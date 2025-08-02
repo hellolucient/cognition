@@ -1,0 +1,44 @@
+import type { Metadata } from "next";
+import { Geist, Geist_Mono } from "next/font/google";
+import "./globals.css";
+import SupabaseProvider from "@/components/providers/supabase-provider";
+import SignInButton from "@/components/auth/sign-in-button";
+
+const geistSans = Geist({
+  variable: "--font-geist-sans",
+  subsets: ["latin"],
+});
+
+const geistMono = Geist_Mono({
+  variable: "--font-geist-mono",
+  subsets: ["latin"],
+});
+
+export const metadata: Metadata = {
+  title: "Cognition - AI Conversation Platform",
+  description: "Share and discuss interesting AI conversations",
+};
+
+export default function RootLayout({
+  children,
+}: Readonly<{
+  children: React.ReactNode;
+}>) {
+  return (
+    <html lang="en">
+      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+        <SupabaseProvider>
+          <div className="flex min-h-screen flex-col">
+            <header className="border-b">
+              <div className="container mx-auto flex h-16 items-center justify-between">
+                <div className="font-medium">cognition</div>
+                <SignInButton />
+              </div>
+            </header>
+            <main className="flex-1">{children}</main>
+          </div>
+        </SupabaseProvider>
+      </body>
+    </html>
+  );
+}
