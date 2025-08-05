@@ -3,12 +3,16 @@ import { PrismaClient } from '@prisma/client'
 import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 import OpenAI from 'openai'
+import Anthropic from '@anthropic-ai/sdk'
+import { GoogleGenerativeAI } from '@google/generative-ai'
+import { decryptApiKey } from '@/lib/encryption'
+import { AIProvider } from '@/lib/ai-providers'
 
 const prisma = new PrismaClient()
 
 export async function POST(request: NextRequest) {
   try {
-    const { type, parentThreadId, userPrompt, manualContent, userApiKey, referencedText, referencedSource } = await request.json()
+    const { type, parentThreadId, userPrompt, manualContent, referencedText, referencedSource, provider } = await request.json()
 
     // Get the authenticated user
     const cookieStore = await cookies()
@@ -61,6 +65,13 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    if (type === 'ai' && !provider) {
+      return NextResponse.json(
+        { error: 'AI provider is required for AI contributions' },
+        { status: 400 }
+      )
+    }
+
     if (type === 'manual' && !manualContent?.trim()) {
       return NextResponse.json(
         { error: 'Manual content is required for manual contributions' },
@@ -87,7 +98,15 @@ export async function POST(request: NextRequest) {
 
     // Check if user exists in our database, create if not
     let dbUser = await prisma.user.findUnique({
-      where: { id: user.id }
+      where: { id: user.id },
+      select: { 
+        id: true, 
+        encryptedOpenAIKey: true,
+        encryptedAnthropicKey: true,
+        encryptedGoogleKey: true,
+        name: true,
+        email: true 
+      }
     })
 
     if (!dbUser) {
@@ -97,6 +116,14 @@ export async function POST(request: NextRequest) {
           email: user.email,
           name: user.user_metadata?.name || user.email?.split('@')[0] || 'Anonymous',
           avatarUrl: user.user_metadata?.avatar_url,
+        },
+        select: { 
+          id: true, 
+          encryptedOpenAIKey: true,
+          encryptedAnthropicKey: true,
+          encryptedGoogleKey: true,
+          name: true,
+          email: true 
         }
       })
     }
@@ -124,15 +151,35 @@ export async function POST(request: NextRequest) {
 
     } else {
       // AI contribution
-      if (!userApiKey) {
+      // Get the appropriate encrypted key based on provider
+      let encryptedKey: string | null = null;
+      switch (provider) {
+        case 'openai':
+          encryptedKey = dbUser.encryptedOpenAIKey;
+          break;
+        case 'anthropic':
+          encryptedKey = dbUser.encryptedAnthropicKey;
+          break;
+        case 'google':
+          encryptedKey = dbUser.encryptedGoogleKey;
+          break;
+        default:
+          return NextResponse.json(
+            { error: 'Invalid AI provider' },
+            { status: 400 }
+          )
+      }
+
+      if (!encryptedKey) {
         return NextResponse.json(
-          { error: 'OpenAI API key is required for AI contributions' },
+          { error: `Please add your ${provider} API key in Settings to contribute with AI` },
           { status: 400 }
         )
       }
 
       try {
-        const openai = new OpenAI({ apiKey: userApiKey })
+        // Decrypt the user's API key
+        const userApiKey = decryptApiKey(encryptedKey);
 
         // Create the full context for the AI
         let contextPrompt = `Here is a conversation that was previously shared on our platform:
@@ -158,23 +205,48 @@ Now, a user wants to continue this conversation with the following prompt. Pleas
 
 USER'S NEW PROMPT: ${userPrompt}`;
 
-        const response = await openai.chat.completions.create({
-          model: 'gpt-4o-mini',
-          messages: [
-            {
-              role: 'system',
-              content: 'You are a helpful AI assistant continuing a conversation. Provide thoughtful, relevant responses that build on the previous discussion.'
-            },
-            {
-              role: 'user',
-              content: contextPrompt
-            }
-          ],
-          max_tokens: 1000,
-          temperature: 0.7,
-        })
-
-        const aiResponse = response.choices[0]?.message?.content?.trim()
+        // Generate AI response based on provider
+        let aiResponse = '';
+        
+        if (provider === 'openai') {
+          const openai = new OpenAI({ apiKey: userApiKey });
+          const response = await openai.chat.completions.create({
+            model: 'gpt-4o-mini',
+            messages: [
+              {
+                role: 'system',
+                content: 'You are a helpful AI assistant continuing a conversation. Provide thoughtful, relevant responses that build on the previous discussion.'
+              },
+              {
+                role: 'user',
+                content: contextPrompt
+              }
+            ],
+            max_tokens: 1000,
+            temperature: 0.7,
+          });
+          aiResponse = response.choices[0]?.message?.content?.trim() || '';
+          
+        } else if (provider === 'anthropic') {
+          const anthropic = new Anthropic({ apiKey: userApiKey });
+          const response = await anthropic.messages.create({
+            model: 'claude-3-haiku-20240307',
+            max_tokens: 1000,
+            messages: [
+              {
+                role: 'user',
+                content: `You are a helpful AI assistant continuing a conversation. Provide thoughtful, relevant responses that build on the previous discussion.\n\n${contextPrompt}`
+              }
+            ],
+          });
+          aiResponse = response.content[0]?.type === 'text' ? response.content[0].text : '';
+          
+        } else if (provider === 'google') {
+          const genAI = new GoogleGenerativeAI(userApiKey);
+          const model = genAI.getGenerativeModel({ model: 'gemini-pro' });
+          const response = await model.generateContent(`You are a helpful AI assistant continuing a conversation. Provide thoughtful, relevant responses that build on the previous discussion.\n\n${contextPrompt}`);
+          aiResponse = response.response.text();
+        }
 
         if (!aiResponse) {
           throw new Error('No response from AI')
@@ -189,31 +261,36 @@ USER'S NEW PROMPT: ${userPrompt}`;
         
         content += `Human: ${userPrompt}\n\nAssistant: ${aiResponse}`;
         contributionContent = content;
-        source = 'AI Contribution (User\'s API Key)'
+        source = `AI Contribution (${provider.charAt(0).toUpperCase() + provider.slice(1)})`
 
-        // Generate a summary for the contribution
+        // Generate a summary for the contribution using platform OpenAI key
         try {
-          const summaryResponse = await openai.chat.completions.create({
-            model: 'gpt-4o-mini',
-            messages: [
-              {
-                role: 'system',
-                content: 'Create a brief 1-2 sentence summary of this conversation contribution.'
-              },
-              {
-                role: 'user',
-                content: contributionContent
-              }
-            ],
-            max_tokens: 100,
-            temperature: 0.7,
-          })
+          if (process.env.OPENAI_API_KEY) {
+            const platformOpenAI = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+            const summaryResponse = await platformOpenAI.chat.completions.create({
+              model: 'gpt-4o-mini',
+              messages: [
+                {
+                  role: 'system',
+                  content: 'Create a brief 1-2 sentence summary of this conversation contribution.'
+                },
+                {
+                  role: 'user',
+                  content: contributionContent
+                }
+              ],
+              max_tokens: 100,
+              temperature: 0.7,
+            });
 
-          contributionSummary = summaryResponse.choices[0]?.message?.content?.trim() || 
-            `Continued the conversation with: ${userPrompt}`
+            contributionSummary = summaryResponse.choices[0]?.message?.content?.trim() || 
+              `Continued the conversation with: ${userPrompt}`;
+          } else {
+            contributionSummary = `Continued the conversation with: ${userPrompt}`;
+          }
 
         } catch (summaryError) {
-          contributionSummary = `Continued the conversation with: ${userPrompt}`
+          contributionSummary = `Continued the conversation with: ${userPrompt}`;
         }
 
       } catch (error: any) {

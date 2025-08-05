@@ -2,12 +2,15 @@
 
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import Link from "next/link";
 import { useState, useEffect, use, useRef } from "react";
 import { useSupabase } from "@/components/providers/supabase-provider";
+import { WaitlistModal } from "@/components/auth/waitlist-modal";
 
 interface Thread {
   id: string;
+  title: string | null;
   content: string;
   summary: string;
   source: string | null;
@@ -36,28 +39,29 @@ export default function ThreadPage({ params }: { params: Promise<{ id: string }>
     fetchThread();
   }, [resolvedParams.id]);
 
-  // Scroll to bottom when thread loads and has contributions
+  // Handle scroll behavior based on navigation context
   useEffect(() => {
-    if (thread && thread.contributions && thread.contributions.length > 0) {
-      // Check if we should scroll (either new load or coming from contribute page)
+    if (thread) {
       const urlParams = new URLSearchParams(window.location.search);
       const scrollToBottom = urlParams.get('scroll') === 'bottom';
       
-      if (scrollToBottom || thread.contributions.length > 0) {
-        // Small delay to ensure content is rendered
-        setTimeout(() => {
+      // Small delay to ensure content is rendered
+      setTimeout(() => {
+        if (scrollToBottom && thread.contributions && thread.contributions.length > 0) {
+          // Coming from contribute page - scroll to latest contribution
           conversationRef.current?.scrollIntoView({ 
             behavior: 'smooth', 
             block: 'start' 
           });
-        }, 100);
-        
-        // Clean up URL parameter
-        if (scrollToBottom) {
+          
+          // Clean up URL parameter
           const newUrl = window.location.pathname;
           window.history.replaceState({}, '', newUrl);
+        } else {
+          // Normal "Read Full" navigation - scroll to top of page
+          window.scrollTo({ top: 0, behavior: 'smooth' });
         }
-      }
+      }, 100);
     }
   }, [thread]);
 
@@ -91,9 +95,18 @@ export default function ThreadPage({ params }: { params: Promise<{ id: string }>
   const [selectedText, setSelectedText] = useState("");
   const [selectedSource, setSelectedSource] = useState("");
   const [showReferenceModal, setShowReferenceModal] = useState(false);
+  const [showWaitlist, setShowWaitlist] = useState(false);
+  const [showExportModal, setShowExportModal] = useState(false);
+  const [exportFormat, setExportFormat] = useState("text");
+  const [isExporting, setIsExporting] = useState(false);
   const conversationRef = useRef<HTMLDivElement>(null);
 
   const handleTextSelection = (text: string, source: string) => {
+    if (!user) {
+      setShowWaitlist(true);
+      return;
+    }
+
     const selection = window.getSelection();
     const selectedText = selection?.toString().trim();
     
@@ -101,6 +114,64 @@ export default function ThreadPage({ params }: { params: Promise<{ id: string }>
       setSelectedText(selectedText);
       setSelectedSource(source);
       setShowReferenceModal(true);
+    }
+  };
+
+  const handleContributeClick = () => {
+    if (!user) {
+      setShowWaitlist(true);
+      return;
+    }
+    if (!thread) {
+      return;
+    }
+    // Navigate to contribute page
+    window.location.href = `/contribute/${thread.id}`;
+  };
+
+  const handleExportClick = () => {
+    setShowExportModal(true);
+  };
+
+  const handleExport = async () => {
+    if (!thread) return;
+    
+    setIsExporting(true);
+    try {
+      const response = await fetch(`/api/threads/${thread.id}/export?format=${exportFormat}`);
+      
+      if (response.ok) {
+        // Get the filename from the Content-Disposition header
+        const contentDisposition = response.headers.get('Content-Disposition');
+        let filename = `conversation-export.${exportFormat === 'json' ? 'json' : exportFormat === 'markdown' ? 'md' : 'txt'}`;
+        
+        if (contentDisposition) {
+          const filenameMatch = contentDisposition.match(/filename="(.+)"/);
+          if (filenameMatch) {
+            filename = filenameMatch[1];
+          }
+        }
+
+        // Create blob and download
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+        
+        setShowExportModal(false);
+      } else {
+        throw new Error('Export failed');
+      }
+    } catch (error) {
+      console.error('Export error:', error);
+      alert('Failed to export conversation. Please try again.');
+    } finally {
+      setIsExporting(false);
     }
   };
 
@@ -213,6 +284,13 @@ export default function ThreadPage({ params }: { params: Promise<{ id: string }>
             </div>
           </div>
 
+          {/* Title */}
+          {thread.title && (
+            <div>
+              <h1 className="text-2xl font-bold text-foreground">{thread.title}</h1>
+            </div>
+          )}
+
           {/* Summary */}
           <div className="bg-muted/50 p-4 rounded-lg">
             <h2 className="font-medium mb-2">Summary</h2>
@@ -297,9 +375,12 @@ export default function ThreadPage({ params }: { params: Promise<{ id: string }>
         </div>
 
         {/* Actions */}
-        <div className="flex gap-4 justify-center">
-          <Button variant="outline" asChild>
-            <Link href={`/contribute/${thread.id}`}>Contribute to This Conversation</Link>
+        <div className="flex gap-4 justify-center flex-wrap">
+          <Button variant="outline" onClick={handleContributeClick}>
+            Contribute to This Conversation
+          </Button>
+          <Button variant="outline" onClick={handleExportClick}>
+            📤 Export Chat
           </Button>
           <Button variant="outline">
             👍 Upvote ({thread._count.upvotes})
@@ -364,6 +445,63 @@ export default function ThreadPage({ params }: { params: Promise<{ id: string }>
             </div>
           </div>
         )}
+
+        {/* Export Modal */}
+        {showExportModal && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+            <div className="bg-background rounded-lg p-6 max-w-md w-full mx-4">
+              <h3 className="text-lg font-semibold mb-4">Export Conversation</h3>
+              <p className="text-muted-foreground mb-4">
+                Choose the format for your export. This will include the original conversation and all community contributions.
+              </p>
+              
+              <div className="space-y-4">
+                <div>
+                  <label className="text-sm font-medium mb-2 block">Export Format</label>
+                  <Select value={exportFormat} onValueChange={setExportFormat}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="text">Plain Text (.txt)</SelectItem>
+                      <SelectItem value="markdown">Markdown (.md)</SelectItem>
+                      <SelectItem value="json">JSON (.json)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                
+                <div className="text-xs text-muted-foreground">
+                  <p><strong>Plain Text:</strong> Human-readable format, great for copying into other AI tools</p>
+                  <p><strong>Markdown:</strong> Formatted text with headers and styling</p>
+                  <p><strong>JSON:</strong> Structured data format for developers</p>
+                </div>
+              </div>
+              
+              <div className="flex gap-3 mt-6">
+                <Button 
+                  onClick={handleExport} 
+                  disabled={isExporting}
+                  className="flex-1"
+                >
+                  {isExporting ? "Exporting..." : "📤 Export"}
+                </Button>
+                <Button 
+                  variant="outline" 
+                  onClick={() => setShowExportModal(false)}
+                  disabled={isExporting}
+                >
+                  Cancel
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Waitlist Modal */}
+        <WaitlistModal 
+          isOpen={showWaitlist} 
+          onClose={() => setShowWaitlist(false)} 
+        />
       </div>
     </main>
   );

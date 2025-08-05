@@ -7,7 +7,7 @@ const prisma = new PrismaClient()
 
 export async function POST(request: NextRequest) {
   try {
-    const { content, source, tags, summary } = await request.json()
+    const { content, source, tags, title, summary } = await request.json()
 
     // Get the authenticated user
     const cookieStore = await cookies()
@@ -69,6 +69,7 @@ export async function POST(request: NextRequest) {
     const thread = await prisma.thread.create({
       data: {
         content,
+        title: title || null,
         summary,
         source: source || null,
         tags: tagArray,

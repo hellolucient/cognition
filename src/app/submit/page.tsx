@@ -5,7 +5,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useSupabase } from "@/components/providers/supabase-provider";
+import { WaitlistModal } from "@/components/auth/waitlist-modal";
+import { InviteSignupModal } from "@/components/auth/invite-signup-modal";
+import Link from "next/link";
 
 const AI_SOURCES = [
   "ChatGPT",
@@ -31,15 +35,47 @@ const POPULAR_TAGS = [
 ];
 
 export default function SubmitPage() {
+  const { user } = useSupabase();
   const [chatContent, setChatContent] = useState("");
   const [source, setSource] = useState("");
   const [customSource, setCustomSource] = useState("");
   const [tags, setTags] = useState("");
   const [customTag, setCustomTag] = useState("");
+  const [title, setTitle] = useState("");
   const [summary, setSummary] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
   const [isPosting, setIsPosting] = useState(false);
   const [step, setStep] = useState<"input" | "review">("input");
+  const [showWaitlist, setShowWaitlist] = useState(false);
+  const [showInviteSignup, setShowInviteSignup] = useState(false);
+
+  // Check for pre-filled content from bookmarklet
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const fromBookmarklet = urlParams.get('from') === 'bookmarklet';
+    
+    if (fromBookmarklet) {
+      // Check sessionStorage for content from bookmarklet
+      const storedContent = sessionStorage.getItem('cognition_chat');
+      console.log('Bookmarklet mode - sessionStorage content:', storedContent ? `Found ${storedContent.length} characters` : 'Not found');
+      if (storedContent) {
+        setChatContent(storedContent);
+        // Clean up
+        sessionStorage.removeItem('cognition_chat');
+        window.history.replaceState({}, '', window.location.pathname);
+        console.log('Content loaded from bookmarklet');
+      } else {
+        console.log('No content found in sessionStorage from bookmarklet');
+      }
+    } else {
+      // Fallback: check URL parameters (for backwards compatibility)
+      const prefilledContent = urlParams.get('content');
+      if (prefilledContent) {
+        setChatContent(decodeURIComponent(prefilledContent));
+        window.history.replaceState({}, '', window.location.pathname);
+      }
+    }
+  }, []);
 
   const handleTagClick = (tag: string) => {
     if (tag === "Other") {
@@ -89,6 +125,7 @@ export default function SubmitPage() {
         throw new Error(data.error || 'Failed to generate summary');
       }
 
+      setTitle(data.title || 'AI Conversation');
       setSummary(data.summary);
       setStep("review");
     } catch (error: any) {
@@ -117,6 +154,7 @@ export default function SubmitPage() {
           content: chatContent,
           source: finalSource,
           tags,
+          title,
           summary,
         }),
       });
@@ -134,6 +172,7 @@ export default function SubmitPage() {
       setSource("");
       setCustomSource("");
       setTags("");
+      setTitle("");
       setSummary("");
       setStep("input");
       
@@ -146,6 +185,12 @@ export default function SubmitPage() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!user) {
+      setShowWaitlist(true);
+      return;
+    }
+    
     if (step === "input") {
       generateSummary();
     } else {
@@ -153,17 +198,111 @@ export default function SubmitPage() {
     }
   };
 
+  if (!user) {
+    return (
+      <main className="container mx-auto max-w-2xl py-8">
+        <div className="space-y-6">
+          <div>
+            <Button variant="outline" asChild className="mb-4">
+              <Link href="/">← Back to Feed</Link>
+            </Button>
+            <h1 className="text-3xl font-bold tracking-tight">Submit a Conversation</h1>
+            <p className="text-muted-foreground">
+              Paste a complete conversation you've had with an AI. It will be summarized and shared with the community.
+            </p>
+          </div>
+
+          {/* Prominent Sign-in Required Notice */}
+          <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border-2 border-blue-200 rounded-xl p-8 text-center">
+            <div className="text-4xl mb-4">🔒</div>
+            <h2 className="text-2xl font-bold text-blue-900 mb-3">Sign In Required</h2>
+            <p className="text-blue-700 mb-6 text-lg">
+              You need to be signed in to submit conversations to our community.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-3 justify-center">
+              <Button onClick={() => setShowInviteSignup(true)} size="lg">
+                Have Invite Code?
+              </Button>
+              <Button onClick={() => setShowWaitlist(true)} variant="outline" size="lg">
+                Join Waitlist
+              </Button>
+              <Button variant="outline" size="lg" asChild>
+                <Link href="/">Browse Conversations</Link>
+              </Button>
+            </div>
+          </div>
+
+          {/* Preview of what they could do */}
+          <div className="bg-muted/30 p-6 rounded-lg">
+            <h3 className="font-semibold mb-3">What you can do once signed in:</h3>
+            <ul className="space-y-2 text-muted-foreground">
+              <li className="flex items-center gap-2">
+                <span className="text-green-600">✓</span>
+                Submit your AI conversations to the community
+              </li>
+              <li className="flex items-center gap-2">
+                <span className="text-green-600">✓</span>
+                Get AI-generated summaries of your chats
+              </li>
+              <li className="flex items-center gap-2">
+                <span className="text-green-600">✓</span>
+                Contribute to other people's conversations
+              </li>
+              <li className="flex items-center gap-2">
+                <span className="text-green-600">✓</span>
+                Share invite codes with friends
+              </li>
+            </ul>
+          </div>
+        </div>
+        
+        <WaitlistModal 
+          isOpen={showWaitlist} 
+          onClose={() => setShowWaitlist(false)} 
+        />
+        
+        <InviteSignupModal
+          isOpen={showInviteSignup}
+          onClose={() => setShowInviteSignup(false)}
+        />
+      </main>
+    );
+  }
+
   return (
     <main className="container mx-auto max-w-2xl py-8">
       <div className="space-y-4">
-        <h1 className="text-3xl font-bold tracking-tight">Submit a Conversation</h1>
-        <p className="text-muted-foreground">
-          Paste a complete conversation you've had with an AI. It will be summarized and shared with the community.
-        </p>
+        <div>
+          <Button variant="outline" asChild className="mb-4">
+            <Link href="/">← Back to Feed</Link>
+          </Button>
+          <h1 className="text-3xl font-bold tracking-tight">Submit a Conversation</h1>
+          <p className="text-muted-foreground">
+            Paste a complete conversation you've had with an AI. It will be summarized and shared with the community.
+          </p>
+        </div>
+
         <form onSubmit={handleSubmit} className="space-y-6">
           {step === "input" && (
             <div className="grid w-full gap-2">
-              <Label htmlFor="chat-content">The full chat transcript</Label>
+              <div className="flex justify-between items-center">
+                <Label htmlFor="chat-content">The full chat transcript</Label>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={async () => {
+                    try {
+                      const text = await navigator.clipboard.readText();
+                      setChatContent(text);
+                    } catch (err) {
+                      alert('Could not read clipboard. Please paste manually (Cmd+V).');
+                    }
+                  }}
+                >
+                  📋 Paste from Clipboard
+                </Button>
+              </div>
               <Textarea
                 id="chat-content"
                 placeholder="Paste your entire chat log here, including both your prompts and the AI's responses."
@@ -177,6 +316,17 @@ export default function SubmitPage() {
           
           {step === "review" && (
             <div className="space-y-4">
+              <div className="grid w-full gap-2">
+                <Label htmlFor="generated-title">Generated Title (you can edit this)</Label>
+                <Input
+                  id="generated-title"
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  placeholder="Enter a catchy title for your conversation"
+                  maxLength={100}
+                />
+              </div>
+              
               <div className="grid w-full gap-2">
                 <Label htmlFor="generated-summary">Generated Summary (you can edit this)</Label>
                 <Textarea
@@ -305,6 +455,11 @@ export default function SubmitPage() {
           </Button>
         </form>
       </div>
+      
+      <WaitlistModal 
+        isOpen={showWaitlist} 
+        onClose={() => setShowWaitlist(false)} 
+      />
     </main>
   );
 }

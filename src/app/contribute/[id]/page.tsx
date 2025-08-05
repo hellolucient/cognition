@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
 import { useState, useEffect, use } from "react";
 import { useSupabase } from "@/components/providers/supabase-provider";
+import { WaitlistModal } from "@/components/auth/waitlist-modal";
 
 interface Thread {
   id: string;
@@ -31,11 +32,88 @@ export default function ContributePage({ params }: { params: Promise<{ id: strin
   const [contributionType, setContributionType] = useState<"ai" | "manual" | null>(null);
   const [userPrompt, setUserPrompt] = useState("");
   const [manualContribution, setManualContribution] = useState("");
-  const [userApiKey, setUserApiKey] = useState("");
+
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [referencedText, setReferencedText] = useState("");
   const [referencedSource, setReferencedSource] = useState("");
+  const [showWaitlist, setShowWaitlist] = useState(false);
+  const [selectedText, setSelectedText] = useState("");
+  const [selectedSource, setSelectedSource] = useState("");
+  const [showReferenceModal, setShowReferenceModal] = useState(false);
   const { user } = useSupabase();
+
+  const handleTextSelection = (text: string, source: string) => {
+    if (!user) {
+      setShowWaitlist(true);
+      return;
+    }
+
+    const selection = window.getSelection();
+    const selectedText = selection?.toString().trim();
+    
+    if (selectedText && selectedText.length > 10) { // Minimum selection length
+      setSelectedText(selectedText);
+      setSelectedSource(source);
+      setShowReferenceModal(true);
+    }
+  };
+
+  const formatContent = (content: string, allowSelection = false) => {
+    // Split by common AI conversation patterns
+    const lines = content.split('\n');
+    const formattedLines = lines.map((line, index) => {
+      const trimmed = line.trim();
+      
+      // Check if it's a user message (common patterns)
+      if (trimmed.startsWith('Human:') || trimmed.startsWith('User:') || trimmed.startsWith('Me:')) {
+        const messageText = trimmed.replace(/^(Human:|User:|Me:)\s*/, '');
+        return (
+          <div key={index} className="mb-4 p-4 bg-blue-50 border-l-4 border-blue-500 rounded-r">
+            <div className="text-sm font-medium text-blue-700 mb-1">Human</div>
+            <div 
+              className={`text-gray-800 ${allowSelection ? 'select-text cursor-text' : ''}`}
+              onMouseUp={() => allowSelection && handleTextSelection(messageText, 'Human')}
+            >
+              {messageText}
+            </div>
+          </div>
+        );
+      }
+      
+      // Check if it's an AI message
+      if (trimmed.startsWith('Assistant:') || trimmed.startsWith('AI:') || trimmed.startsWith('ChatGPT:') || trimmed.startsWith('Claude:')) {
+        const messageText = trimmed.replace(/^(Assistant:|AI:|ChatGPT:|Claude:)\s*/, '');
+        return (
+          <div key={index} className="mb-4 p-4 bg-gray-50 border-l-4 border-gray-500 rounded-r">
+            <div className="text-sm font-medium text-gray-700 mb-1">Assistant</div>
+            <div 
+              className={`text-gray-800 ${allowSelection ? 'select-text cursor-text' : ''}`}
+              onMouseUp={() => allowSelection && handleTextSelection(messageText, 'Assistant')}
+            >
+              {messageText}
+            </div>
+          </div>
+        );
+      }
+      
+      // Regular line
+      if (trimmed) {
+        return (
+          <div 
+            key={index} 
+            className={`mb-2 text-gray-800 ${allowSelection ? 'select-text cursor-text' : ''}`}
+            onMouseUp={() => allowSelection && handleTextSelection(trimmed, 'Human')}
+          >
+            {trimmed}
+          </div>
+        );
+      }
+      
+      return null;
+    }).filter(Boolean);
+
+    return formattedLines;
+  };
 
   useEffect(() => {
     fetchThread();
@@ -68,11 +146,19 @@ export default function ContributePage({ params }: { params: Promise<{ id: strin
     }
   };
 
+  const handleContributionTypeSelect = (type: "ai" | "manual") => {
+    if (!user) {
+      setShowWaitlist(true);
+      return;
+    }
+    setContributionType(type);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!user) {
-      alert("Please sign in to contribute to conversations.");
+      setShowWaitlist(true);
       return;
     }
 
@@ -81,10 +167,7 @@ export default function ContributePage({ params }: { params: Promise<{ id: strin
       return;
     }
 
-    if (contributionType === "ai" && !userApiKey.trim()) {
-      alert("Please enter your OpenAI API key.");
-      return;
-    }
+
 
     if (contributionType === "manual" && !manualContribution.trim()) {
       alert("Please enter your contribution.");
@@ -103,7 +186,6 @@ export default function ContributePage({ params }: { params: Promise<{ id: strin
           parentThreadId: resolvedParams.id,
           userPrompt: contributionType === "ai" ? userPrompt : null,
           manualContent: contributionType === "manual" ? manualContribution : null,
-          userApiKey: contributionType === "ai" ? userApiKey : null,
           referencedText: referencedText || null,
           referencedSource: referencedSource || null,
         }),
@@ -194,23 +276,23 @@ export default function ContributePage({ params }: { params: Promise<{ id: strin
 
         {/* Contribution Type Selection */}
         {!contributionType && (
-          <div className="space-y-4">
+          <div className="space-y-4" data-contribution-form>
             <h2 className="text-xl font-semibold">How would you like to contribute?</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div 
                 className="border rounded-lg p-6 cursor-pointer hover:bg-muted/50 transition-colors"
-                onClick={() => setContributionType("ai")}
+                onClick={() => handleContributionTypeSelect("ai")}
               >
                 <div className="space-y-2">
                   <h3 className="font-medium">Continue with AI</h3>
                   <p className="text-sm text-muted-foreground">
-                    Add a new prompt and get an AI response that continues the conversation. Requires your own OpenAI API key.
+                    Add a new prompt and get an AI response that continues the conversation. Uses your API key from Settings.
                   </p>
                 </div>
               </div>
               <div 
                 className="border rounded-lg p-6 cursor-pointer hover:bg-muted/50 transition-colors"
-                onClick={() => setContributionType("manual")}
+                onClick={() => handleContributionTypeSelect("manual")}
               >
                 <div className="space-y-2">
                   <h3 className="font-medium">Add Your Thoughts</h3>
@@ -230,21 +312,7 @@ export default function ContributePage({ params }: { params: Promise<{ id: strin
               <h2 className="text-xl font-semibold">Continue with AI</h2>
               <div className="bg-blue-50 p-4 rounded-lg">
                 <p className="text-sm text-blue-800">
-                  <strong>Note:</strong> The AI will be given the full context of the original conversation before responding to your prompt.
-                </p>
-              </div>
-              <div className="grid w-full gap-2">
-                <Label htmlFor="api-key">Your OpenAI API Key</Label>
-                <Input
-                  id="api-key"
-                  type="password"
-                  placeholder="sk-..."
-                  value={userApiKey}
-                  onChange={(e) => setUserApiKey(e.target.value)}
-                  required
-                />
-                <p className="text-xs text-muted-foreground">
-                  Your API key is used only for this request and is not stored.
+                  <strong>Note:</strong> The AI will be given the full context of the original conversation before responding to your prompt. Using your API key from Settings.
                 </p>
               </div>
               <div className="grid w-full gap-2">
@@ -300,7 +368,7 @@ export default function ContributePage({ params }: { params: Promise<{ id: strin
 
         {/* Original Thread Context - moved to bottom */}
         <div className="bg-muted/30 p-6 rounded-lg">
-          <h2 className="font-medium mb-3">Original Conversation Summary</h2>
+          <h2 className="font-medium mb-3">Original Conversation</h2>
           <div className="space-y-3">
             <div className="flex items-center gap-3">
               <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
@@ -316,7 +384,9 @@ export default function ContributePage({ params }: { params: Promise<{ id: strin
                 )}
               </div>
             </div>
-            <p className="text-foreground leading-relaxed">{thread.summary}</p>
+            <div className="space-y-2">
+              {formatContent(thread.content, true)}
+            </div>
             {thread.tags.length > 0 && (
               <div className="flex flex-wrap gap-1">
                 {thread.tags.map((tag) => (
@@ -329,6 +399,52 @@ export default function ContributePage({ params }: { params: Promise<{ id: strin
           </div>
         </div>
       </div>
+      
+      {/* Reference Modal */}
+      {showReferenceModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-background rounded-lg p-6 max-w-md w-full mx-4">
+            <h3 className="text-lg font-semibold mb-4">Reply to Selected Text</h3>
+            <div className="bg-muted p-3 rounded mb-4">
+              <div className="text-sm font-medium text-muted-foreground mb-1">
+                Replying to ({selectedSource}):
+              </div>
+              <div className="text-sm italic">"{selectedText}"</div>
+            </div>
+            <p className="text-muted-foreground mb-4">
+              This selected text will be included as context when you contribute to the conversation.
+            </p>
+            <div className="flex gap-3">
+              <Button 
+                onClick={() => {
+                  setReferencedText(selectedText);
+                  setReferencedSource(selectedSource);
+                  setShowReferenceModal(false);
+                  // Scroll to contribution form
+                  document.querySelector('[data-contribution-form]')?.scrollIntoView({ 
+                    behavior: 'smooth', 
+                    block: 'start' 
+                  });
+                }}
+                className="flex-1"
+              >
+                Continue with This Quote
+              </Button>
+              <Button 
+                variant="outline" 
+                onClick={() => setShowReferenceModal(false)}
+              >
+                Cancel
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <WaitlistModal 
+        isOpen={showWaitlist} 
+        onClose={() => setShowWaitlist(false)} 
+      />
     </main>
   );
 }

@@ -8,6 +8,7 @@ import { createContext, useContext, useEffect, useState } from 'react'
 type SupabaseContext = {
   user: User | null
   session: Session | null
+  supabase: ReturnType<typeof createClient>
   signOut: () => Promise<void>
   signInWithGithub: () => Promise<void>
 }
@@ -47,6 +48,7 @@ export default function SupabaseProvider({
   const value = {
     session,
     user,
+    supabase,
     signOut: async () => {
       await supabase.auth.signOut()
       router.push('/')
