@@ -1,7 +1,6 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
 import { useState, useEffect } from "react";
@@ -154,7 +153,7 @@ export default function HomePage() {
             </div>
             
             <div className="text-xs text-blue-600 space-y-2">
-              <p>💡 <strong>Can't drag?</strong> Right-click the button above → "Bookmark this link" or "Add to bookmarks"</p>
+              <p>💡 <strong>Can&apos;t drag?</strong> Right-click the button above → &quot;Bookmark this link&quot; or &quot;Add to bookmarks&quot;</p>
               <details className="cursor-pointer">
                 <summary className="font-medium">🔧 Alternative: Manual Setup</summary>
                 <div className="mt-2 p-2 bg-gray-50 rounded text-xs">

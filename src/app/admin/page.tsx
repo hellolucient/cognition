@@ -126,7 +126,7 @@ export default function AdminPage() {
       <main className="container mx-auto py-8">
         <div className="text-center">
           <h1 className="text-2xl font-bold mb-4">Access Denied</h1>
-          <p className="text-muted-foreground mb-4">You don't have permission to access the admin panel.</p>
+          <p className="text-muted-foreground mb-4">You don&apos;t have permission to access the admin panel.</p>
           <Button asChild>
             <Link href="/">Go Home</Link>
           </Button>
