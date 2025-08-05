@@ -1,8 +1,370 @@
-export default function ThreadPage({ params }: { params: { id: string } }) {
+"use client";
+
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import Link from "next/link";
+import { useState, useEffect, use, useRef } from "react";
+import { useSupabase } from "@/components/providers/supabase-provider";
+
+interface Thread {
+  id: string;
+  content: string;
+  summary: string;
+  source: string | null;
+  tags: string[];
+  createdAt: string;
+  author: {
+    id: string;
+    name: string | null;
+    avatarUrl: string | null;
+  };
+  contributions?: Thread[];
+  _count: {
+    comments: number;
+    upvotes: number;
+  };
+}
+
+export default function ThreadPage({ params }: { params: Promise<{ id: string }> }) {
+  const resolvedParams = use(params);
+  const [thread, setThread] = useState<Thread | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const { user } = useSupabase();
+
+  useEffect(() => {
+    fetchThread();
+  }, [resolvedParams.id]);
+
+  // Scroll to bottom when thread loads and has contributions
+  useEffect(() => {
+    if (thread && thread.contributions && thread.contributions.length > 0) {
+      // Check if we should scroll (either new load or coming from contribute page)
+      const urlParams = new URLSearchParams(window.location.search);
+      const scrollToBottom = urlParams.get('scroll') === 'bottom';
+      
+      if (scrollToBottom || thread.contributions.length > 0) {
+        // Small delay to ensure content is rendered
+        setTimeout(() => {
+          conversationRef.current?.scrollIntoView({ 
+            behavior: 'smooth', 
+            block: 'start' 
+          });
+        }, 100);
+        
+        // Clean up URL parameter
+        if (scrollToBottom) {
+          const newUrl = window.location.pathname;
+          window.history.replaceState({}, '', newUrl);
+        }
+      }
+    }
+  }, [thread]);
+
+  const fetchThread = async () => {
+    try {
+      const response = await fetch(`/api/threads/${resolvedParams.id}`);
+      if (response.ok) {
+        const data = await response.json();
+        setThread(data);
+      } else {
+        setError('Thread not found');
+      }
+    } catch (error) {
+      console.error('Error fetching thread:', error);
+      setError('Failed to load thread');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
+
+  const [selectedText, setSelectedText] = useState("");
+  const [selectedSource, setSelectedSource] = useState("");
+  const [showReferenceModal, setShowReferenceModal] = useState(false);
+  const conversationRef = useRef<HTMLDivElement>(null);
+
+  const handleTextSelection = (text: string, source: string) => {
+    const selection = window.getSelection();
+    const selectedText = selection?.toString().trim();
+    
+    if (selectedText && selectedText.length > 10) { // Minimum selection length
+      setSelectedText(selectedText);
+      setSelectedSource(source);
+      setShowReferenceModal(true);
+    }
+  };
+
+  const formatContent = (content: string, allowSelection = false) => {
+    // Split by common AI conversation patterns
+    const lines = content.split('\n');
+    const formattedLines = lines.map((line, index) => {
+      const trimmed = line.trim();
+      
+      // Check if it's a user message (common patterns)
+      if (trimmed.startsWith('Human:') || trimmed.startsWith('User:') || trimmed.startsWith('Me:')) {
+        const messageText = trimmed.replace(/^(Human:|User:|Me:)\s*/, '');
+        return (
+          <div key={index} className="mb-4 p-4 bg-blue-50 border-l-4 border-blue-500 rounded-r">
+            <div className="text-sm font-medium text-blue-700 mb-1">Human</div>
+            <div 
+              className={`text-gray-800 ${allowSelection ? 'select-text cursor-text' : ''}`}
+              onMouseUp={() => allowSelection && handleTextSelection(messageText, 'Human')}
+            >
+              {messageText}
+            </div>
+          </div>
+        );
+      }
+      
+      // Check if it's an AI message
+      if (trimmed.startsWith('Assistant:') || trimmed.startsWith('AI:') || trimmed.startsWith('ChatGPT:') || trimmed.startsWith('Claude:')) {
+        const messageText = trimmed.replace(/^(Assistant:|AI:|ChatGPT:|Claude:)\s*/, '');
+        return (
+          <div key={index} className="mb-4 p-4 bg-gray-50 border-l-4 border-gray-500 rounded-r">
+            <div className="text-sm font-medium text-gray-700 mb-1">Assistant</div>
+            <div 
+              className={`text-gray-800 ${allowSelection ? 'select-text cursor-text' : ''}`}
+              onMouseUp={() => allowSelection && handleTextSelection(messageText, 'Assistant')}
+            >
+              {messageText}
+            </div>
+          </div>
+        );
+      }
+      
+      // Regular line
+      if (trimmed) {
+        return (
+          <div 
+            key={index} 
+            className={`mb-2 text-gray-800 ${allowSelection ? 'select-text cursor-text' : ''}`}
+            onMouseUp={() => allowSelection && handleTextSelection(trimmed, 'Human')}
+          >
+            {trimmed}
+          </div>
+        );
+      }
+      
+      return null;
+    }).filter(Boolean);
+
+    return formattedLines;
+  };
+
+  if (loading) {
+    return (
+      <main className="container mx-auto py-8">
+        <div className="text-center">Loading thread...</div>
+      </main>
+    );
+  }
+
+  if (error || !thread) {
+    return (
+      <main className="container mx-auto py-8">
+        <div className="text-center space-y-4">
+          <h1 className="text-2xl font-bold">Thread Not Found</h1>
+          <p className="text-muted-foreground">{error || 'This thread does not exist.'}</p>
+          <Button asChild>
+            <Link href="/">Back to Home</Link>
+          </Button>
+        </div>
+      </main>
+    );
+  }
+
   return (
-    <main className="container mx-auto py-8">
-      <h1 className="text-2xl font-bold">Thread {params.id}</h1>
-      {/* Full conversation, summary, and comments will go here */}
+    <main className="container mx-auto max-w-4xl py-8">
+      <div className="space-y-6">
+        {/* Back Navigation */}
+        <div>
+          <Button variant="outline" asChild>
+            <Link href="/">← Back to Feed</Link>
+          </Button>
+        </div>
+
+        {/* Thread Header */}
+        <div className="space-y-4">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+              {thread.author.name?.[0]?.toUpperCase() || "?"}
+            </div>
+            <div>
+              <div className="font-medium">{thread.author.name || "Anonymous"}</div>
+              <div className="text-sm text-muted-foreground">
+                {formatDate(thread.createdAt)}
+                {thread.source && (
+                  <>
+                    {" • "}
+                    <Badge variant="secondary">{thread.source}</Badge>
+                  </>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Summary */}
+          <div className="bg-muted/50 p-4 rounded-lg">
+            <h2 className="font-medium mb-2">Summary</h2>
+            <p className="text-foreground leading-relaxed">{thread.summary}</p>
+          </div>
+
+          {/* Tags */}
+          {thread.tags.length > 0 && (
+            <div className="flex flex-wrap gap-2">
+              {thread.tags.map((tag) => (
+                <Badge key={tag} variant="outline">
+                  {tag}
+                </Badge>
+              ))}
+            </div>
+          )}
+
+          {/* Stats */}
+          <div className="flex items-center gap-6 text-sm text-muted-foreground">
+            <span>{thread._count.upvotes} upvotes</span>
+            <span>{thread._count.comments} comments</span>
+          </div>
+        </div>
+
+                        {/* Full Conversation with Contributions */}
+                <div className="space-y-4">
+                  <h3 className="text-xl font-semibold">Full Conversation</h3>
+          
+          {/* Original Thread */}
+          <div className="bg-blue-50/30 border border-blue-200 rounded-lg p-6">
+            <div className="flex items-center gap-2 mb-4">
+              <div className="w-6 h-6 rounded-full bg-blue-500 flex items-center justify-center text-white text-xs font-medium">
+                {thread.author.name?.[0]?.toUpperCase() || "?"}
+              </div>
+              <span className="text-sm font-medium text-blue-700">
+                Original by {thread.author.name || "Anonymous"}
+              </span>
+            </div>
+            {formatContent(thread.content, true)}
+          </div>
+
+          {/* Contributions */}
+          {thread.contributions && thread.contributions.length > 0 && (
+            <div className="space-y-4">
+              {thread.contributions.map((contribution, index) => {
+                // Different background colors for different contributors
+                const colors = [
+                  'bg-green-50/30 border-green-200 text-green-700',
+                  'bg-purple-50/30 border-purple-200 text-purple-700', 
+                  'bg-orange-50/30 border-orange-200 text-orange-700',
+                  'bg-pink-50/30 border-pink-200 text-pink-700',
+                  'bg-indigo-50/30 border-indigo-200 text-indigo-700'
+                ];
+                const colorClass = colors[index % colors.length];
+                const [bgColor, borderColor, textColor] = colorClass.split(' ');
+
+                                        return (
+                          <div 
+                            key={contribution.id} 
+                            className={`${bgColor} border ${borderColor} rounded-lg p-6`}
+                            ref={index === thread.contributions.length - 1 ? conversationRef : null}
+                          >
+                    <div className="flex items-center gap-2 mb-4">
+                      <div className={`w-6 h-6 rounded-full ${borderColor.replace('border-', 'bg-').replace('-200', '-500')} flex items-center justify-center text-white text-xs font-medium`}>
+                        {contribution.author.name?.[0]?.toUpperCase() || "?"}
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className={`text-sm font-medium ${textColor}`}>
+                          Contribution by {contribution.author.name || "Anonymous"}
+                        </span>
+                        <Badge variant="outline" className="text-xs">
+                          {contribution.source}
+                        </Badge>
+                      </div>
+                    </div>
+                    {formatContent(contribution.content, true)}
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+
+        {/* Actions */}
+        <div className="flex gap-4 justify-center">
+          <Button variant="outline" asChild>
+            <Link href={`/contribute/${thread.id}`}>Contribute to This Conversation</Link>
+          </Button>
+          <Button variant="outline">
+            👍 Upvote ({thread._count.upvotes})
+          </Button>
+        </div>
+
+        {/* Comments Section Placeholder */}
+        <div className="space-y-4">
+          <h3 className="text-xl font-semibold">Comments ({thread._count.comments})</h3>
+          <div className="bg-muted/30 p-8 rounded-lg text-center">
+            <p className="text-muted-foreground">Comments section coming soon...</p>
+          </div>
+        </div>
+
+        {/* Navigation Buttons */}
+        <div className="flex justify-center gap-4 pt-4 border-t">
+          <Button 
+            variant="outline" 
+            onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+          >
+            ↑ Back to Top
+          </Button>
+          <Button variant="outline" asChild>
+            <Link href="/">← Back to Feed</Link>
+          </Button>
+        </div>
+
+        {/* Reference Modal */}
+        {showReferenceModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+              <h3 className="text-lg font-semibold mb-4">Reply to this text?</h3>
+              <div className="bg-muted p-3 rounded mb-4">
+                <div className="text-xs text-muted-foreground mb-1">
+                  {selectedSource}:
+                </div>
+                <div className="text-sm">
+                  "{selectedText}"
+                </div>
+              </div>
+              <div className="flex gap-3">
+                <Button 
+                  onClick={() => {
+                    // Navigate to contribute page with reference
+                    window.location.href = `/contribute/${thread.id}?ref=${encodeURIComponent(selectedText)}&source=${selectedSource}`;
+                  }}
+                  className="flex-1"
+                >
+                  Reply to this
+                </Button>
+                <Button 
+                  variant="outline" 
+                  onClick={() => {
+                    setShowReferenceModal(false);
+                    setSelectedText("");
+                    setSelectedSource("");
+                  }}
+                >
+                  Cancel
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
     </main>
   );
 }

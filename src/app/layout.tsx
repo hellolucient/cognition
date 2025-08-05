@@ -31,7 +31,13 @@ export default function RootLayout({
           <div className="flex min-h-screen flex-col">
             <header className="border-b">
               <div className="container mx-auto flex h-16 items-center justify-between">
-                <div className="font-medium">cognition</div>
+                <div className="flex items-center gap-6">
+                  <a href="/" className="font-bold text-xl">cognition</a>
+                  <nav className="hidden md:flex items-center gap-4 text-sm">
+                    <a href="/submit" className="text-muted-foreground hover:text-foreground">Submit</a>
+                    <a href="/settings" className="text-muted-foreground hover:text-foreground">Settings</a>
+                  </nav>
+                </div>
                 <SignInButton />
               </div>
             </header>

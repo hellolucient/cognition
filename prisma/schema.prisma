@@ -23,17 +23,27 @@ model User {
 }
 
 model Thread {
-  id          String    @id @default(cuid())
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-  author      User      @relation(fields: [authorId], references: [id])
-  authorId    String
-  content     String
-  summary     String
-  source      String?
-  tags        String[]
-  comments    Comment[]
-  upvotes     Upvote[]
+  id               String    @id @default(cuid())
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+  author           User      @relation(fields: [authorId], references: [id])
+  authorId         String
+  content          String
+  summary          String
+  source           String?
+  tags             String[]
+  comments         Comment[]
+  upvotes          Upvote[]
+  
+  // Contribution chain support
+  parentThread     Thread?   @relation("ThreadContributions", fields: [parentThreadId], references: [id])
+  parentThreadId   String?
+  contributions    Thread[]  @relation("ThreadContributions")
+  isContribution   Boolean   @default(false)
+  
+  // Quote/Reference support
+  referencedText   String?   // The specific text being referenced
+  referencedSource String?   // "Human" or "Assistant" - who said the referenced text
 }
 
 model Comment {
