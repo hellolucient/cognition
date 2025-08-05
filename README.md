@@ -1,12 +1,12 @@
-# 🧠 Cognition
+# 🧠 Vanwinkle
 
 > **A collaborative platform for sharing, building upon, and evolving AI conversations**
 
-Cognition transforms private AI chats into a living, collaborative knowledge base where users can share their conversations with AI assistants, contribute new insights, and collectively build upon each other's discoveries.
+Vanwinkle transforms private AI chats into a living, collaborative knowledge base where users can share their conversations with AI assistants, contribute new insights, and collectively build upon each other's discoveries.
 
 ## 🎯 Vision
 
-Instead of AI conversations disappearing into private chat histories, Cognition creates a **social layer for AI interaction** where:
+Instead of AI conversations disappearing into private chat histories, Vanwinkle creates a **social layer for AI interaction** where:
 
 - **Knowledge compounds** through community contributions
 - **Conversations evolve** beyond their original scope  
@@ -15,8 +15,14 @@ Instead of AI conversations disappearing into private chat histories, Cognition 
 
 ## ✨ How It Works
 
-### 📝 **Share Your AI Conversations**
-1. **Paste any AI chat** (ChatGPT, Claude, etc.) into our submission form
+### 🚀 **One-Click ChatGPT Integration**
+1. **Drag our bookmarklet** to your browser's bookmark bar
+2. **Go to any ChatGPT conversation** (web or Mac app share links)
+3. **Click the bookmarklet** → Automatically extracts & copies your conversation
+4. **Cognition opens** with your chat ready to submit - just click "Paste from Clipboard"!
+
+### 📝 **Traditional Sharing (Any AI)**
+1. **Manually paste any AI chat** (ChatGPT, Claude, etc.) into our submission form
 2. **AI automatically generates** an engaging summary using our platform's API
 3. **Add tags and source labels** for discoverability
 4. **Publish to the community** for others to discover
@@ -38,9 +44,34 @@ Instead of AI conversations disappearing into private chat histories, Cognition 
 - **Take enhanced discussions** to your private AI sessions
 - **Build upon community insights** in your own projects
 
+## 🔖 **ChatGPT Bookmarklet Magic**
+
+Our intelligent bookmarklet makes sharing ChatGPT conversations effortless:
+
+### 🎯 **Perfect for Mac ChatGPT App Users:**
+1. **Create conversation** in ChatGPT Mac app
+2. **Click "Share"** → Copy the share URL  
+3. **Open URL in browser** → Click our bookmarklet
+4. **BOOM!** → Vanwinkle opens with your full conversation ready to submit
+
+### 🌐 **Works with Any ChatGPT Page:**
+- ✅ **Regular chat.openai.com conversations**
+- ✅ **ChatGPT share URLs** (chatgpt.com/share/...)
+- ✅ **Mac app share links** (via browser)
+- ✅ **Automatic content extraction** using proven selectors
+- ✅ **Beautiful formatting** with `🧑 You:` and `🤖 ChatGPT:` labels
+
+### 🔧 **How It Works:**
+- **Smart extraction** finds conversation messages regardless of ChatGPT's UI changes
+- **Clipboard integration** copies formatted content automatically  
+- **Auto-opens Vanwinkle** submit page for seamless workflow
+- **Graceful fallbacks** download file if clipboard fails
+- **Cross-browser compatible** works in Chrome, Safari, Firefox, etc.
+
 ## 🛠 Features
 
 ### Core Functionality
+- ✅ **Smart ChatGPT Bookmarklet** - One-click extraction from any ChatGPT conversation (including Mac app share links)
 - ✅ **Thread Feed** - Browse and discover AI conversations with filtering
 - ✅ **Smart Summaries & Titles** - AI-generated previews with configurable providers
 - ✅ **Contribution System** - Extend conversations with AI or manual input

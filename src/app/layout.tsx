@@ -16,7 +16,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Cognition - AI Conversation Platform",
+  title: "Vanwinkle - AI Conversation Platform",
   description: "Share and discuss interesting AI conversations",
 };
 
@@ -33,7 +33,9 @@ export default function RootLayout({
             <header className="border-b">
               <div className="container mx-auto flex h-16 items-center justify-between">
                 <div className="flex items-center gap-6">
-                  <a href="/" className="font-bold text-xl">cognition</a>
+                  <a href="/">
+                    <img src="/vanwinkle_logo.png" alt="Vanwinkle" className="h-8 w-auto" />
+                  </a>
                   <nav className="hidden md:flex items-center gap-4 text-sm">
                     <a href="/submit" className="text-muted-foreground hover:text-foreground">Submit</a>
                     <a href="/settings" className="text-muted-foreground hover:text-foreground">Settings</a>

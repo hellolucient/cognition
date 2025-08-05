@@ -56,12 +56,12 @@ export default function SubmitPage() {
     
     if (fromBookmarklet) {
       // Check sessionStorage for content from bookmarklet
-      const storedContent = sessionStorage.getItem('cognition_chat');
+      const storedContent = sessionStorage.getItem('vanwinkle_chat');
       console.log('Bookmarklet mode - sessionStorage content:', storedContent ? `Found ${storedContent.length} characters` : 'Not found');
       if (storedContent) {
         setChatContent(storedContent);
         // Clean up
-        sessionStorage.removeItem('cognition_chat');
+        sessionStorage.removeItem('vanwinkle_chat');
         window.history.replaceState({}, '', window.location.pathname);
         console.log('Content loaded from bookmarklet');
       } else {
