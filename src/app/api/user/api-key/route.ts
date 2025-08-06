@@ -10,14 +10,17 @@ const prisma = new PrismaClient();
 // Save or update API key
 export async function POST(request: NextRequest) {
   try {
-    const { apiKey, provider } = await request.json();
+    const { apiKey: rawApiKey, provider } = await request.json();
 
-    if (!apiKey || !provider) {
+    if (!rawApiKey || !provider) {
       return NextResponse.json(
         { error: 'API key and provider are required' },
         { status: 400 }
       );
     }
+
+    // Clean the API key - remove whitespace, line breaks, and invisible characters
+    const apiKey = rawApiKey.trim().replace(/[\r\n\t\s]/g, '');
 
     // Validate provider
     if (!['openai', 'anthropic', 'google'].includes(provider)) {
@@ -30,9 +33,12 @@ export async function POST(request: NextRequest) {
     // Validate API key format
     if (!validateApiKey(apiKey, provider as AIProvider)) {
       console.log(`API key validation failed for ${provider}:`, {
-        keyLength: apiKey.length,
-        keyPrefix: apiKey.substring(0, 10) + '...',
-        provider
+        rawKeyLength: rawApiKey.length,
+        cleanedKeyLength: apiKey.length,
+        rawKeyPrefix: rawApiKey.substring(0, 10) + '...',
+        cleanedKeyPrefix: apiKey.substring(0, 10) + '...',
+        provider,
+        containedWhitespace: rawApiKey !== apiKey
       });
       return NextResponse.json(
         { 
