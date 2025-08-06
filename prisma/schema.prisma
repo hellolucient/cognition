@@ -27,6 +27,7 @@ model User {
   usedInvites    InviteCode[] @relation("UsedInvites")
   threads        Thread[]
   upvotes        Upvote[]
+  pendingShares  PendingShare[]
   invitedBy      User?        @relation("UserInvites", fields: [invitedById], references: [id])
   invitees       User[]       @relation("UserInvites")
 }
@@ -98,5 +99,22 @@ model WaitlistEntry {
   notified  Boolean  @default(false)
 
   @@index([email])
+  @@index([createdAt])
+}
+
+model PendingShare {
+  id          String   @id @default(cuid())
+  url         String   // ChatGPT share URL
+  title       String?  // Optional title extracted from URL or user-provided
+  userId      String
+  status      String   @default("pending") // pending, completed, cancelled
+  createdAt   DateTime @default(now())
+  completedAt DateTime?
+  notes       String?  // Optional notes from user
+  
+  user        User     @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@index([status])
   @@index([createdAt])
 }

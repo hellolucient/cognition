@@ -37,7 +37,7 @@ export default function HomePage() {
   useEffect(() => {
     const button = document.getElementById('bookmarklet-button');
     if (button) {
-      const bookmarkletCode = `(function(){try{console.log('=== VANWINKLE BOOKMARKLET v2 DEBUG ===');console.log('URL:',window.location.href);console.log('Document ready state:',document.readyState);var messages=Array.from(document.querySelectorAll('main .min-h-\\\\[20px\\\\], main .prose')).map(function(el){return el.innerText;});console.log('Found messages:',messages.length);if(messages.length>0){console.log('First message preview:',messages[0].substring(0,100));}if(messages.length===0){alert('❌ No messages found.\\\\n\\\\nFound selectors: '+document.querySelectorAll('main .min-h-\\\\[20px\\\\], main .prose').length+'\\\\nTry a different ChatGPT page.');return;}var formatted=messages.map(function(text,i){return i%2===0?'🧑 You:\\\\n'+text:'🤖 ChatGPT:\\\\n'+text;}).join('\\\\n\\\\n---\\\\n\\\\n');console.log('Formatted length:',formatted.length);console.log('Clipboard available:',!!navigator.clipboard);console.log('writeText available:',!!(navigator.clipboard&&navigator.clipboard.writeText));setTimeout(function(){if(navigator.clipboard&&navigator.clipboard.writeText){console.log('🔄 Attempting clipboard write...');navigator.clipboard.writeText(formatted).then(function(){console.log('✅ SUCCESS: Clipboard write completed');console.log('Opening Vanwinkle...');var vanwinkleUrl=(window.location.hostname==='localhost'?'http://localhost:3002':'https://vanwinkle.vercel.app')+'/submit?from=bookmarklet';window.open(vanwinkleUrl,'_blank');alert('✅ SUCCESS!\\\\n\\\\nCopied '+formatted.length+' characters to clipboard.\\\\n\\\\nVanwinkle is opening - click \\"Paste from Clipboard\\"');}).catch(function(err){console.error('❌ CLIPBOARD FAILED:',err);console.log('Error name:',err.name);console.log('Error message:',err.message);alert('❌ CLIPBOARD FAILED\\\\n\\\\nError: '+err.message+'\\\\n\\\\nTry clicking the page first, then run bookmarklet again.');});}else{console.log('❌ No clipboard support');alert('❌ No clipboard support in this browser');}},500);}catch(e){console.error('BOOKMARKLET ERROR:',e);alert('❌ BOOKMARKLET ERROR\\\\n\\\\n'+e.message);}})();`;
+      const bookmarkletCode = `(function(){try{console.log('=== VANWINKLE BOOKMARKLET v2 DEBUG ===');console.log('URL:',window.location.href);console.log('Document ready state:',document.readyState);var messages=Array.from(document.querySelectorAll('main .min-h-\\\\[20px\\\\], main .prose')).map(function(el){return el.innerText;});console.log('Found messages:',messages.length);if(messages.length>0){console.log('First message preview:',messages[0].substring(0,100));}if(messages.length===0){alert('❌ No messages found.\\\\n\\\\nFound selectors: '+document.querySelectorAll('main .min-h-\\\\[20px\\\\], main .prose').length+'\\\\nTry a different ChatGPT page.');return;}var formatted=messages.map(function(text,i){return i%2===0?'🧑 You:\\\\n'+text:'🤖 ChatGPT:\\\\n'+text;}).join('\\\\n\\\\n---\\\\n\\\\n');console.log('Formatted length:',formatted.length);console.log('Clipboard available:',!!navigator.clipboard);console.log('writeText available:',!!(navigator.clipboard&&navigator.clipboard.writeText));setTimeout(function(){if(navigator.clipboard&&navigator.clipboard.writeText){console.log('🔄 Attempting clipboard write...');navigator.clipboard.writeText(formatted).then(function(){console.log('✅ SUCCESS: Clipboard write completed');console.log('Opening Vanwinkle...');window.open('https://vanwinkle.vercel.app/submit?from=bookmarklet','_blank');alert('✅ SUCCESS!\\\\n\\\\nCopied '+formatted.length+' characters to clipboard.\\\\n\\\\nVanwinkle is opening - click \\"Paste from Clipboard\\"');}).catch(function(err){console.error('❌ CLIPBOARD FAILED:',err);console.log('Error name:',err.name);console.log('Error message:',err.message);alert('❌ CLIPBOARD FAILED\\\\n\\\\nError: '+err.message+'\\\\n\\\\nTry clicking the page first, then run bookmarklet again.');});}else{console.log('❌ No clipboard support');alert('❌ No clipboard support in this browser');}},500);}catch(e){console.error('BOOKMARKLET ERROR:',e);alert('❌ BOOKMARKLET ERROR\\\\n\\\\n'+e.message);}})();`;
       
       // Create an actual anchor element and set its href
       const link = document.createElement('a');
@@ -56,6 +56,23 @@ export default function HomePage() {
   useEffect(() => {
     fetchThreads();
   }, []);
+
+  // Auto-scroll to threads section when redirected from successful post
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('posted') === 'true' && threads.length > 0) {
+      // Small delay to ensure content is rendered, then scroll to threads section
+      setTimeout(() => {
+        const threadsSection = document.querySelector('.threads-feed');
+        if (threadsSection) {
+          // Scroll to the threads section, not the very top of the page
+          threadsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+        // Clean up the URL parameter
+        window.history.replaceState({}, '', '/');
+      }, 800);
+    }
+  }, [threads]); // Trigger when threads load
 
   const fetchThreads = async () => {
     try {
@@ -112,6 +129,25 @@ export default function HomePage() {
               </Button>
             )}
           </div>
+          
+          {/* Mobile-First Save Chat Button */}
+          {user && (
+            <div className="bg-gradient-to-r from-green-50 to-blue-50 border border-green-200 rounded-lg p-4 md:hidden">
+              <div className="text-center space-y-3">
+                <div className="text-lg font-semibold text-green-800">
+                  📱 Using ChatGPT Mobile?
+                </div>
+                <p className="text-sm text-green-700">
+                  Save ChatGPT share links here → Process on desktop later
+                </p>
+                <Button asChild className="bg-green-600 hover:bg-green-700">
+                  <Link href="/save-for-later">
+                    🔗 Save Share Links
+                  </Link>
+                </Button>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Bookmarklet Installation Hero */}
@@ -213,9 +249,9 @@ export default function HomePage() {
             </Button>
           </div>
         ) : (
-          <div className="space-y-4">
-            {filteredThreads.map((thread) => (
-              <div key={thread.id} className="border rounded-lg p-6 hover:bg-muted/50 transition-colors">
+          <div className="space-y-4 threads-feed">
+            {filteredThreads.map((thread, index) => (
+              <div key={thread.id} className={`border rounded-lg p-6 hover:bg-muted/50 transition-colors thread-item ${index === 0 ? 'first-thread' : ''}`}>
                 <div className="space-y-3">
                   {/* Thread Header */}
                   <div className="flex items-start justify-between">

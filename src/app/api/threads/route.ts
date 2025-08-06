@@ -92,6 +92,72 @@ export async function POST(request: NextRequest) {
       }
     })
 
+    // Auto-detection: Try to match with pending shares
+    try {
+      // Look for pending shares by this user that might match this submission
+      const pendingShares = await prisma.pendingShare.findMany({
+        where: {
+          userId: user.id,
+          status: 'pending',
+        },
+        orderBy: {
+          createdAt: 'desc',
+        },
+        take: 10, // Check the 10 most recent pending shares
+      });
+
+      // Simple matching logic - if the thread title matches or is similar to a pending share title
+      // or if this submission came from bookmarklet (indicated by source containing 'ChatGPT')
+      const isFromBookmarklet = source?.toLowerCase().includes('chatgpt') || 
+                               content.includes('🧑 You:') || 
+                               content.includes('🤖 ChatGPT:');
+
+      if (isFromBookmarklet && pendingShares.length > 0) {
+        // Try to find the best match
+        let bestMatch = null;
+        let bestScore = 0;
+
+        for (const share of pendingShares) {
+          let score = 0;
+          
+          // Title similarity
+          if (share.title && title) {
+            const titleWords = title.toLowerCase().split(' ');
+            const shareWords = share.title.toLowerCase().split(' ');
+            const commonWords = titleWords.filter(word => shareWords.includes(word));
+            score += commonWords.length * 2;
+          }
+          
+          // Recency bonus (more recent = higher score)
+          const ageInHours = (Date.now() - new Date(share.createdAt).getTime()) / (1000 * 60 * 60);
+          if (ageInHours < 1) score += 10;
+          else if (ageInHours < 6) score += 5;
+          else if (ageInHours < 24) score += 2;
+          
+          if (score > bestScore) {
+            bestScore = score;
+            bestMatch = share;
+          }
+        }
+
+        // If we found a reasonable match (score > 2), mark it as completed
+        if (bestMatch && bestScore > 2) {
+          await prisma.pendingShare.update({
+            where: { id: bestMatch.id },
+            data: {
+              status: 'completed',
+              completedAt: new Date(),
+            },
+          });
+          
+          console.log(`Auto-matched thread ${thread.id} with pending share ${bestMatch.id} (score: ${bestScore})`);
+        }
+      }
+    } catch (autoDetectionError) {
+      // Don't fail the thread creation if auto-detection fails
+      console.error('Auto-detection error:', autoDetectionError);
+    }
+
     return NextResponse.json(thread)
 
   } catch (error: any) {

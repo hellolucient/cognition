@@ -55,8 +55,9 @@ export function decryptApiKey(encryptedApiKey: string): string {
 export function validateApiKey(apiKey: string, provider: AIProvider): boolean {
   switch (provider) {
     case 'openai':
-      // OpenAI keys start with 'sk-' and are typically 51 characters long
-      return /^sk-[a-zA-Z0-9]{48}$/.test(apiKey);
+      // OpenAI keys start with 'sk-' and can vary in length (old: ~48 chars, new: 60+ chars)
+      // Allow alphanumeric and some common symbols that might appear in keys
+      return /^sk-[a-zA-Z0-9_\-]{20,}$/.test(apiKey);
     
     case 'anthropic':
       // Anthropic keys start with 'sk-ant-' and are longer

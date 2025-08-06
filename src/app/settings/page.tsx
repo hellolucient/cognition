@@ -21,6 +21,16 @@ interface InviteCode {
   };
 }
 
+interface PendingShare {
+  id: string;
+  url: string;
+  title: string | null;
+  notes: string | null;
+  status: string;
+  createdAt: string;
+  completedAt: string | null;
+}
+
 export default function SettingsPage() {
   const { user } = useSupabase();
   const [inviteCodes, setInviteCodes] = useState<InviteCode[]>([]);
@@ -28,6 +38,11 @@ export default function SettingsPage() {
   const [generating, setGenerating] = useState(false);
   const [error, setError] = useState("");
   const [copiedStates, setCopiedStates] = useState<{[key: string]: boolean}>({});
+  
+  // Pending shares state
+  const [pendingShares, setPendingShares] = useState<PendingShare[]>([]);
+  const [pendingSharesLoading, setPendingSharesLoading] = useState(true);
+  const [pendingSharesFilter, setPendingSharesFilter] = useState<'pending' | 'completed' | 'all'>('pending');
   
   // API Key management
   const [apiKeyStatus, setApiKeyStatus] = useState({
@@ -45,8 +60,15 @@ export default function SettingsPage() {
     if (user) {
       fetchInviteCodes();
       checkApiKeyStatus();
+      fetchPendingShares();
     }
   }, [user]);
+
+  useEffect(() => {
+    if (user) {
+      fetchPendingShares();
+    }
+  }, [user, pendingSharesFilter]);
 
   const fetchInviteCodes = async () => {
     try {
@@ -112,6 +134,70 @@ export default function SettingsPage() {
     const tweetText = `Join me on @cognition_ai - where AI conversations become collaborative knowledge! 🧠✨\n\nUse my invite code: ${code}\n\n#AI #Collaboration #Cognition`;
     const tweetUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(tweetText)}`;
     window.open(tweetUrl, '_blank');
+  };
+
+  // Pending Shares Functions
+  const fetchPendingShares = async () => {
+    try {
+      setPendingSharesLoading(true);
+      const statusParam = pendingSharesFilter === 'all' ? '' : `?status=${pendingSharesFilter}`;
+      const response = await fetch(`/api/pending-shares${statusParam}`);
+      const data = await response.json();
+      
+      if (response.ok) {
+        setPendingShares(data.pendingShares);
+      } else {
+        console.error('Failed to fetch pending shares:', data.error);
+      }
+    } catch (error) {
+      console.error('Failed to fetch pending shares:', error);
+    } finally {
+      setPendingSharesLoading(false);
+    }
+  };
+
+  const openChatGPT = (url: string) => {
+    window.open(url, '_blank');
+  };
+
+  const markAsCompleted = async (shareId: string) => {
+    try {
+      const response = await fetch(`/api/pending-shares/${shareId}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ status: 'completed' }),
+      });
+
+      if (response.ok) {
+        await fetchPendingShares(); // Refresh the list
+      } else {
+        alert('Failed to mark as completed');
+      }
+    } catch (error) {
+      alert('Failed to mark as completed');
+    }
+  };
+
+  const deletePendingShare = async (shareId: string) => {
+    if (!confirm('Are you sure you want to delete this saved conversation?')) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/pending-shares/${shareId}`, {
+        method: 'DELETE',
+      });
+
+      if (response.ok) {
+        await fetchPendingShares(); // Refresh the list
+      } else {
+        alert('Failed to delete pending share');
+      }
+    } catch (error) {
+      alert('Failed to delete pending share');
+    }
   };
 
   // API Key Management Functions
@@ -394,6 +480,145 @@ export default function SettingsPage() {
               </div>
             </div>
           )}
+        </div>
+
+        {/* Saved Conversations (Pending Shares) */}
+        <div className="bg-muted/30 p-6 rounded-lg">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h2 className="text-xl font-semibold">📱 Saved Conversations</h2>
+              <p className="text-muted-foreground">
+                ChatGPT conversations saved from mobile for desktop processing
+              </p>
+            </div>
+            <Button asChild>
+              <Link href="/save-for-later">
+                💾 Save New Chat
+              </Link>
+            </Button>
+          </div>
+
+          {/* Filter Tabs */}
+          <div className="flex gap-2 mb-4">
+            <Button
+              variant={pendingSharesFilter === 'pending' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setPendingSharesFilter('pending')}
+            >
+              Pending ({pendingShares.filter(s => s.status === 'pending').length})
+            </Button>
+            <Button
+              variant={pendingSharesFilter === 'completed' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setPendingSharesFilter('completed')}
+            >
+              Completed ({pendingShares.filter(s => s.status === 'completed').length})
+            </Button>
+            <Button
+              variant={pendingSharesFilter === 'all' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setPendingSharesFilter('all')}
+            >
+              All ({pendingShares.length})
+            </Button>
+          </div>
+
+          {/* Pending Shares List */}
+          {pendingSharesLoading ? (
+            <div className="text-center py-8">Loading saved conversations...</div>
+          ) : pendingShares.length === 0 ? (
+            <div className="text-center py-8">
+              <p className="text-muted-foreground mb-4">
+                {pendingSharesFilter === 'pending' 
+                  ? "No pending conversations. Save some from your mobile device!" 
+                  : `No ${pendingSharesFilter} conversations found.`
+                }
+              </p>
+              <Button asChild>
+                <Link href="/save-for-later">
+                  💾 Save Your First Chat
+                </Link>
+              </Button>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {pendingShares.map((share) => (
+                <div key={share.id} className="border rounded-lg p-4">
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-2">
+                        <h3 className="font-medium">
+                          {share.title || 'Untitled ChatGPT Conversation'}
+                        </h3>
+                        <Badge 
+                          variant={share.status === 'pending' ? 'default' : 'secondary'}
+                        >
+                          {share.status}
+                        </Badge>
+                      </div>
+                      
+                      <div className="text-sm text-muted-foreground mb-2">
+                        Saved: {new Date(share.createdAt).toLocaleDateString()}
+                        {share.completedAt && (
+                          <span> • Completed: {new Date(share.completedAt).toLocaleDateString()}</span>
+                        )}
+                      </div>
+                      
+                      {share.notes && (
+                        <div className="text-sm text-gray-600 mb-2">
+                          📝 {share.notes}
+                        </div>
+                      )}
+                      
+                      <div className="text-xs text-muted-foreground font-mono break-all">
+                        {share.url}
+                      </div>
+                    </div>
+                    
+                    <div className="flex gap-2 ml-4">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => openChatGPT(share.url)}
+                      >
+                        🔗 Open ChatGPT
+                      </Button>
+                      
+                      {share.status === 'pending' && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => markAsCompleted(share.id)}
+                        >
+                          ✅ Mark Complete
+                        </Button>
+                      )}
+                      
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => deletePendingShare(share.id)}
+                        className="text-red-600 hover:text-red-700"
+                      >
+                        🗑️ Delete
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Instructions */}
+          <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+            <h3 className="font-medium text-blue-900 mb-2">💡 How to use:</h3>
+            <ol className="text-sm text-blue-800 space-y-1">
+              <li>1. Save ChatGPT conversations from your mobile device</li>
+              <li>2. Click "Open ChatGPT" to view the conversation on desktop</li>
+              <li>3. Use our bookmarklet to import the full conversation to Vanwinkle</li>
+              <li>4. Mark as completed when done</li>
+            </ol>
+          </div>
         </div>
 
         {/* Invite Codes */}

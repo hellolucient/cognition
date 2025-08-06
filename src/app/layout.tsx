@@ -3,7 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import SupabaseProvider from "@/components/providers/supabase-provider";
 import SignInButton from "@/components/auth/sign-in-button";
-import { AdminNavLink } from "@/components/admin/admin-nav-link";
+import { NavWithNotifications, MobileNavWithNotifications } from "@/components/navigation/nav-with-notifications";
 import Link from "next/link";
 
 const geistSans = Geist({
@@ -37,11 +37,8 @@ export default function RootLayout({
                   <Link href="/">
                     <img src="/vanwinkle_logo.png" alt="Vanwinkle" className="h-8 w-auto" />
                   </Link>
-                  <nav className="hidden md:flex items-center gap-4 text-sm">
-                    <a href="/submit" className="text-muted-foreground hover:text-foreground">Submit</a>
-                    <a href="/settings" className="text-muted-foreground hover:text-foreground">Settings</a>
-                    <AdminNavLink />
-                  </nav>
+                  <NavWithNotifications />
+                  <MobileNavWithNotifications />
                 </div>
                 <SignInButton />
               </div>

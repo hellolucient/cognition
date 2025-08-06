@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { useSupabase } from "@/components/providers/supabase-provider";
 import { WaitlistModal } from "@/components/auth/waitlist-modal";
 import { InviteSignupModal } from "@/components/auth/invite-signup-modal";
@@ -36,6 +37,7 @@ const POPULAR_TAGS = [
 
 export default function SubmitPage() {
   const { user } = useSupabase();
+  const router = useRouter();
   const [chatContent, setChatContent] = useState("");
   const [source, setSource] = useState("");
   const [customSource, setCustomSource] = useState("");
@@ -165,20 +167,16 @@ export default function SubmitPage() {
         throw new Error(data.error || 'Failed to create thread');
       }
       
-      alert("Post submitted successfully! Your conversation has been shared with the community.");
+      // Success! Reset loading state and redirect
+      setIsPosting(false);
       
-      // Reset form
-      setChatContent("");
-      setSource("");
-      setCustomSource("");
-      setTags("");
-      setTitle("");
-      setSummary("");
-      setStep("input");
+      // Force redirect using window.location as backup
+      setTimeout(() => {
+        window.location.href = '/?posted=true';
+      }, 100);
       
     } catch (error: any) {
       alert(`Error posting: ${error.message}`);
-    } finally {
       setIsPosting(false);
     }
   };
