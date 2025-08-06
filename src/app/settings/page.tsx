@@ -224,6 +224,15 @@ export default function SettingsPage() {
       return;
     }
 
+    // Debug logging for mobile
+    console.log('Settings page - Starting API key save:', {
+      provider: selectedProvider,
+      keyLength: apiKeyInput.length,
+      keyPrefix: apiKeyInput.substring(0, 10) + '...',
+      userAgent: navigator.userAgent,
+      timestamp: new Date().toISOString()
+    });
+
     setSavingApiKey(true);
     setApiKeyError('');
 
@@ -741,6 +750,36 @@ export default function SettingsPage() {
                   {inviteCodes.filter(c => !c.usedAt && (!c.expiresAt || new Date(c.expiresAt) > new Date())).length}
                 </div>
                 <div className="text-sm text-muted-foreground">Available</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Troubleshooting Section */}
+        <div className="space-y-4">
+          <h2 className="text-xl font-semibold">🔧 Troubleshooting</h2>
+          
+          <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+            <h3 className="font-medium text-yellow-900 mb-2">Having trouble saving API keys on mobile?</h3>
+            <div className="text-sm text-yellow-800 space-y-2">
+              <p><strong>Try this:</strong></p>
+              <ol className="list-decimal list-inside space-y-1">
+                <li>Go to <Link href="/debug/api-key" className="underline text-blue-600">/debug/api-key</Link></li>
+                <li>Test your API key there first</li>
+                <li>If it works there but not here, it's a mobile browser issue</li>
+              </ol>
+              
+              <p className="mt-3"><strong>Common fixes:</strong></p>
+              <ul className="list-disc list-inside space-y-1">
+                <li>Clear browser cache and cookies</li>
+                <li>Try in incognito/private mode</li>
+                <li>Check if you're signed in properly</li>
+                <li>Try a different mobile browser</li>
+              </ul>
+              
+              <p className="mt-3"><strong>Device info:</strong></p>
+              <div className="bg-white p-2 rounded text-xs font-mono">
+                {typeof navigator !== 'undefined' ? navigator.userAgent : 'Loading...'}
               </div>
             </div>
           </div>
