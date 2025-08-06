@@ -29,8 +29,16 @@ export async function POST(request: NextRequest) {
 
     // Validate API key format
     if (!validateApiKey(apiKey, provider as AIProvider)) {
+      console.log(`API key validation failed for ${provider}:`, {
+        keyLength: apiKey.length,
+        keyPrefix: apiKey.substring(0, 10) + '...',
+        provider
+      });
       return NextResponse.json(
-        { error: `Invalid ${provider} API key format` },
+        { 
+          error: `Invalid ${provider} API key format`,
+          details: `Key length: ${apiKey.length}, Expected format varies by provider`
+        },
         { status: 400 }
       );
     }
@@ -103,7 +111,11 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error('Error saving API key:', error);
     return NextResponse.json(
-      { error: 'Failed to save API key' },
+      { 
+        error: 'Failed to save API key',
+        details: error instanceof Error ? error.message : 'Unknown error',
+        provider: provider || 'unknown'
+      },
       { status: 500 }
     );
   }

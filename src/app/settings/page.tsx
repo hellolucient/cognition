@@ -251,10 +251,12 @@ export default function SettingsPage() {
         setApiKeyInput('');
         alert(`${getProviderDisplayName(selectedProvider)} API key saved successfully! You can now contribute to conversations with AI.`);
       } else {
+        console.error('API key save failed:', { status: response.status, data });
         setApiKeyError(data.error || 'Failed to save API key');
       }
     } catch (error) {
-      setApiKeyError('Failed to save API key');
+      console.error('API key save error:', error);
+      setApiKeyError(`Failed to save API key: ${error instanceof Error ? error.message : 'Unknown error'}`);
     } finally {
       setSavingApiKey(false);
     }
