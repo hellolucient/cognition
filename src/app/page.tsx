@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
 import { useState, useEffect } from "react";
 import { useSupabase } from "@/components/providers/supabase-provider";
+import { BookmarkletModal } from "@/components/bookmarklet/bookmarklet-modal";
 
 interface Thread {
   id: string;
@@ -29,29 +30,10 @@ export default function HomePage() {
   const [threads, setThreads] = useState<Thread[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedTag, setSelectedTag] = useState<string | null>(null);
+  const [showBookmarkletModal, setShowBookmarkletModal] = useState(false);
   const { user } = useSupabase();
 
-  const [bookmarkletUrl, setBookmarkletUrl] = useState('');
 
-  // Set up bookmarklet using DOM manipulation to bypass React security
-  useEffect(() => {
-    const button = document.getElementById('bookmarklet-button');
-    if (button) {
-      const bookmarkletCode = `(function(){try{console.log('=== VANWINKLE BOOKMARKLET v2 DEBUG ===');console.log('URL:',window.location.href);console.log('Document ready state:',document.readyState);var messages=Array.from(document.querySelectorAll('main .min-h-\\\\[20px\\\\], main .prose')).map(function(el){return el.innerText;});console.log('Found messages:',messages.length);if(messages.length>0){console.log('First message preview:',messages[0].substring(0,100));}if(messages.length===0){alert('❌ No messages found.\\\\n\\\\nFound selectors: '+document.querySelectorAll('main .min-h-\\\\[20px\\\\], main .prose').length+'\\\\nTry a different ChatGPT page.');return;}var formatted=messages.map(function(text,i){return i%2===0?'🧑 You:\\\\n'+text:'🤖 ChatGPT:\\\\n'+text;}).join('\\\\n\\\\n---\\\\n\\\\n');console.log('Formatted length:',formatted.length);console.log('Clipboard available:',!!navigator.clipboard);console.log('writeText available:',!!(navigator.clipboard&&navigator.clipboard.writeText));setTimeout(function(){if(navigator.clipboard&&navigator.clipboard.writeText){console.log('🔄 Attempting clipboard write...');navigator.clipboard.writeText(formatted).then(function(){console.log('✅ SUCCESS: Clipboard write completed');console.log('Opening Vanwinkle...');window.open('https://vanwinkle.vercel.app/submit?from=bookmarklet','_blank');alert('✅ SUCCESS!\\\\n\\\\nCopied '+formatted.length+' characters to clipboard.\\\\n\\\\nVanwinkle is opening - click \\"Paste from Clipboard\\"');}).catch(function(err){console.error('❌ CLIPBOARD FAILED:',err);console.log('Error name:',err.name);console.log('Error message:',err.message);alert('❌ CLIPBOARD FAILED\\\\n\\\\nError: '+err.message+'\\\\n\\\\nTry clicking the page first, then run bookmarklet again.');});}else{console.log('❌ No clipboard support');alert('❌ No clipboard support in this browser');}},500);}catch(e){console.error('BOOKMARKLET ERROR:',e);alert('❌ BOOKMARKLET ERROR\\\\n\\\\n'+e.message);}})();`;
-      
-      // Create an actual anchor element and set its href
-      const link = document.createElement('a');
-      link.href = `javascript:${bookmarkletCode}`;
-      link.innerHTML = button.innerHTML;
-      link.className = button.className;
-      link.draggable = true;
-      
-      // Replace the div with the anchor
-      button.parentNode?.replaceChild(link, button);
-      
-      setBookmarkletUrl(`javascript:${bookmarkletCode}`);
-    }
-  }, []);
 
   useEffect(() => {
     fetchThreads();
@@ -119,71 +101,24 @@ export default function HomePage() {
           <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
             Share and discover interesting conversations with AI. Submit your best ChatGPT, Claude, and other AI interactions for the community to explore.
           </p>
-          <div className="flex gap-4 justify-center">
-            <Button asChild>
+          <div className="flex flex-col sm:flex-row gap-3 justify-center items-center">
+            <Button asChild size="lg">
               <Link href="/submit">Submit Conversation</Link>
+            </Button>
+            <Button 
+              onClick={() => setShowBookmarkletModal(true)} 
+              variant="outline" 
+              size="lg"
+              className="flex items-center gap-2"
+            >
+              🚀 Install Bookmarklet
             </Button>
           </div>
           
 
         </div>
 
-        {/* Bookmarklet Installation Hero */}
-        <div className="bg-gradient-to-r from-blue-50 to-purple-50 border border-blue-200 rounded-lg p-6 mb-8">
-          <div className="text-center space-y-4">
-            <div className="flex items-center justify-center gap-2 mb-2">
-              <span className="text-2xl">🚀</span>
-              <h2 className="text-2xl font-bold text-blue-900">Get Started in 10 Seconds</h2>
-            </div>
-            
-            <p className="text-blue-800 max-w-2xl mx-auto">
-              Install our bookmarklet to instantly share your ChatGPT, Claude, or other AI conversations with the community.
-            </p>
-            
-            <div className="bg-white/80 backdrop-blur-sm border border-blue-300 rounded-lg p-4 max-w-3xl mx-auto">
-              <div className="space-y-3">
-                <div className="text-sm font-medium text-blue-900 mb-2">
-                  Step 1: Drag this button to your bookmarks bar ↓
-                </div>
-                
-                <div className="flex justify-center">
-                  <div
-                    id="bookmarklet-button"
-                    className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-medium px-6 py-3 rounded-lg transition-colors cursor-grab active:cursor-grabbing select-none"
-                    draggable="true"
-                  >
-                    📋 Save to Vanwinkle
-                  </div>
-                </div>
-                
-                <div className="text-xs text-blue-700 space-y-1">
-                  <p><strong>Step 2:</strong> Go to a ChatGPT conversation or share page</p>
-                  <p><strong>Step 3:</strong> Click anywhere on the page first, then click the bookmark</p>
-                  <p className="text-green-600"><strong>✨ Auto-copies to clipboard + opens Vanwinkle</strong></p>
-                  <p className="text-blue-600"><strong>💡 Mac app users:</strong> Share → Open in browser → Use bookmarklet</p>
-                  <p className="text-orange-600"><strong>📁 Fallback:</strong> Downloads file if clipboard fails</p>
-                </div>
-              </div>
-            </div>
-            
-            <div className="text-xs text-blue-600 space-y-2">
-              <p>💡 <strong>Can&apos;t drag?</strong> Right-click the button above → &quot;Bookmark this link&quot; or &quot;Add to bookmarks&quot;</p>
-              <details className="cursor-pointer">
-                <summary className="font-medium">🔧 Alternative: Manual Setup</summary>
-                <div className="mt-2 p-2 bg-gray-50 rounded text-xs">
-                  <p className="mb-2">1. Copy this code:</p>
-                  <textarea 
-                    readOnly 
-                    value={bookmarkletUrl}
-                    className="w-full h-20 text-xs font-mono p-1 border rounded"
-                    onClick={(e) => e.currentTarget.select()}
-                  />
-                  <p className="mt-2">2. Create a new bookmark and paste as the URL</p>
-                </div>
-              </details>
-            </div>
-          </div>
-        </div>
+
 
         {/* Tag Filter */}
         {allTags.length > 0 && (
@@ -298,6 +233,12 @@ export default function HomePage() {
           </div>
         )}
       </div>
+
+      {/* Bookmarklet Modal */}
+      <BookmarkletModal 
+        isOpen={showBookmarkletModal} 
+        onClose={() => setShowBookmarkletModal(false)} 
+      />
     </main>
   );
 }
