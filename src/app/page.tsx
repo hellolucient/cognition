@@ -23,6 +23,7 @@ interface Thread {
   _count: {
     comments: number;
     upvotes: number;
+    downvotes: number;
   };
 }
 
@@ -73,10 +74,15 @@ export default function HomePage() {
   // Get all unique tags from threads
   const allTags = Array.from(new Set(threads.flatMap(thread => thread.tags))).slice(0, 10);
 
-  // Filter threads by selected tag
-  const filteredThreads = selectedTag 
+  // Filter threads by selected tag and sort by net upvotes (upvotes - downvotes)
+  const filteredThreads = (selectedTag 
     ? threads.filter(thread => thread.tags.includes(selectedTag))
-    : threads;
+    : threads)
+    .sort((a, b) => {
+      const aNetVotes = a._count.upvotes - a._count.downvotes;
+      const bNetVotes = b._count.upvotes - b._count.downvotes;
+      return bNetVotes - aNetVotes; // Highest net votes first
+    });
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);

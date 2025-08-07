@@ -25,6 +25,7 @@ interface Thread {
   _count: {
     comments: number;
     upvotes: number;
+    downvotes: number;
   };
 }
 
@@ -33,53 +34,62 @@ export default function ThreadPage({ params }: { params: Promise<{ id: string }>
   const [thread, setThread] = useState<Thread | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [upvoteLoading, setUpvoteLoading] = useState(false);
+  const [voteLoading, setVoteLoading] = useState(false);
   const [hasUpvoted, setHasUpvoted] = useState(false);
+  const [hasDownvoted, setHasDownvoted] = useState(false);
   const [upvoteCount, setUpvoteCount] = useState(0);
+  const [downvoteCount, setDownvoteCount] = useState(0);
   const { user } = useSupabase();
 
   useEffect(() => {
     fetchThread();
-    fetchUpvoteStatus();
+    fetchVoteStatus();
   }, [resolvedParams.id]);
 
-  const fetchUpvoteStatus = async () => {
+  const fetchVoteStatus = async () => {
     try {
-      const response = await fetch(`/api/threads/${resolvedParams.id}/upvote`);
+      const response = await fetch(`/api/threads/${resolvedParams.id}/vote`);
       if (response.ok) {
         const data = await response.json();
         setUpvoteCount(data.upvoteCount);
+        setDownvoteCount(data.downvoteCount);
         setHasUpvoted(data.hasUpvoted);
+        setHasDownvoted(data.hasDownvoted);
       }
     } catch (error) {
-      console.error('Error fetching upvote status:', error);
+      console.error('Error fetching vote status:', error);
     }
   };
 
-  const handleUpvote = async () => {
+  const handleVote = async (voteType: 'upvote' | 'downvote') => {
     if (!user) {
-      // Could show a sign-in modal here
-      alert('Please sign in to upvote');
+      alert('Please sign in to vote');
       return;
     }
 
-    setUpvoteLoading(true);
+    setVoteLoading(true);
     try {
-      const response = await fetch(`/api/threads/${resolvedParams.id}/upvote`, {
+      const response = await fetch(`/api/threads/${resolvedParams.id}/vote`, {
         method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ voteType }),
       });
 
       if (response.ok) {
         const data = await response.json();
-        setHasUpvoted(data.upvoted);
         setUpvoteCount(data.upvoteCount);
+        setDownvoteCount(data.downvoteCount);
+        setHasUpvoted(data.hasUpvoted);
+        setHasDownvoted(data.hasDownvoted);
       } else {
-        console.error('Failed to upvote');
+        console.error('Failed to vote');
       }
     } catch (error) {
-      console.error('Error upvoting:', error);
+      console.error('Error voting:', error);
     } finally {
-      setUpvoteLoading(false);
+      setVoteLoading(false);
     }
   };
 
@@ -428,10 +438,19 @@ export default function ThreadPage({ params }: { params: Promise<{ id: string }>
           </Button>
           <Button 
             variant={hasUpvoted ? "default" : "outline"}
-            onClick={handleUpvote}
-            disabled={upvoteLoading}
+            onClick={() => handleVote('upvote')}
+            disabled={voteLoading}
+            title={hasUpvoted ? "Click to remove your upvote" : "Click to upvote this conversation"}
           >
-            {hasUpvoted ? "👍" : "👍"} {hasUpvoted ? "Upvoted" : "Upvote"} ({upvoteCount})
+            👍 {hasUpvoted ? "Upvoted" : "Upvote"} ({upvoteCount})
+          </Button>
+          <Button 
+            variant={hasDownvoted ? "destructive" : "outline"}
+            onClick={() => handleVote('downvote')}
+            disabled={voteLoading}
+            title={hasDownvoted ? "Click to remove your downvote" : "Click to downvote this conversation"}
+          >
+            👎 {hasDownvoted ? "Downvoted" : "Downvote"} ({downvoteCount})
           </Button>
         </div>
 

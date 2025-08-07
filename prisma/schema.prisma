@@ -27,6 +27,7 @@ model User {
   usedInvites    InviteCode[] @relation("UsedInvites")
   threads        Thread[]
   upvotes        Upvote[]
+  downvotes      Downvote[]
   pendingShares  PendingShare[]
   invitedBy      User?        @relation("UserInvites", fields: [invitedById], references: [id])
   invitees       User[]       @relation("UserInvites")
@@ -51,6 +52,7 @@ model Thread {
   parentThread     Thread?   @relation("ThreadContributions", fields: [parentThreadId], references: [id])
   contributions    Thread[]  @relation("ThreadContributions")
   upvotes          Upvote[]
+  downvotes        Downvote[]
 }
 
 model Comment {
@@ -65,6 +67,17 @@ model Comment {
 }
 
 model Upvote {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  userId    String
+  threadId  String
+  thread    Thread   @relation(fields: [threadId], references: [id])
+  user      User     @relation(fields: [userId], references: [id])
+
+  @@unique([userId, threadId])
+}
+
+model Downvote {
   id        String   @id @default(cuid())
   createdAt DateTime @default(now())
   userId    String
