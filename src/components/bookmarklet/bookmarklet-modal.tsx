@@ -34,6 +34,8 @@ export function BookmarkletModal({ isOpen, onClose }: BookmarkletModalProps) {
           link.className = button.className;
           link.draggable = true;
           link.setAttribute('data-converted', 'true');
+          // Add favicon hint by referencing our domain
+          link.setAttribute('data-favicon', 'https://vanwinkle.vercel.app/favicon.ico');
           
           // Replace the div with the anchor
           if (button.parentNode) {
@@ -73,8 +75,9 @@ export function BookmarkletModal({ isOpen, onClose }: BookmarkletModalProps) {
                 id="bookmarklet-button-modal"
                 className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-6 rounded-lg cursor-grab active:cursor-grabbing select-none transition-colors duration-200 shadow-lg hover:shadow-xl"
                 draggable={true}
+                title="Drag to bookmarks bar - vanwinkle.vercel.app"
               >
-                🧠 Save to vanwinkle
+                Save to vanwinkle
               </div>
               
               <div className="text-sm text-blue-700 space-y-2 mt-4">
@@ -101,7 +104,7 @@ export function BookmarkletModal({ isOpen, onClose }: BookmarkletModalProps) {
               </summary>
               <div className="mt-2 p-3 bg-yellow-100 rounded border">
                 <p className="mb-2">1. Right-click your bookmarks bar → "Add page" or "New bookmark"</p>
-                <p className="mb-2">2. Name: <code className="bg-yellow-200 px-1 rounded">🧠 Save to vanwinkle</code></p>
+                <p className="mb-2">2. Name: <code className="bg-yellow-200 px-1 rounded">Save to vanwinkle</code></p>
                 <p className="mb-2">3. URL: Copy this entire code:</p>
                 <textarea 
                   className="w-full h-20 text-xs bg-white border border-yellow-300 rounded p-2 font-mono"
