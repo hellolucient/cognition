@@ -1,8 +1,118 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { PrismaClient } from '@prisma/client'
 import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
-import prisma from '@/lib/prisma';
 
+const prisma = new PrismaClient({
+  datasources: {
+    db: {
+      url: process.env.DATABASE_URL,
+    },
+  },
+  // Add connection resilience for regional connectivity issues
+  log: ['error'],
+})
+
+export async function POST(request: NextRequest) {
+  try {
+    const { content, source, tags, title, summary } = await request.json()
+
+    // Get the authenticated user
+    const cookieStore = await cookies()
+    const supabase = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        cookies: {
+          get(name: string) {
+            return cookieStore.get(name)?.value
+          },
+          set(name: string, value: string, options: any) {
+            cookieStore.set({ name, value, ...options })
+          },
+          remove(name: string, options: any) {
+            cookieStore.set({ name, value: '', ...options })
+          },
+        },
+      }
+    )
+
+    const { data: { user } } = await supabase.auth.getUser()
+
+    if (!user) {
+      return NextResponse.json(
+        { error: 'Authentication required' },
+        { status: 401 }
+      )
+    }
+
+    // Validation
+    if (!content || !summary) {
+      return NextResponse.json(
+        { error: 'Content and summary are required' },
+        { status: 400 }
+      )
+    }
+
+    // Check if user exists in our database, create if not
+    let dbUser = await prisma.user.findUnique({
+      where: { id: user.id }
+    })
+
+    if (!dbUser) {
+      dbUser = await prisma.user.create({
+        data: {
+          id: user.id,
+          email: user.email,
+          name: user.user_metadata?.name || user.email?.split('@')[0] || 'Anonymous',
+          avatarUrl: user.user_metadata?.avatar_url,
+        }
+      })
+    }
+
+    // Parse tags
+    const tagArray = tags ? tags.split(',').map((tag: string) => tag.trim()).filter(Boolean) : []
+
+    // Create the thread
+    const thread = await prisma.thread.create({
+      data: {
+        content,
+        title: title || null,
+        summary,
+        source: source || null,
+        tags: tagArray,
+        authorId: user.id,
+      },
+      include: {
+        author: {
+          select: {
+            id: true,
+            name: true,
+            avatarUrl: true,
+          }
+        },
+        _count: {
+          select: {
+            comments: true,
+            upvotes: true,
+          }
+        }
+      }
+    })
+
+    // Auto-detection: Try to match with pending shares
+    try {
+      // Look for pending shares by this user that might match this submission
+      const pendingShares = await prisma.pendingShare.findMany({
+        where: {
+          userId: user.id,
+          status: 'pending',
+        },
+        orderBy: {
+          createdAt: 'desc',
+        },
+        take: 10, // Check the 10 most recent pending shares
+      });
 
       // Simple matching logic - if the thread title matches or is similar to a pending share title
       // or if this submission came from bookmarklet (indicated by source containing 'ChatGPT')

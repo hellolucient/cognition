@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import prisma from '@/lib/prisma';
+import { PrismaClient } from '@prisma/client'
 
 export async function GET() {
   try {
@@ -14,3 +14,45 @@ export async function GET() {
     }
 
     // Test database connection
+    const prisma = new PrismaClient({
+      datasources: {
+        db: {
+          url: process.env.DATABASE_URL,
+        },
+      },
+      log: ['error'],
+    })
+
+    try {
+      // Simple database test
+      await prisma.$queryRaw`SELECT 1 as test`
+      
+      return NextResponse.json({
+        status: 'ok',
+        timestamp: new Date().toISOString(),
+        environment: envCheck,
+        database: 'connected',
+        message: 'All systems operational'
+      })
+    } catch (dbError: any) {
+      return NextResponse.json({
+        status: 'database_error',
+        timestamp: new Date().toISOString(),
+        environment: envCheck,
+        database: 'failed',
+        error: dbError.message,
+        message: 'Database connection failed'
+      }, { status: 500 })
+    } finally {
+      await prisma.$disconnect()
+    }
+
+  } catch (error: any) {
+    return NextResponse.json({
+      status: 'error',
+      timestamp: new Date().toISOString(),
+      error: error.message,
+      message: 'System check failed'
+    }, { status: 500 })
+  }
+}

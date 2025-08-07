@@ -3,7 +3,6 @@ import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 import prisma from '@/lib/prisma';
 
-
 export async function GET(request: NextRequest) {
   try {
     // Get the authenticated user

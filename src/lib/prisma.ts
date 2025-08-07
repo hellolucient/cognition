@@ -12,10 +12,18 @@ const prisma = globalThis.prisma ?? new PrismaClient({
     },
   },
   log: ['error'],
+  // Disable prepared statements to avoid conflicts in serverless
+  // This is a known issue with Prisma in Vercel
+  engineType: 'library' as any,
 });
 
 if (process.env.NODE_ENV !== 'production') {
   globalThis.prisma = prisma;
 }
+
+// Ensure connection is properly closed on process exit
+process.on('beforeExit', async () => {
+  await prisma.$disconnect();
+});
 
 export default prisma;
