@@ -30,12 +30,10 @@ export function BookmarkletModal({ isOpen, onClose }: BookmarkletModalProps) {
           // Create an actual anchor element and set its href
           const link = document.createElement('a');
           link.href = `javascript:${bookmarkletCode}`;
-          link.innerHTML = button.innerHTML;
+          link.innerHTML = '💬 ' + button.innerHTML; // Add speech balloon for conversations
           link.className = button.className;
           link.draggable = true;
           link.setAttribute('data-converted', 'true');
-          // Add favicon hint by referencing our domain
-          link.setAttribute('data-favicon', 'https://vanwinkle.vercel.app/favicon.ico');
           
           // Replace the div with the anchor
           if (button.parentNode) {
