@@ -85,6 +85,20 @@ export function EmailSignInModal({ isOpen, onClose }: EmailSignInModalProps) {
       if (error) {
         setSignUpError(error.message || 'Failed to create account')
       } else {
+        // Try to create user in database
+        try {
+          const createUserResponse = await fetch('/api/auth/create-user', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+          })
+          
+          if (!createUserResponse.ok) {
+            console.warn('Failed to create user in database, but auth signup succeeded')
+          }
+        } catch (createUserError) {
+          console.warn('Error creating user in database:', createUserError)
+        }
+        
         setSignUpSuccess('Account created! Please check your email for verification.')
         // Don't close modal immediately - let user see success message
       }
