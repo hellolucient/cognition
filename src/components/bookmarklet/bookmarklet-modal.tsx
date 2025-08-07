@@ -25,7 +25,7 @@ export function BookmarkletModal({ isOpen, onClose }: BookmarkletModalProps) {
       const timer = setTimeout(() => {
         const button = document.getElementById('bookmarklet-button-modal');
         if (button && !button.getAttribute('data-converted')) {
-          const bookmarkletCode = `(function(){try{console.log('=== VANWINKLE BOOKMARKLET v2 DEBUG ===');console.log('URL:',window.location.href);console.log('Document ready state:',document.readyState);var messages=Array.from(document.querySelectorAll('main .min-h-\\\\[20px\\\\], main .prose')).map(function(el){return el.innerText;});console.log('Found messages:',messages.length);if(messages.length>0){console.log('First message preview:',messages[0].substring(0,100));}if(messages.length===0){alert('❌ No messages found.\\\\n\\\\nFound selectors: '+document.querySelectorAll('main .min-h-\\\\[20px\\\\], main .prose').length+'\\\\nTry a different ChatGPT page.');return;}var formatted=messages.map(function(text,i){return i%2===0?'🧑 You:\\\\n'+text:'🤖 ChatGPT:\\\\n'+text;}).join('\\\\n\\\\n---\\\\n\\\\n');console.log('Formatted length:',formatted.length);console.log('Clipboard available:',!!navigator.clipboard);console.log('writeText available:',!!(navigator.clipboard&&navigator.clipboard.writeText));setTimeout(function(){if(navigator.clipboard&&navigator.clipboard.writeText){console.log('🔄 Attempting clipboard write...');navigator.clipboard.writeText(formatted).then(function(){console.log('✅ SUCCESS: Clipboard write completed');console.log('Opening Vanwinkle...');window.open('https://vanwinkle.vercel.app/submit?from=bookmarklet','_blank');alert('✅ SUCCESS!\\\\n\\\\nCopied '+formatted.length+' characters to clipboard.\\\\n\\\\nVanwinkle is opening - click \\"Paste from Clipboard\\"');}).catch(function(err){console.error('❌ CLIPBOARD FAILED:',err);console.log('Error name:',err.name);console.log('Error message:',err.message);alert('❌ CLIPBOARD FAILED\\\\n\\\\nError: '+err.message+'\\\\n\\\\nTry clicking the page first, then run bookmarklet again.');});}else{console.log('❌ No clipboard support');alert('❌ No clipboard support in this browser');}},500);}catch(e){console.error('BOOKMARKLET ERROR:',e);alert('❌ BOOKMARKLET ERROR\\\\n\\\\n'+e.message);}})();`;
+          const bookmarkletCode = `(function(){try{console.log('=== vanwinkle BOOKMARKLET v2 DEBUG ===');console.log('URL:',window.location.href);console.log('Document ready state:',document.readyState);var messages=Array.from(document.querySelectorAll('main .min-h-\\\\[20px\\\\], main .prose')).map(function(el){return el.innerText;});console.log('Found messages:',messages.length);if(messages.length>0){console.log('First message preview:',messages[0].substring(0,100));}if(messages.length===0){alert('❌ No messages found.\\\\n\\\\nFound selectors: '+document.querySelectorAll('main .min-h-\\\\[20px\\\\], main .prose').length+'\\\\nTry a different ChatGPT page.');return;}var formatted=messages.map(function(text,i){return i%2===0?'🧑 You:\\\\n'+text:'🤖 ChatGPT:\\\\n'+text;}).join('\\\\n\\\\n---\\\\n\\\\n');console.log('Formatted length:',formatted.length);console.log('Clipboard available:',!!navigator.clipboard);console.log('writeText available:',!!(navigator.clipboard&&navigator.clipboard.writeText));setTimeout(function(){if(navigator.clipboard&&navigator.clipboard.writeText){console.log('🔄 Attempting clipboard write...');navigator.clipboard.writeText(formatted).then(function(){console.log('✅ SUCCESS: Clipboard write completed');console.log('Opening vanwinkle...');window.open('https://vanwinkle.vercel.app/submit?from=bookmarklet','_blank');alert('✅ SUCCESS!\\\\n\\\\nCopied '+formatted.length+' characters to clipboard.\\\\n\\\\nvanwinkle is opening - click \\"Paste from Clipboard\\"');}).catch(function(err){console.error('❌ CLIPBOARD FAILED:',err);console.log('Error name:',err.name);console.log('Error message:',err.message);alert('❌ CLIPBOARD FAILED\\\\n\\\\nError: '+err.message+'\\\\n\\\\nTry clicking the page first, then run bookmarklet again.');});}else{console.log('❌ No clipboard support');alert('❌ No clipboard support in this browser');}},500);}catch(e){console.error('BOOKMARKLET ERROR:',e);alert('❌ BOOKMARKLET ERROR\\\\n\\\\n'+e.message);}})();`;
           
           // Create an actual anchor element and set its href
           const link = document.createElement('a');
@@ -54,7 +54,7 @@ export function BookmarkletModal({ isOpen, onClose }: BookmarkletModalProps) {
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-2xl">
             <span className="text-2xl">🚀</span>
-            Install Vanwinkle Bookmarklet
+            Install vanwinkle Bookmarklet
           </DialogTitle>
           <DialogDescription>
             Get started in 10 seconds - instantly share your ChatGPT, Claude, or other AI conversations with the community.
@@ -71,17 +71,18 @@ export function BookmarkletModal({ isOpen, onClose }: BookmarkletModalProps) {
               
               <div 
                 id="bookmarklet-button-modal"
-                className="inline-block bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-6 rounded-lg cursor-grab active:cursor-grabbing select-none transition-colors duration-200 shadow-lg hover:shadow-xl"
+                className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-6 rounded-lg cursor-grab active:cursor-grabbing select-none transition-colors duration-200 shadow-lg hover:shadow-xl"
                 draggable={true}
               >
-                📚 Save to Vanwinkle
+                <img src="/vanwinkle_logo.png" alt="vanwinkle" className="h-5 w-auto filter brightness-0 invert" />
+                Save to vanwinkle
               </div>
               
               <div className="text-sm text-blue-700 space-y-2 mt-4">
                 <p><strong>Step 2:</strong> Go to a ChatGPT conversation or share page</p>
                 <p><strong>Step 3:</strong> Click anywhere on the page first, then click the bookmark</p>
                 <div className="bg-blue-100 p-3 rounded border border-blue-300 mt-3">
-                  <p className="text-green-700">✅ <strong>Auto-copies to clipboard + opens Vanwinkle</strong></p>
+                  <p className="text-green-700">✅ <strong>Auto-copies to clipboard + opens vanwinkle</strong></p>
                   <p className="text-blue-600">💡 <strong>Mac app users:</strong> Share → Open in browser → Use bookmarklet</p>
                   <p className="text-red-600">⚠️ <strong>Fallback:</strong> Downloads file if clipboard fails</p>
                 </div>
@@ -101,7 +102,7 @@ export function BookmarkletModal({ isOpen, onClose }: BookmarkletModalProps) {
               </summary>
               <div className="mt-2 p-3 bg-yellow-100 rounded border">
                 <p className="mb-2">1. Right-click your bookmarks bar → "Add page" or "New bookmark"</p>
-                <p className="mb-2">2. Name: <code className="bg-yellow-200 px-1 rounded">Save to Vanwinkle</code></p>
+                <p className="mb-2">2. Name: <code className="bg-yellow-200 px-1 rounded">Save to vanwinkle</code></p>
                 <p className="mb-2">3. URL: Copy this entire code:</p>
                 <textarea 
                   className="w-full h-20 text-xs bg-white border border-yellow-300 rounded p-2 font-mono"

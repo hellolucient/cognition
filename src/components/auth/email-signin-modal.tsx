@@ -141,7 +141,7 @@ export function EmailSignInModal({ isOpen, onClose }: EmailSignInModalProps) {
     <Dialog open={isOpen} onOpenChange={handleClose}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Sign In to Vanwinkle</DialogTitle>
+          <DialogTitle>Sign In to vanwinkle</DialogTitle>
         </DialogHeader>
         
         <Tabs defaultValue="signin" className="w-full">

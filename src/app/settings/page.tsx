@@ -651,7 +651,7 @@ export default function SettingsPage() {
             <ol className="text-sm text-blue-800 space-y-1">
               <li>1. Save ChatGPT conversations from your mobile device</li>
               <li>2. Click "Open ChatGPT" to view the conversation on desktop</li>
-              <li>3. Use our bookmarklet to import the full conversation to Vanwinkle</li>
+              <li>3. Use our bookmarklet to import the full conversation to vanwinkle</li>
               <li>4. Mark as completed when done</li>
             </ol>
           </div>

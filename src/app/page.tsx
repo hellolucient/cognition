@@ -96,7 +96,7 @@ export default function HomePage() {
         {/* Header */}
         <div className="text-center space-y-4">
           <div className="flex justify-center">
-            <img src="/vanwinkle_logo.png" alt="Vanwinkle" className="h-16 w-auto" />
+            <img src="/vanwinkle_logo.png" alt="vanwinkle" className="h-16 w-auto" />
           </div>
           <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
             Share and discover interesting conversations with AI. Submit your best ChatGPT, Claude, and other AI interactions for the community to explore.
