@@ -130,24 +130,7 @@ export default function HomePage() {
             )}
           </div>
           
-          {/* Mobile-First Save Chat Button */}
-          {user && (
-            <div className="bg-gradient-to-r from-green-50 to-blue-50 border border-green-200 rounded-lg p-4 md:hidden">
-              <div className="text-center space-y-3">
-                <div className="text-lg font-semibold text-green-800">
-                  📱 Using ChatGPT Mobile?
-                </div>
-                <p className="text-sm text-green-700">
-                  Save ChatGPT share links here → Process on desktop later
-                </p>
-                <Button asChild className="bg-green-600 hover:bg-green-700">
-                  <Link href="/save-for-later">
-                    🔗 Save Share Links
-                  </Link>
-                </Button>
-              </div>
-            </div>
-          )}
+
         </div>
 
         {/* Bookmarklet Installation Hero */}

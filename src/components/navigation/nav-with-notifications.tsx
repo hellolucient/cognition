@@ -36,9 +36,6 @@ export function NavWithNotifications() {
       <Link href="/submit" className="text-muted-foreground hover:text-foreground">
         Submit
       </Link>
-      <Link href="/save-for-later" className="text-muted-foreground hover:text-foreground">
-        📱 Save Links
-      </Link>
       <Link href="/settings" className="text-muted-foreground hover:text-foreground relative">
         Settings
         {user && pendingCount > 0 && (

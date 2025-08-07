@@ -328,6 +328,31 @@ export default function SettingsPage() {
           </p>
         </div>
 
+        {/* Save Links Section - Mobile Feature */}
+        <div className="bg-gradient-to-r from-green-50 to-blue-50 border border-green-200 rounded-lg p-6">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h2 className="text-xl font-semibold text-green-800">📱 Save ChatGPT Share Links</h2>
+              <p className="text-green-700 text-sm mt-1">
+                For mobile users who can't use the bookmarklet
+              </p>
+            </div>
+            <Button asChild className="bg-green-600 hover:bg-green-700">
+              <Link href="/save-for-later">
+                🔗 Open Save Links
+              </Link>
+            </Button>
+          </div>
+          <div className="text-sm text-green-600 bg-green-50 p-3 rounded border border-green-200">
+            <p><strong>How it works:</strong></p>
+            <ol className="list-decimal list-inside mt-2 space-y-1">
+              <li>Copy ChatGPT share URLs on mobile</li>
+              <li>Paste them here with optional notes</li>
+              <li>Process them later on desktop with the bookmarklet</li>
+            </ol>
+          </div>
+        </div>
+
         {/* User Info */}
         <div className="bg-muted/30 p-6 rounded-lg">
           <h2 className="text-xl font-semibold mb-4">Account Information</h2>
