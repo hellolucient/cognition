@@ -92,12 +92,14 @@ Our intelligent bookmarklet makes sharing ChatGPT conversations effortless:
 
 ### Technical Features
 - ✅ **Next.js 15** with App Router and React 18
-- ✅ **PostgreSQL** database via Supabase with RLS
-- ✅ **Prisma ORM** for type-safe database operations
+- ✅ **PostgreSQL** database via Supabase with RLS and connection pooling
+- ✅ **Prisma ORM** with singleton client pattern for serverless compatibility
+- ✅ **Production-Ready Deployment** on Vercel with optimized database connections
 - ✅ **Tailwind CSS** + shadcn/ui components
 - ✅ **Multi-AI Provider Support** - OpenAI, Anthropic, Google AI
 - ✅ **Secure API Key Storage** - Encrypted user keys with AES-256-CBC
 - ✅ **Admin Panel** - Platform management and AI provider configuration
+- ✅ **Regional Resilience** - Handles connectivity variations across global users
 
 ## 🚀 Getting Started
 
@@ -108,32 +110,48 @@ Our intelligent bookmarklet makes sharing ChatGPT conversations effortless:
 - GitHub OAuth app (for authentication)
 - Email service setup in Supabase (for email auth)
 
-### ⚠️ Regional Considerations
+### ⚠️ Production Deployment & Database Configuration
 
-**Database Location & Performance:**
-- The current setup uses Supabase hosted in **Singapore (AWS ap-southeast-1)**
-- **Local users (Asia-Pacific)**: Optimal performance with low latency
-- **International users (USA, Europe)**: May experience slower load times (~200-300ms latency)
-- **During travel**: Temporary connectivity issues may occur due to changing networks
+**Database Connection Setup:**
+- Uses **Supabase PostgreSQL** with connection pooling for optimal performance
+- **Prisma ORM** configured with singleton client pattern to prevent connection conflicts
+- **Transaction mode** enabled for serverless compatibility
 
-**Known Issues & Solutions:**
-- **Intermittent connectivity**: Restart your Supabase instance if you experience 500 errors while traveling
-- **Regional latency**: For production deployment with global users, consider multi-region database setup
-- **Network sensitivity**: Hotel/airport WiFi may cause temporary connection issues
+**Critical Production Settings:**
+- **DATABASE_URL** must include `?pgbouncer=true&connection_limit=1` for Vercel deployment
+- **Shared Prisma Client** prevents "prepared statement already exists" errors in serverless
+- **Connection resilience** configured for regional connectivity variations
+
+**Regional Considerations:**
+- Current setup uses Supabase hosted in **Singapore (AWS ap-southeast-1)**
+- **Asia-Pacific users**: Optimal performance with low latency
+- **International users**: May experience ~200-300ms latency but stable connectivity
+- **Production-tested** across multiple regions with robust error handling
+
+**Troubleshooting Production Issues:**
+- **500 errors on API endpoints**: Usually resolved by database restart + proper connection string format
+- **Prepared statement conflicts**: Fixed by singleton Prisma client and transaction mode
+- **Authentication failures**: Ensure Supabase RLS policies are properly configured
+- **Regional connectivity**: Connection pooling and retry logic handle temporary network issues
 
 **For Production Scaling:**
-- Consider Supabase read replicas in user regions (USA, Europe)
-- Implement connection retry logic for mobile/unstable connections
-- Monitor user feedback for regional performance issues
+- Consider Supabase read replicas for global distribution
+- Monitor connection pool usage in Vercel analytics
+- Implement health checks for database connectivity
 
 ### Environment Setup
 
 Create a `.env` file with:
 
 ```bash
-# Database
-DATABASE_URL="postgresql://..."
-DIRECT_URL="postgresql://..."
+# Database (Critical: Include pgbouncer parameters for production)
+DATABASE_URL="postgresql://user:password@host:port/db?pgbouncer=true&connection_limit=1"
+DIRECT_URL="postgresql://user:password@host:port/db?sslmode=require"
+
+# Database connection settings for better regional connectivity
+DATABASE_CONNECTION_LIMIT=5
+DATABASE_POOL_TIMEOUT=10
+DATABASE_CONNECT_TIMEOUT=60
 
 # Supabase
 NEXT_PUBLIC_SUPABASE_URL="https://your-project.supabase.co"
@@ -262,7 +280,7 @@ MIT License - see [LICENSE](LICENSE) for details.
 
 ## 🔗 Links
 
-- **Live Platform**: [Coming Soon]
+- **Live Platform**: [https://vanwinkle.vercel.app](https://vanwinkle.vercel.app) ✅ **Production Ready**
 - **Documentation**: [Wiki](https://github.com/hellolucient/cognition/wiki)
 - **Issues**: [GitHub Issues](https://github.com/hellolucient/cognition/issues)
 - **Discussions**: [GitHub Discussions](https://github.com/hellolucient/cognition/discussions)
