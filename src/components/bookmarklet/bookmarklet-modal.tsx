@@ -21,22 +21,30 @@ export function BookmarkletModal({ isOpen, onClose }: BookmarkletModalProps) {
   // Set up bookmarklet using DOM manipulation to bypass React security
   useEffect(() => {
     if (isOpen) {
-      const button = document.getElementById('bookmarklet-button-modal');
-      if (button) {
-        const bookmarkletCode = `(function(){try{console.log('=== VANWINKLE BOOKMARKLET v2 DEBUG ===');console.log('URL:',window.location.href);console.log('Document ready state:',document.readyState);var messages=Array.from(document.querySelectorAll('main .min-h-\\\\[20px\\\\], main .prose')).map(function(el){return el.innerText;});console.log('Found messages:',messages.length);if(messages.length>0){console.log('First message preview:',messages[0].substring(0,100));}if(messages.length===0){alert('❌ No messages found.\\\\n\\\\nFound selectors: '+document.querySelectorAll('main .min-h-\\\\[20px\\\\], main .prose').length+'\\\\nTry a different ChatGPT page.');return;}var formatted=messages.map(function(text,i){return i%2===0?'🧑 You:\\\\n'+text:'🤖 ChatGPT:\\\\n'+text;}).join('\\\\n\\\\n---\\\\n\\\\n');console.log('Formatted length:',formatted.length);console.log('Clipboard available:',!!navigator.clipboard);console.log('writeText available:',!!(navigator.clipboard&&navigator.clipboard.writeText));setTimeout(function(){if(navigator.clipboard&&navigator.clipboard.writeText){console.log('🔄 Attempting clipboard write...');navigator.clipboard.writeText(formatted).then(function(){console.log('✅ SUCCESS: Clipboard write completed');console.log('Opening Vanwinkle...');window.open('https://vanwinkle.vercel.app/submit?from=bookmarklet','_blank');alert('✅ SUCCESS!\\\\n\\\\nCopied '+formatted.length+' characters to clipboard.\\\\n\\\\nVanwinkle is opening - click \\"Paste from Clipboard\\"');}).catch(function(err){console.error('❌ CLIPBOARD FAILED:',err);console.log('Error name:',err.name);console.log('Error message:',err.message);alert('❌ CLIPBOARD FAILED\\\\n\\\\nError: '+err.message+'\\\\n\\\\nTry clicking the page first, then run bookmarklet again.');});}else{console.log('❌ No clipboard support');alert('❌ No clipboard support in this browser');}},500);}catch(e){console.error('BOOKMARKLET ERROR:',e);alert('❌ BOOKMARKLET ERROR\\\\n\\\\n'+e.message);}})();`;
-        
-        // Create an actual anchor element and set its href
-        const link = document.createElement('a');
-        link.href = `javascript:${bookmarkletCode}`;
-        link.innerHTML = button.innerHTML;
-        link.className = button.className;
-        link.draggable = true;
-        
-        // Replace the div with the anchor
-        button.parentNode?.replaceChild(link, button);
-        
-        setBookmarkletUrl(`javascript:${bookmarkletCode}`);
-      }
+      // Small delay to ensure the modal is fully rendered
+      const timer = setTimeout(() => {
+        const button = document.getElementById('bookmarklet-button-modal');
+        if (button && !button.getAttribute('data-converted')) {
+          const bookmarkletCode = `(function(){try{console.log('=== VANWINKLE BOOKMARKLET v2 DEBUG ===');console.log('URL:',window.location.href);console.log('Document ready state:',document.readyState);var messages=Array.from(document.querySelectorAll('main .min-h-\\\\[20px\\\\], main .prose')).map(function(el){return el.innerText;});console.log('Found messages:',messages.length);if(messages.length>0){console.log('First message preview:',messages[0].substring(0,100));}if(messages.length===0){alert('❌ No messages found.\\\\n\\\\nFound selectors: '+document.querySelectorAll('main .min-h-\\\\[20px\\\\], main .prose').length+'\\\\nTry a different ChatGPT page.');return;}var formatted=messages.map(function(text,i){return i%2===0?'🧑 You:\\\\n'+text:'🤖 ChatGPT:\\\\n'+text;}).join('\\\\n\\\\n---\\\\n\\\\n');console.log('Formatted length:',formatted.length);console.log('Clipboard available:',!!navigator.clipboard);console.log('writeText available:',!!(navigator.clipboard&&navigator.clipboard.writeText));setTimeout(function(){if(navigator.clipboard&&navigator.clipboard.writeText){console.log('🔄 Attempting clipboard write...');navigator.clipboard.writeText(formatted).then(function(){console.log('✅ SUCCESS: Clipboard write completed');console.log('Opening Vanwinkle...');window.open('https://vanwinkle.vercel.app/submit?from=bookmarklet','_blank');alert('✅ SUCCESS!\\\\n\\\\nCopied '+formatted.length+' characters to clipboard.\\\\n\\\\nVanwinkle is opening - click \\"Paste from Clipboard\\"');}).catch(function(err){console.error('❌ CLIPBOARD FAILED:',err);console.log('Error name:',err.name);console.log('Error message:',err.message);alert('❌ CLIPBOARD FAILED\\\\n\\\\nError: '+err.message+'\\\\n\\\\nTry clicking the page first, then run bookmarklet again.');});}else{console.log('❌ No clipboard support');alert('❌ No clipboard support in this browser');}},500);}catch(e){console.error('BOOKMARKLET ERROR:',e);alert('❌ BOOKMARKLET ERROR\\\\n\\\\n'+e.message);}})();`;
+          
+          // Create an actual anchor element and set its href
+          const link = document.createElement('a');
+          link.href = `javascript:${bookmarkletCode}`;
+          link.innerHTML = button.innerHTML;
+          link.className = button.className;
+          link.draggable = true;
+          link.setAttribute('data-converted', 'true');
+          
+          // Replace the div with the anchor
+          if (button.parentNode) {
+            button.parentNode.replaceChild(link, button);
+          }
+          
+          setBookmarkletUrl(`javascript:${bookmarkletCode}`);
+        }
+      }, 100);
+
+      return () => clearTimeout(timer);
     }
   }, [isOpen]);
 
@@ -63,7 +71,7 @@ export function BookmarkletModal({ isOpen, onClose }: BookmarkletModalProps) {
               
               <div 
                 id="bookmarklet-button-modal"
-                className="inline-block bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-6 rounded-lg cursor-move select-none transition-colors duration-200 shadow-lg hover:shadow-xl"
+                className="inline-block bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-6 rounded-lg cursor-grab active:cursor-grabbing select-none transition-colors duration-200 shadow-lg hover:shadow-xl"
                 draggable={true}
               >
                 📚 Save to Vanwinkle
