@@ -108,6 +108,24 @@ Our intelligent bookmarklet makes sharing ChatGPT conversations effortless:
 - GitHub OAuth app (for authentication)
 - Email service setup in Supabase (for email auth)
 
+### ⚠️ Regional Considerations
+
+**Database Location & Performance:**
+- The current setup uses Supabase hosted in **Singapore (AWS ap-southeast-1)**
+- **Local users (Asia-Pacific)**: Optimal performance with low latency
+- **International users (USA, Europe)**: May experience slower load times (~200-300ms latency)
+- **During travel**: Temporary connectivity issues may occur due to changing networks
+
+**Known Issues & Solutions:**
+- **Intermittent connectivity**: Restart your Supabase instance if you experience 500 errors while traveling
+- **Regional latency**: For production deployment with global users, consider multi-region database setup
+- **Network sensitivity**: Hotel/airport WiFi may cause temporary connection issues
+
+**For Production Scaling:**
+- Consider Supabase read replicas in user regions (USA, Europe)
+- Implement connection retry logic for mobile/unstable connections
+- Monitor user feedback for regional performance issues
+
 ### Environment Setup
 
 Create a `.env` file with:

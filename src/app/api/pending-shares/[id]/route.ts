@@ -3,7 +3,15 @@ import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 import { PrismaClient } from '@prisma/client';
 
-const prisma = new PrismaClient();
+const prisma = new PrismaClient({
+  datasources: {
+    db: {
+      url: process.env.DATABASE_URL,
+    },
+  },
+  // Add connection resilience for regional connectivity issues
+  log: ['error'],
+});
 
 // GET /api/pending-shares/[id] - Get a specific pending share
 export async function GET(

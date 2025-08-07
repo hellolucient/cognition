@@ -3,7 +3,15 @@ import { PrismaClient } from '@prisma/client'
 import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 
-const prisma = new PrismaClient()
+const prisma = new PrismaClient({
+  datasources: {
+    db: {
+      url: process.env.DATABASE_URL,
+    },
+  },
+  // Add connection resilience for regional connectivity issues
+  log: ['error'],
+})
 
 // Generate initial invite codes for new users
 function generateInviteCode(): string {

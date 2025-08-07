@@ -1,17 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { PrismaClient } from '@prisma/client'
 import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
-
-const prisma = new PrismaClient({
-  datasources: {
-    db: {
-      url: process.env.DATABASE_URL,
-    },
-  },
-  // Add connection resilience for regional connectivity issues
-  log: ['error'],
-})
 
 export async function GET(request: NextRequest) {
   try {
@@ -38,45 +27,23 @@ export async function GET(request: NextRequest) {
 
     if (!user) {
       return NextResponse.json(
-        { error: 'Authentication required' },
+        { error: 'Not authenticated' },
         { status: 401 }
       )
     }
 
-    // Get user's invite codes
-    const codes = await prisma.inviteCode.findMany({
-      where: {
-        createdById: user.id,
-      },
-      include: {
-        usedBy: {
-          select: {
-            name: true,
-            email: true,
-          }
-        }
-      },
-      orderBy: {
-        createdAt: 'desc'
-      }
-    })
-
     return NextResponse.json({
-      codes: codes.map(code => ({
-        id: code.id,
-        code: code.code,
-        createdAt: code.createdAt,
-        expiresAt: code.expiresAt,
-        usedAt: code.usedAt,
-        usedBy: code.usedBy,
-        isActive: code.isActive,
-      }))
+      authUserId: user.id,
+      email: user.email,
+      userMetadata: user.user_metadata,
+      authUidAsText: user.id.toString(),
+      message: 'This is what auth.uid() returns in your RLS policies'
     })
 
   } catch (error: any) {
-    console.error('Error fetching invite codes:', error)
+    console.error('Error getting user info:', error)
     return NextResponse.json(
-      { error: 'Failed to fetch invite codes' },
+      { error: 'Failed to get user info' },
       { status: 500 }
     )
   }
