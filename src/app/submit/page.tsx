@@ -10,6 +10,7 @@ import { useRouter } from "next/navigation";
 import { useSupabase } from "@/components/providers/supabase-provider";
 import { WaitlistModal } from "@/components/auth/waitlist-modal";
 import { InviteSignupModal } from "@/components/auth/invite-signup-modal";
+import { EmailSignInModal } from "@/components/auth/email-signin-modal";
 import Link from "next/link";
 
 const AI_SOURCES = [
@@ -50,6 +51,7 @@ export default function SubmitPage() {
   const [step, setStep] = useState<"input" | "review">("input");
   const [showWaitlist, setShowWaitlist] = useState(false);
   const [showInviteSignup, setShowInviteSignup] = useState(false);
+  const [showEmailSignIn, setShowEmailSignIn] = useState(false);
 
   // Check for pre-filled content from bookmarklet
   useEffect(() => {
@@ -218,7 +220,10 @@ export default function SubmitPage() {
               You need to be signed in to submit conversations to our community.
             </p>
             <div className="flex flex-col sm:flex-row gap-3 justify-center">
-              <Button onClick={() => setShowInviteSignup(true)} size="lg">
+              <Button onClick={() => setShowEmailSignIn(true)} size="lg">
+                Sign In
+              </Button>
+              <Button onClick={() => setShowInviteSignup(true)} variant="outline" size="lg">
                 Have Invite Code?
               </Button>
               <Button onClick={() => setShowWaitlist(true)} variant="outline" size="lg">
@@ -253,6 +258,11 @@ export default function SubmitPage() {
             </ul>
           </div>
         </div>
+        
+        <EmailSignInModal
+          isOpen={showEmailSignIn}
+          onClose={() => setShowEmailSignIn(false)}
+        />
         
         <WaitlistModal 
           isOpen={showWaitlist} 
@@ -453,6 +463,11 @@ export default function SubmitPage() {
           </Button>
         </form>
       </div>
+      
+      <EmailSignInModal
+        isOpen={showEmailSignIn}
+        onClose={() => setShowEmailSignIn(false)}
+      />
       
       <WaitlistModal 
         isOpen={showWaitlist} 

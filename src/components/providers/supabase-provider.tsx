@@ -11,6 +11,8 @@ type SupabaseContext = {
   supabase: ReturnType<typeof createClient>
   signOut: () => Promise<void>
   signInWithGithub: () => Promise<void>
+  signInWithEmail: (email: string, password: string) => Promise<{ error?: any }>
+  signUpWithEmail: (email: string, password: string, name?: string) => Promise<{ error?: any }>
 }
 
 const Context = createContext<SupabaseContext | undefined>(undefined)
@@ -60,6 +62,25 @@ export default function SupabaseProvider({
           redirectTo: `${window.location.origin}/auth/callback`
         }
       })
+    },
+    signInWithEmail: async (email: string, password: string) => {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      })
+      return { error }
+    },
+    signUpWithEmail: async (email: string, password: string, name?: string) => {
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            name: name || null,
+          },
+        },
+      })
+      return { error }
     }
   }
 

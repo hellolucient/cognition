@@ -5,11 +5,13 @@ import { Button } from "@/components/ui/button"
 import { useSupabase } from "../providers/supabase-provider"
 import { WaitlistModal } from "./waitlist-modal"
 import { InviteSignupModal } from "./invite-signup-modal"
+import { EmailSignInModal } from "./email-signin-modal"
 
 export default function SignInButton() {
   const { user, signInWithGithub, signOut } = useSupabase()
   const [showWaitlist, setShowWaitlist] = useState(false)
   const [showInviteSignup, setShowInviteSignup] = useState(false)
+  const [showEmailSignIn, setShowEmailSignIn] = useState(false)
 
   if (user) {
     return (
@@ -27,6 +29,9 @@ export default function SignInButton() {
   return (
     <>
       <div className="flex items-center gap-2">
+        <Button onClick={() => setShowEmailSignIn(true)} variant="default">
+          Sign In
+        </Button>
         <Button onClick={signInWithGithub} variant="outline">
           Sign in with GitHub
         </Button>
@@ -37,6 +42,11 @@ export default function SignInButton() {
           Join Waitlist
         </Button>
       </div>
+      
+      <EmailSignInModal
+        isOpen={showEmailSignIn}
+        onClose={() => setShowEmailSignIn(false)}
+      />
       
       <WaitlistModal 
         isOpen={showWaitlist} 
