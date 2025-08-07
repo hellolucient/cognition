@@ -123,11 +123,6 @@ export default function HomePage() {
             <Button asChild>
               <Link href="/submit">Submit Conversation</Link>
             </Button>
-            {user && (
-              <Button variant="outline" asChild>
-                <Link href="/settings">Settings</Link>
-              </Button>
-            )}
           </div>
           
 

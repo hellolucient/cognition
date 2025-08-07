@@ -33,9 +33,6 @@ export function NavWithNotifications() {
 
   return (
     <nav className="hidden md:flex items-center gap-4 text-sm">
-      <Link href="/submit" className="text-muted-foreground hover:text-foreground">
-        Submit
-      </Link>
       <Link href="/settings" className="text-muted-foreground hover:text-foreground relative">
         Settings
         {user && pendingCount > 0 && (
