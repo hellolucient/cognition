@@ -5,10 +5,26 @@ declare global {
   var prisma: PrismaClient | undefined;
 }
 
+// Add pgbouncer compatibility parameters to disable prepared statements
+const getDatabaseUrl = () => {
+  const baseUrl = process.env.DATABASE_URL;
+  if (!baseUrl) return baseUrl;
+  
+  // In production, add pgbouncer compatibility parameters
+  if (process.env.NODE_ENV === 'production') {
+    const url = new URL(baseUrl);
+    url.searchParams.set('pgbouncer', 'true');
+    url.searchParams.set('statement_cache_size', '0');
+    return url.toString();
+  }
+  
+  return baseUrl;
+};
+
 const prisma = globalThis.prisma ?? new PrismaClient({
   datasources: {
     db: {
-      url: process.env.DATABASE_URL,
+      url: getDatabaseUrl(),
     },
   },
   log: ['error'],
