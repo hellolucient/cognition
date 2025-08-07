@@ -1,17 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { PrismaClient } from '@prisma/client'
 import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
-
-const prisma = new PrismaClient({
-  datasources: {
-    db: {
-      url: process.env.DATABASE_URL,
-    },
-  },
-  // Add connection resilience for regional connectivity issues
-  log: ['error'],
-})
+import prisma from '@/lib/prisma'
 
 export async function GET(request: NextRequest) {
   try {
