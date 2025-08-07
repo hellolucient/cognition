@@ -15,11 +15,11 @@ export default function SignInButton() {
 
   if (user) {
     return (
-      <div className="flex items-center gap-4">
-        <span className="text-sm text-muted-foreground">
+      <div className="flex items-center gap-2 md:gap-4">
+        <span className="text-sm text-muted-foreground hidden sm:block">
           Welcome, {user.user_metadata?.name || user.email}!
         </span>
-        <Button variant="outline" onClick={signOut}>
+        <Button variant="outline" onClick={signOut} size="sm">
           Sign Out
         </Button>
       </div>
@@ -28,17 +28,17 @@ export default function SignInButton() {
 
   return (
     <>
-      <div className="flex items-center gap-2">
-        <Button onClick={() => setShowEmailSignIn(true)} variant="default">
+      <div className="flex items-center gap-1 md:gap-2">
+        <Button onClick={() => setShowEmailSignIn(true)} variant="default" size="sm">
           Sign In
         </Button>
-        <Button onClick={signInWithGithub} variant="outline">
+        <Button onClick={signInWithGithub} variant="outline" size="sm" className="hidden sm:flex">
           Sign in with GitHub
         </Button>
-        <Button onClick={() => setShowInviteSignup(true)} variant="outline">
+        <Button onClick={() => setShowInviteSignup(true)} variant="outline" size="sm" className="hidden md:flex">
           Have Invite Code?
         </Button>
-        <Button onClick={() => setShowWaitlist(true)}>
+        <Button onClick={() => setShowWaitlist(true)} size="sm" className="hidden lg:flex">
           Join Waitlist
         </Button>
       </div>

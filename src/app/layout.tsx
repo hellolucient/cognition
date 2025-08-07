@@ -32,15 +32,17 @@ export default function RootLayout({
         <SupabaseProvider>
           <div className="flex min-h-screen flex-col">
             <header className="border-b">
-              <div className="container mx-auto flex h-16 items-center justify-between">
-                <div className="flex items-center gap-6">
-                  <Link href="/">
-                    <img src="/vanwinkle_logo.png" alt="Vanwinkle" className="h-8 w-auto" />
+              <div className="container mx-auto flex h-16 items-center justify-between px-4">
+                <div className="flex items-center gap-2 md:gap-6 min-w-0">
+                  <Link href="/" className="flex-shrink-0">
+                    <img src="/vanwinkle_logo.png" alt="Vanwinkle" className="h-6 md:h-8 w-auto" />
                   </Link>
                   <NavWithNotifications />
                   <MobileNavWithNotifications />
                 </div>
-                <SignInButton />
+                <div className="flex-shrink-0">
+                  <SignInButton />
+                </div>
               </div>
             </header>
             <main className="flex-1">{children}</main>
