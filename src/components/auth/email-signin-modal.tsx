@@ -45,7 +45,14 @@ export function EmailSignInModal({ isOpen, onClose }: EmailSignInModalProps) {
       const { error } = await signInWithEmail(signInEmail.trim(), signInPassword)
       
       if (error) {
-        setSignInError(error.message || 'Failed to sign in')
+        // Provide more helpful error messages
+        let errorMessage = error.message || 'Failed to sign in'
+        if (errorMessage.includes('Email not confirmed')) {
+          errorMessage = 'Please check your email and click the confirmation link before signing in.'
+        } else if (errorMessage.includes('Invalid login credentials')) {
+          errorMessage = 'Invalid email or password. Please check your credentials.'
+        }
+        setSignInError(errorMessage)
       } else {
         // Success - close modal
         onClose()
@@ -99,7 +106,7 @@ export function EmailSignInModal({ isOpen, onClose }: EmailSignInModalProps) {
           console.warn('Error creating user in database:', createUserError)
         }
         
-        setSignUpSuccess('Account created! Please check your email for verification.')
+        setSignUpSuccess('Account created! Please check your email and click the confirmation link before signing in.')
         // Don't close modal immediately - let user see success message
       }
     } catch (error: any) {
