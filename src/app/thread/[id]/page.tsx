@@ -33,11 +33,55 @@ export default function ThreadPage({ params }: { params: Promise<{ id: string }>
   const [thread, setThread] = useState<Thread | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [upvoteLoading, setUpvoteLoading] = useState(false);
+  const [hasUpvoted, setHasUpvoted] = useState(false);
+  const [upvoteCount, setUpvoteCount] = useState(0);
   const { user } = useSupabase();
 
   useEffect(() => {
     fetchThread();
+    fetchUpvoteStatus();
   }, [resolvedParams.id]);
+
+  const fetchUpvoteStatus = async () => {
+    try {
+      const response = await fetch(`/api/threads/${resolvedParams.id}/upvote`);
+      if (response.ok) {
+        const data = await response.json();
+        setUpvoteCount(data.upvoteCount);
+        setHasUpvoted(data.hasUpvoted);
+      }
+    } catch (error) {
+      console.error('Error fetching upvote status:', error);
+    }
+  };
+
+  const handleUpvote = async () => {
+    if (!user) {
+      // Could show a sign-in modal here
+      alert('Please sign in to upvote');
+      return;
+    }
+
+    setUpvoteLoading(true);
+    try {
+      const response = await fetch(`/api/threads/${resolvedParams.id}/upvote`, {
+        method: 'POST',
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setHasUpvoted(data.upvoted);
+        setUpvoteCount(data.upvoteCount);
+      } else {
+        console.error('Failed to upvote');
+      }
+    } catch (error) {
+      console.error('Error upvoting:', error);
+    } finally {
+      setUpvoteLoading(false);
+    }
+  };
 
   // Handle scroll behavior based on navigation context
   useEffect(() => {
@@ -382,18 +426,16 @@ export default function ThreadPage({ params }: { params: Promise<{ id: string }>
           <Button variant="outline" onClick={handleExportClick}>
             📤 Export Chat
           </Button>
-          <Button variant="outline">
-            👍 Upvote ({thread._count.upvotes})
+          <Button 
+            variant={hasUpvoted ? "default" : "outline"}
+            onClick={handleUpvote}
+            disabled={upvoteLoading}
+          >
+            {hasUpvoted ? "👍" : "👍"} {hasUpvoted ? "Upvoted" : "Upvote"} ({upvoteCount})
           </Button>
         </div>
 
-        {/* Comments Section Placeholder */}
-        <div className="space-y-4">
-          <h3 className="text-xl font-semibold">Comments ({thread._count.comments})</h3>
-          <div className="bg-muted/30 p-8 rounded-lg text-center">
-            <p className="text-muted-foreground">Comments section coming soon...</p>
-          </div>
-        </div>
+
 
         {/* Navigation Buttons */}
         <div className="flex justify-center gap-4 pt-4 border-t">

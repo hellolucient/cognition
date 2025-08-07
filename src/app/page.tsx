@@ -216,7 +216,6 @@ export default function HomePage() {
                   <div className="flex items-center justify-between pt-2">
                     <div className="flex items-center gap-4 text-sm text-muted-foreground">
                       <span>{thread._count.upvotes} upvotes</span>
-                      <span>{thread._count.comments} comments</span>
                     </div>
                     <div className="flex gap-2">
                       <Button variant="outline" size="sm" asChild>
