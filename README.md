@@ -169,6 +169,16 @@ API_KEY_ENCRYPTION_KEY="your-32-character-encryption-key"
 NEXT_PUBLIC_SITE_URL="http://localhost:3000"
 ```
 
+## 🔒 User API Keys: Security Overview
+
+- **Encryption at rest**: User-supplied provider keys are encrypted using `AES-256-CBC` with a fresh per-record IV. The 32-byte cipher key is derived from `API_KEY_ENCRYPTION_KEY` via `scrypt`.
+- **Server-only decryption**: Keys are decrypted in memory on the server only when needed to call provider APIs; plaintext is never persisted or logged.
+- **AuthN/Z**: Management routes require an authenticated Supabase session; users can only manage their own keys.
+- **Validation & hygiene**: Keys are cleaned (whitespace/invisible chars removed) and validated per provider format before storage.
+- **Fields**: Encrypted keys are stored on `User` as `encryptedOpenAIKey`, `encryptedAnthropicKey`, `encryptedGoogleKey`.
+
+See `docs/api-keys-security.md` for hardening recommendations (rotation, audit logs, rate limiting, log redaction) and implementation checklist.
+
 ### Installation
 
 ```bash
