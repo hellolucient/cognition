@@ -44,6 +44,7 @@ export default function SettingsPage() {
   const [pendingShares, setPendingShares] = useState<PendingShare[]>([]);
   const [pendingSharesLoading, setPendingSharesLoading] = useState(true);
   const [pendingSharesFilter, setPendingSharesFilter] = useState<'pending' | 'completed' | 'all'>('pending');
+  const [pendingSharesCounts, setPendingSharesCounts] = useState<{ pending: number; completed: number; total: number }>({ pending: 0, completed: 0, total: 0 });
   
   // API Key management
   const [apiKeyStatus, setApiKeyStatus] = useState({
@@ -62,6 +63,7 @@ export default function SettingsPage() {
       fetchInviteCodes();
       checkApiKeyStatus();
       fetchPendingShares();
+      fetchPendingSharesCounts();
     }
   }, [user]);
 
@@ -141,7 +143,7 @@ export default function SettingsPage() {
   const fetchPendingShares = async () => {
     try {
       setPendingSharesLoading(true);
-      const statusParam = pendingSharesFilter === 'all' ? '' : `?status=${pendingSharesFilter}`;
+      const statusParam = `?status=${pendingSharesFilter}`;
       const response = await fetch(`/api/pending-shares${statusParam}`);
       const data = await response.json();
       
@@ -154,6 +156,18 @@ export default function SettingsPage() {
       console.error('Failed to fetch pending shares:', error);
     } finally {
       setPendingSharesLoading(false);
+    }
+  };
+
+  const fetchPendingSharesCounts = async () => {
+    try {
+      const response = await fetch('/api/pending-shares/count');
+      const data = await response.json();
+      if (response.ok) {
+        setPendingSharesCounts({ pending: data.pending ?? 0, completed: data.completed ?? 0, total: data.total ?? 0 });
+      }
+    } catch (error) {
+      console.error('Failed to fetch pending shares counts:', error);
     }
   };
 
@@ -172,7 +186,7 @@ export default function SettingsPage() {
       });
 
       if (response.ok) {
-        await fetchPendingShares(); // Refresh the list
+        await Promise.all([fetchPendingShares(), fetchPendingSharesCounts()]);
       } else {
         alert('Failed to mark as completed');
       }
@@ -192,7 +206,7 @@ export default function SettingsPage() {
       });
 
       if (response.ok) {
-        await fetchPendingShares(); // Refresh the list
+        await Promise.all([fetchPendingShares(), fetchPendingSharesCounts()]);
       } else {
         alert('Failed to delete pending share');
       }
@@ -542,21 +556,21 @@ export default function SettingsPage() {
               size="sm"
               onClick={() => setPendingSharesFilter('pending')}
             >
-              Pending ({pendingShares.filter(s => s.status === 'pending').length})
+              Pending ({pendingSharesCounts.pending})
             </Button>
             <Button
               variant={pendingSharesFilter === 'completed' ? 'default' : 'outline'}
               size="sm"
               onClick={() => setPendingSharesFilter('completed')}
             >
-              Completed ({pendingShares.filter(s => s.status === 'completed').length})
+              Completed ({pendingSharesCounts.completed})
             </Button>
             <Button
               variant={pendingSharesFilter === 'all' ? 'default' : 'outline'}
               size="sm"
               onClick={() => setPendingSharesFilter('all')}
             >
-              All ({pendingShares.length})
+              All ({pendingSharesCounts.total})
             </Button>
           </div>
 

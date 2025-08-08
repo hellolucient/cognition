@@ -43,11 +43,13 @@ export async function GET(request: NextRequest) {
     const status = searchParams.get('status') || 'pending';
     const limit = parseInt(searchParams.get('limit') || '50');
 
+    const whereClause: any = { userId: user.id };
+    if (status !== 'all') {
+      whereClause.status = status;
+    }
+
     const pendingShares = await prisma.pendingShare.findMany({
-      where: {
-        userId: user.id,
-        status: status,
-      },
+      where: whereClause,
       orderBy: {
         createdAt: 'desc',
       },
