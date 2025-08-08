@@ -52,11 +52,20 @@ export default function SubmitPage() {
   const [showWaitlist, setShowWaitlist] = useState(false);
   const [showInviteSignup, setShowInviteSignup] = useState(false);
   const [showEmailSignIn, setShowEmailSignIn] = useState(false);
+  const [shareUrl, setShareUrl] = useState<string>("");
 
   // Check for pre-filled content from bookmarklet
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
     const fromBookmarklet = urlParams.get('from') === 'bookmarklet';
+    const passedShare = urlParams.get('share');
+    if (passedShare) {
+      try {
+        setShareUrl(decodeURIComponent(passedShare));
+      } catch {
+        setShareUrl(passedShare);
+      }
+    }
     
     if (fromBookmarklet) {
       // Check sessionStorage for content from bookmarklet
@@ -64,6 +73,10 @@ export default function SubmitPage() {
       console.log('Bookmarklet mode - sessionStorage content:', storedContent ? `Found ${storedContent.length} characters` : 'Not found');
       if (storedContent) {
         setChatContent(storedContent);
+        
+        // Auto-detect platform from bookmarklet content
+        detectAndSetPlatform(storedContent);
+        
         // Clean up
         sessionStorage.removeItem('vanwinkle_chat');
         window.history.replaceState({}, '', window.location.pathname);
@@ -75,11 +88,40 @@ export default function SubmitPage() {
       // Fallback: check URL parameters (for backwards compatibility)
       const prefilledContent = urlParams.get('content');
       if (prefilledContent) {
-        setChatContent(decodeURIComponent(prefilledContent));
+        const decodedContent = decodeURIComponent(prefilledContent);
+        setChatContent(decodedContent);
+        detectAndSetPlatform(decodedContent);
         window.history.replaceState({}, '', window.location.pathname);
       }
     }
   }, []);
+
+  // Function to detect platform from conversation content
+  const detectAndSetPlatform = (content: string) => {
+    if (!content) return;
+    
+    let detectedPlatform = null;
+    
+    // Check for platform-specific markers in the content
+    if (content.includes('🤖 ChatGPT:')) {
+      detectedPlatform = 'ChatGPT';
+    } else if (content.includes('🤖 Claude:')) {
+      detectedPlatform = 'Claude';
+    } else if (content.includes('🤖 Gemini:')) {
+      detectedPlatform = 'Gemini';
+    } else if (content.includes('🤖 Copilot:')) {
+      detectedPlatform = 'Copilot';
+    } else if (content.includes('🤖 Grok:')) {
+      detectedPlatform = 'Grok';
+    } else if (content.includes('🤖 Perplexity:')) {
+      detectedPlatform = 'Perplexity';
+    }
+    
+    if (detectedPlatform && AI_SOURCES.includes(detectedPlatform)) {
+      setSource(detectedPlatform);
+      console.log(`Auto-detected platform: ${detectedPlatform}`);
+    }
+  };
 
   const handleTagClick = (tag: string) => {
     if (tag === "Other") {
@@ -160,6 +202,7 @@ export default function SubmitPage() {
           tags,
           title,
           summary,
+          shareUrl: shareUrl || undefined,
         }),
       });
 

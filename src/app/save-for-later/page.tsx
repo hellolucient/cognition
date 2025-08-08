@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Card } from '@/components/ui/card';
 import { useSupabase } from '@/components/providers/supabase-provider';
+import { detectPlatform, isLikelyAIUrl } from '@/lib/ai-url-detector';
 import Link from 'next/link';
 
 export default function SaveForLaterPage() {
@@ -17,6 +18,7 @@ export default function SaveForLaterPage() {
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
   const [pendingCount, setPendingCount] = useState(0);
+  const [detectedPlatform, setDetectedPlatform] = useState<string>('');
   const { user } = useSupabase();
   const router = useRouter();
 
@@ -33,7 +35,7 @@ export default function SaveForLaterPage() {
       try {
         if (navigator.clipboard && navigator.clipboard.readText) {
           const clipboardText = await navigator.clipboard.readText();
-          if (clipboardText && (clipboardText.includes('chatgpt.com') || clipboardText.includes('chat.openai.com'))) {
+          if (clipboardText && isLikelyAIUrl(clipboardText)) {
             setUrl(clipboardText);
           }
         }
@@ -45,6 +47,16 @@ export default function SaveForLaterPage() {
     // Only try auto-paste if URL is empty
     if (!url) {
       tryAutoPaste();
+    }
+  }, [url]);
+
+  // Detect platform when URL changes
+  useEffect(() => {
+    if (url.trim()) {
+      const platform = detectPlatform(url.trim());
+      setDetectedPlatform(platform.detected ? platform.displayName : '');
+    } else {
+      setDetectedPlatform('');
     }
   }, [url]);
 
@@ -112,7 +124,7 @@ export default function SaveForLaterPage() {
           router.push('/settings');
         }, 2000);
       } else {
-        setError(data.error || 'Failed to save ChatGPT conversation');
+        setError(data.error || 'Failed to save AI conversation');
       }
     } catch (err) {
       setError('Network error. Please try again.');
@@ -128,7 +140,7 @@ export default function SaveForLaterPage() {
           <Card className="p-6 text-center">
             <h1 className="text-2xl font-bold mb-4">Sign In Required</h1>
             <p className="text-gray-600 mb-6">
-              You need to sign in to save ChatGPT conversations for later.
+              You need to sign in to save AI conversations for later.
             </p>
             <Link href="/">
               <Button className="w-full">
@@ -147,10 +159,10 @@ export default function SaveForLaterPage() {
         {/* Header */}
                   <div className="text-center mb-8">
             <h1 className="text-3xl font-bold text-gray-900 mb-2">
-              📱 Save ChatGPT Share Links
+              📱 Save AI Share Links
             </h1>
             <p className="text-gray-600">
-              Save ChatGPT share URLs from mobile → Process on desktop later
+              Save AI conversation URLs from mobile → Process on desktop later
             </p>
           {pendingCount > 0 && (
             <div className="mt-4 bg-blue-100 text-blue-800 px-3 py-2 rounded-lg text-sm">
@@ -186,7 +198,12 @@ export default function SaveForLaterPage() {
             {/* URL Input */}
             <div>
               <label htmlFor="url" className="block text-sm font-medium text-gray-700 mb-2">
-                ChatGPT Share URL *
+                AI Share URL *
+                {detectedPlatform && (
+                  <span className="ml-2 px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full">
+                    ✓ {detectedPlatform}
+                  </span>
+                )}
               </label>
               <div className="space-y-3">
                 <Input
@@ -194,7 +211,7 @@ export default function SaveForLaterPage() {
                   type="url"
                   value={url}
                   onChange={(e) => setUrl(e.target.value)}
-                  placeholder="https://chatgpt.com/share/..."
+                  placeholder="https://chatgpt.com/share/... or other AI platform URLs"
                   required
                   className="text-base" // Better for mobile
                 />
@@ -208,7 +225,7 @@ export default function SaveForLaterPage() {
                 </Button>
               </div>
               <p className="text-xs text-gray-500 mt-2">
-                Copy the share link from ChatGPT and paste it here
+                Supports: ChatGPT, Claude, Perplexity, Grok, Gemini, Copilot
               </p>
             </div>
 
@@ -266,9 +283,9 @@ export default function SaveForLaterPage() {
         <Card className="p-4 mt-6 bg-blue-50 border-blue-200">
           <h3 className="font-medium text-blue-900 mb-2">💡 How it works:</h3>
           <ol className="text-sm text-blue-800 space-y-1">
-            <li>1. In ChatGPT mobile: Share → Copy link</li>
+            <li>1. In any AI app: Share → Copy link</li>
             <li>2. Paste that share URL here and save</li>
-            <li>3. On desktop: See notification → Click "Open ChatGPT"</li>
+            <li>3. On desktop: See notification → Click "Open Link"</li>
             <li>4. Use our bookmarklet to import the full conversation</li>
           </ol>
         </Card>

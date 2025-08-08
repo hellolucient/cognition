@@ -25,7 +25,7 @@ export function BookmarkletModal({ isOpen, onClose }: BookmarkletModalProps) {
       const timer = setTimeout(() => {
         const button = document.getElementById('bookmarklet-button-modal');
         if (button && !button.getAttribute('data-converted')) {
-          const bookmarkletCode = `(function(){try{console.log('=== vanwinkle BOOKMARKLET v2 DEBUG ===');console.log('URL:',window.location.href);console.log('Document ready state:',document.readyState);var messages=Array.from(document.querySelectorAll('main .min-h-\\\\[20px\\\\], main .prose')).map(function(el){return el.innerText;});console.log('Found messages:',messages.length);if(messages.length>0){console.log('First message preview:',messages[0].substring(0,100));}if(messages.length===0){alert('❌ No messages found.\\\\n\\\\nFound selectors: '+document.querySelectorAll('main .min-h-\\\\[20px\\\\], main .prose').length+'\\\\nTry a different ChatGPT page.');return;}var formatted=messages.map(function(text,i){return i%2===0?'🧑 You:\\\\n'+text:'🤖 ChatGPT:\\\\n'+text;}).join('\\\\n\\\\n---\\\\n\\\\n');console.log('Formatted length:',formatted.length);console.log('Clipboard available:',!!navigator.clipboard);console.log('writeText available:',!!(navigator.clipboard&&navigator.clipboard.writeText));setTimeout(function(){if(navigator.clipboard&&navigator.clipboard.writeText){console.log('🔄 Attempting clipboard write...');navigator.clipboard.writeText(formatted).then(function(){console.log('✅ SUCCESS: Clipboard write completed');console.log('Opening vanwinkle...');window.open('https://vanwinkle.vercel.app/submit?from=bookmarklet','_blank');alert('✅ SUCCESS!\\\\n\\\\nCopied '+formatted.length+' characters to clipboard.\\\\n\\\\nvanwinkle is opening - click \\"Paste from Clipboard\\"');}).catch(function(err){console.error('❌ CLIPBOARD FAILED:',err);console.log('Error name:',err.name);console.log('Error message:',err.message);alert('❌ CLIPBOARD FAILED\\\\n\\\\nError: '+err.message+'\\\\n\\\\nTry clicking the page first, then run bookmarklet again.');});}else{console.log('❌ No clipboard support');alert('❌ No clipboard support in this browser');}},500);}catch(e){console.error('BOOKMARKLET ERROR:',e);alert('❌ BOOKMARKLET ERROR\\\\n\\\\n'+e.message);}})();`;
+          const bookmarkletCode = `(function(){try{console.log('=== vanwinkle BOOKMARKLET v4 ENHANCED SELECTORS ===');console.log('URL:',window.location.href);console.log('Document ready state:',document.readyState);var platform='Unknown';var platformEmoji='🤖';if(window.location.href.includes('chatgpt.com')||window.location.href.includes('chat.openai.com')){platform='ChatGPT';platformEmoji='🤖';}else if(window.location.href.includes('claude.ai')){platform='Claude';platformEmoji='🤖';}else if(window.location.href.includes('perplexity.ai')){platform='Perplexity';platformEmoji='🤖';}else if(window.location.href.includes('grok.com')){platform='Grok';platformEmoji='🤖';}else if(window.location.href.includes('g.co/gemini')||window.location.href.includes('gemini.google.com')){platform='Gemini';platformEmoji='🤖';}else if(window.location.href.includes('copilot.microsoft.com')){platform='Copilot';platformEmoji='🤖';}console.log('Detected platform:',platform);var platformSelectors={'ChatGPT':['main .min-h-\\[20px\\]','main .prose','[data-message-author-role]','.group\\/conversation-turn'],'Claude':['.message','.chat-message','[data-role]','div[class*="message"]','article'],'Perplexity':['.conversation-item','.message-container','.search-result','.answer-container'],'Grok':['.conversation-turn','.message','.chat-bubble','.response-container'],'Gemini':['.message','.response-container','.conversation-item','[data-message-id]'],'Copilot':['.ac-textBlock','.response-message-group','.message-content','cib-message','[data-content]','.copilot-chat-turn','.turn-content','div[class*="turn"]','div[class*="message"]','div[class*="chat"]','[role="group"]','[role="listitem"]','article','p'],'Unknown':['main .min-h-\\[20px\\]','main .prose','.conversation-turn','.message','.chat-message','[data-message-author-role]','.group\\/conversation-turn']};var selectors=platformSelectors[platform]||platformSelectors['Unknown'];console.log('Using selectors for',platform+':',selectors);var messages=[];for(var i=0;i<selectors.length;i++){var elements=document.querySelectorAll(selectors[i]);console.log('Trying selector:',selectors[i],'found',elements.length,'elements');if(elements.length>0){var candidateMessages=Array.from(elements).map(function(el){return el.innerText.trim();}).filter(function(text){return text.length>10;});console.log('Found',candidateMessages.length,'text blocks with selector:',selectors[i]);if(candidateMessages.length>0){messages=candidateMessages;console.log('Using messages from selector:',selectors[i]);break;}}}console.log('Total messages found:',messages.length);if(messages.length>0){console.log('First message preview:',messages[0].substring(0,100));}if(messages.length===0){console.log('Trying alternative approach - looking for any text content...');var allTextElements=document.querySelectorAll('p, div, span, article, section');var textBlocks=Array.from(allTextElements).map(function(el){return el.innerText.trim();}).filter(function(text){return text.length>20&&!text.includes('Skip to')&&!text.includes('Sign in')&&!text.includes('Settings');}).slice(0,20);if(textBlocks.length>0){messages=textBlocks;console.log('Found',messages.length,'text blocks using fallback method');}else{alert('❌ No messages found on this '+platform+' page.\\n\\nTry:\\n1. Make sure the conversation is loaded\\n2. Try a different page\\n3. Check browser console for details');return;}}var formatted=messages.map(function(text,i){return i%2===0?'🧑 You:\\n'+text:platformEmoji+' '+platform+':\\n'+text;}).join('\\n\\n---\\n\\n');console.log('Formatted content length:',formatted.length);console.log('Using platform:',platform);setTimeout(function(){if(navigator.clipboard&&navigator.clipboard.writeText){console.log('🔄 Attempting clipboard write...');navigator.clipboard.writeText(formatted).then(function(){console.log('✅ SUCCESS: Clipboard write completed');console.log('Opening vanwinkle...');var shareUrl=encodeURIComponent(window.location.href);window.open('https://vanwinkle.vercel.app/submit?from=bookmarklet&share='+shareUrl,'_blank');alert('✅ SUCCESS!\\n\\nCopied '+formatted.length+' characters from '+platform+' to clipboard.\\n\\nvanwinkle is opening - click \"Paste from Clipboard\"');}).catch(function(err){console.error('❌ CLIPBOARD FAILED:',err);alert('❌ CLIPBOARD FAILED\\n\\nError: '+err.message+'\\n\\nTry clicking the page first, then run bookmarklet again.');});}else{console.log('❌ No clipboard support');alert('❌ No clipboard support in this browser');}},500);}catch(e){console.error('BOOKMARKLET ERROR:',e);alert('❌ BOOKMARKLET ERROR\\n\\n'+e.message+'\\n\\nCheck browser console for details');}})();`;
           
           // Create an actual anchor element and set its href
           const link = document.createElement('a');
@@ -57,7 +57,7 @@ export function BookmarkletModal({ isOpen, onClose }: BookmarkletModalProps) {
             Install vanwinkle Bookmarklet
           </DialogTitle>
           <DialogDescription>
-            Get started in 10 seconds - instantly share your ChatGPT, Claude, or other AI conversations with the community.
+            Get started in 10 seconds - instantly share conversations from ChatGPT, Claude, Perplexity, Grok, Gemini, Copilot, and more!
           </DialogDescription>
         </DialogHeader>
 
@@ -79,12 +79,12 @@ export function BookmarkletModal({ isOpen, onClose }: BookmarkletModalProps) {
               </div>
               
               <div className="text-sm text-blue-700 space-y-2 mt-4">
-                <p><strong>Step 2:</strong> Go to a ChatGPT conversation or share page</p>
+                <p><strong>Step 2:</strong> Go to any AI conversation (ChatGPT, Claude, Perplexity, etc.)</p>
                 <p><strong>Step 3:</strong> Click anywhere on the page first, then click the bookmark</p>
                 <div className="bg-blue-100 p-3 rounded border border-blue-300 mt-3">
-                  <p className="text-green-700">✅ <strong>Auto-copies to clipboard + opens vanwinkle</strong></p>
-                  <p className="text-blue-600">💡 <strong>Mac app users:</strong> Share → Open in browser → Use bookmarklet</p>
-                  <p className="text-red-600">⚠️ <strong>Fallback:</strong> Downloads file if clipboard fails</p>
+                  <p className="text-green-700">✅ <strong>Auto-detects platform + copies to clipboard + opens vanwinkle</strong></p>
+                  <p className="text-blue-600">💡 <strong>Supports:</strong> ChatGPT, Claude, Perplexity, Grok, Gemini, Copilot</p>
+                  <p className="text-blue-600">🚀 <strong>Mac app users:</strong> Share → Open in browser → Use bookmarklet</p>
                 </div>
               </div>
             </div>
@@ -118,10 +118,11 @@ export function BookmarkletModal({ isOpen, onClose }: BookmarkletModalProps) {
           <div className="bg-green-50 border border-green-200 rounded-lg p-4">
             <h4 className="font-semibold text-green-800 mb-2">🔍 How it works:</h4>
             <ol className="list-decimal list-inside text-sm text-green-700 space-y-1">
-              <li>In ChatGPT mobile: Share → Copy link</li>
-              <li>Paste that share URL here and save</li>
-              <li>On desktop: See notification → Click "Open ChatGPT"</li>
-              <li>Use our bookmarklet to import the full conversation</li>
+              <li>On any AI conversation page, click the bookmarklet</li>
+              <li>It auto-detects the platform (ChatGPT, Claude, etc.)</li>
+              <li>Extracts and formats the conversation automatically</li>
+              <li>Opens vanwinkle with content ready to submit</li>
+              <li>Platform is automatically pre-selected for you!</li>
             </ol>
           </div>
 

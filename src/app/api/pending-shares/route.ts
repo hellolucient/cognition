@@ -102,16 +102,13 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { url, title, notes } = body;
 
-    // Basic URL validation
-    if (!url || typeof url !== 'string') {
-      return NextResponse.json({ error: 'Valid URL is required' }, { status: 400 });
-    }
-
-    // Validate it's a ChatGPT URL
-    const isValidChatGPTUrl = url.includes('chatgpt.com') || url.includes('chat.openai.com');
-    if (!isValidChatGPTUrl) {
+    // Validate URL using our AI platform detector
+    const { validateAIUrl } = await import('@/lib/ai-url-detector');
+    const urlAnalysis = validateAIUrl(url);
+    
+    if (!urlAnalysis.isValid) {
       return NextResponse.json({ 
-        error: 'Please provide a valid ChatGPT share URL' 
+        error: urlAnalysis.error || 'Please provide a valid AI platform share URL' 
       }, { status: 400 });
     }
 
@@ -126,7 +123,7 @@ export async function POST(request: NextRequest) {
 
     if (existingShare) {
       return NextResponse.json({ 
-        error: 'This ChatGPT conversation is already saved in your pending list' 
+        error: `This ${urlAnalysis.platform.displayName} conversation is already saved in your pending list` 
       }, { status: 409 });
     }
 
@@ -136,18 +133,22 @@ export async function POST(request: NextRequest) {
         url,
         title: title || null,
         notes: notes || null,
+        platform: urlAnalysis.platform.name,
         userId: user.id,
       },
     });
 
     return NextResponse.json({ 
-      pendingShare,
-      message: 'ChatGPT conversation saved! You can now access it from your desktop.' 
+      pendingShare: {
+        ...pendingShare,
+        detectedPlatform: urlAnalysis.platform.name
+      },
+      message: `${urlAnalysis.platform.displayName} conversation saved! You can now access it from your desktop.` 
     }, { status: 201 });
   } catch (error) {
     console.error('Error creating pending share:', error);
     return NextResponse.json(
-      { error: 'Failed to save ChatGPT conversation' },
+      { error: 'Failed to save AI conversation' },
       { status: 500 }
     );
   }

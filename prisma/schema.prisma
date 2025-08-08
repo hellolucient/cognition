@@ -117,8 +117,9 @@ model WaitlistEntry {
 
 model PendingShare {
   id          String   @id @default(cuid())
-  url         String   // ChatGPT share URL
+  url         String   // AI platform share URL
   title       String?  // Optional title extracted from URL or user-provided
+  platform    String?  // Detected AI platform (ChatGPT, Claude, etc.)
   userId      String
   status      String   @default("pending") // pending, completed, cancelled
   createdAt   DateTime @default(now())

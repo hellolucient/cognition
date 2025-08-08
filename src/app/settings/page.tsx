@@ -26,6 +26,7 @@ interface PendingShare {
   url: string;
   title: string | null;
   notes: string | null;
+  platform: string | null;
   status: string;
   createdAt: string;
   completedAt: string | null;
@@ -584,8 +585,13 @@ export default function SettingsPage() {
                     <div className="flex-1">
                       <div className="flex items-center gap-2 mb-2">
                         <h3 className="font-medium">
-                          {share.title || 'Untitled ChatGPT Conversation'}
+                          {share.title || `Untitled ${share.platform || 'AI'} Conversation`}
                         </h3>
+                        {share.platform && (
+                          <Badge variant="outline" className="text-xs">
+                            {share.platform}
+                          </Badge>
+                        )}
                         <Badge 
                           variant={share.status === 'pending' ? 'default' : 'secondary'}
                         >
@@ -617,7 +623,7 @@ export default function SettingsPage() {
                         size="sm"
                         onClick={() => openChatGPT(share.url)}
                       >
-                        🔗 Open ChatGPT
+                        🔗 Open {share.platform || 'Link'}
                       </Button>
                       
                       {share.status === 'pending' && (
@@ -649,8 +655,8 @@ export default function SettingsPage() {
           <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
             <h3 className="font-medium text-blue-900 mb-2">💡 How to use:</h3>
             <ol className="text-sm text-blue-800 space-y-1">
-              <li>1. Save ChatGPT conversations from your mobile device</li>
-              <li>2. Click "Open ChatGPT" to view the conversation on desktop</li>
+              <li>1. Save AI conversations from your mobile device</li>
+              <li>2. Click "Open [Platform]" to view the conversation on desktop</li>
               <li>3. Use our bookmarklet to import the full conversation to vanwinkle</li>
               <li>4. Mark as completed when done</li>
             </ol>

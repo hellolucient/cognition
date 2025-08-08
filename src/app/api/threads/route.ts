@@ -5,7 +5,7 @@ import prisma from '@/lib/prisma'
 
 export async function POST(request: NextRequest) {
   try {
-    const { content, source, tags, title, summary } = await request.json()
+    const { content, source, tags, title, summary, shareUrl } = await request.json()
 
     // Get the authenticated user
     const cookieStore = await cookies()
@@ -93,6 +93,23 @@ export async function POST(request: NextRequest) {
 
     // Auto-detection: Try to match with pending shares
     try {
+      // If we have the originating share URL from the bookmarklet, close it deterministically first
+      if (shareUrl) {
+        const exact = await prisma.pendingShare.findFirst({
+          where: { userId: user.id, status: 'pending', url: shareUrl }
+        })
+        if (exact) {
+          await prisma.pendingShare.update({
+            where: { id: exact.id },
+            data: { status: 'completed', completedAt: new Date() }
+          })
+          if (!source && exact.platform) {
+            await prisma.thread.update({ where: { id: thread.id }, data: { source: exact.platform } })
+          }
+          return NextResponse.json(thread)
+        }
+      }
+
       // Look for pending shares by this user that might match this submission
       const pendingShares = await prisma.pendingShare.findMany({
         where: {
@@ -105,11 +122,14 @@ export async function POST(request: NextRequest) {
         take: 10, // Check the 10 most recent pending shares
       });
 
-      // Simple matching logic - if the thread title matches or is similar to a pending share title
-      // or if this submission came from bookmarklet (indicated by source containing 'ChatGPT')
-      const isFromBookmarklet = source?.toLowerCase().includes('chatgpt') || 
-                               content.includes('🧑 You:') || 
-                               content.includes('🤖 ChatGPT:');
+      // Enhanced matching logic for multiple platforms
+      const isFromBookmarklet = content.includes('🧑 You:') || 
+                               content.includes('🤖 ChatGPT:') ||
+                               content.includes('🤖 Claude:') ||
+                               content.includes('🤖 Gemini:') ||
+                               content.includes('🤖 Copilot:') ||
+                               content.includes('🤖 Grok:') ||
+                               content.includes('🤖 Perplexity:');
 
       if (isFromBookmarklet && pendingShares.length > 0) {
         // Try to find the best match
@@ -126,6 +146,11 @@ export async function POST(request: NextRequest) {
             const commonWords = titleWords.filter(word => shareWords.includes(word));
             score += commonWords.length * 2;
           }
+
+          // Platform bonus if source specified and matches
+          if (source && share.platform && share.platform.toLowerCase() === source.toLowerCase()) {
+            score += 3;
+          }
           
           // Recency bonus (more recent = higher score)
           const ageInHours = (Date.now() - new Date(share.createdAt).getTime()) / (1000 * 60 * 60);
@@ -139,8 +164,9 @@ export async function POST(request: NextRequest) {
           }
         }
 
-        // If we found a reasonable match (score > 2), mark it as completed
-        if (bestMatch && bestScore > 2) {
+        // If we found a reasonable match, mark it as completed
+        // Lowered threshold and added fallback heuristics for bookmarklet flow
+        if (bestMatch && bestScore >= 1) {
           await prisma.pendingShare.update({
             where: { id: bestMatch.id },
             data: {
@@ -149,7 +175,59 @@ export async function POST(request: NextRequest) {
             },
           });
           
+          // If no source was specified but we have platform info from the pending share, use it
+          if (!source && bestMatch.platform) {
+            await prisma.thread.update({
+              where: { id: thread.id },
+              data: { source: bestMatch.platform }
+            });
+          }
+          
           console.log(`Auto-matched thread ${thread.id} with pending share ${bestMatch.id} (score: ${bestScore})`);
+        } else {
+          // Fallbacks: if only one pending share exists, or pick the most recent within 2 hours
+          let fallback: any = null;
+          if (pendingShares.length === 1) {
+            fallback = pendingShares[0];
+          } else {
+            fallback = pendingShares.find((s: any) => (Date.now() - new Date(s.createdAt).getTime()) < (1000 * 60 * 60 * 2));
+          }
+
+          if (fallback) {
+            await prisma.pendingShare.update({
+              where: { id: fallback.id },
+              data: {
+                status: 'completed',
+                completedAt: new Date(),
+              },
+            });
+            if (!source && fallback.platform) {
+              await prisma.thread.update({
+                where: { id: thread.id },
+                data: { source: fallback.platform }
+              });
+            }
+            console.log(`Fallback matched thread ${thread.id} with pending share ${fallback.id}`);
+          }
+        }
+      }
+      
+      // Auto-detect platform from content if no source is specified
+      if (!source && isFromBookmarklet) {
+        let detectedPlatform = null;
+        
+        if (content.includes('🤖 ChatGPT:')) detectedPlatform = 'ChatGPT';
+        else if (content.includes('🤖 Claude:')) detectedPlatform = 'Claude';
+        else if (content.includes('🤖 Gemini:')) detectedPlatform = 'Gemini';
+        else if (content.includes('🤖 Copilot:')) detectedPlatform = 'Copilot';
+        else if (content.includes('🤖 Grok:')) detectedPlatform = 'Grok';
+        else if (content.includes('🤖 Perplexity:')) detectedPlatform = 'Perplexity';
+        
+        if (detectedPlatform) {
+          await prisma.thread.update({
+            where: { id: thread.id },
+            data: { source: detectedPlatform }
+          });
         }
       }
     } catch (autoDetectionError) {
