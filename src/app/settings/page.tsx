@@ -67,9 +67,15 @@ export default function SettingsPage() {
     }
   }, [user]);
 
+  // Ensure counts load immediately on first mount (session cookie auth works without waiting on context)
+  useEffect(() => {
+    fetchPendingSharesCounts();
+  }, []);
+
   useEffect(() => {
     if (user) {
       fetchPendingShares();
+      fetchPendingSharesCounts();
     }
   }, [user, pendingSharesFilter]);
 
