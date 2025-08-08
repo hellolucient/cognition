@@ -27,6 +27,9 @@ const PLATFORM_PATTERNS = {
     patterns: [
       /^https:\/\/chatgpt\.com\/share\/.+/i,
       /^https:\/\/chat\.openai\.com\/share\/.+/i,
+      // Direct ChatGPT conversation URLs (non-share)
+      /^https:\/\/chat\.openai\.com\/c\/[a-zA-Z0-9\-]+$/i,
+      /^https:\/\/chatgpt\.com\/c\/[a-zA-Z0-9\-]+$/i,
     ]
   },
   claude: {

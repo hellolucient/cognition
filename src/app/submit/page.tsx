@@ -59,6 +59,7 @@ export default function SubmitPage() {
     const urlParams = new URLSearchParams(window.location.search);
     const fromBookmarklet = urlParams.get('from') === 'bookmarklet';
     const passedShare = urlParams.get('share');
+    const passedPlatform = urlParams.get('platform');
     if (passedShare) {
       try {
         setShareUrl(decodeURIComponent(passedShare));
@@ -74,8 +75,25 @@ export default function SubmitPage() {
       if (storedContent) {
         setChatContent(storedContent);
         
-        // Auto-detect platform from bookmarklet content
-        detectAndSetPlatform(storedContent);
+        // Prefer URL param platform if present; else detect from content
+        if (passedPlatform) {
+          const normalized = passedPlatform.trim().toLowerCase();
+          const mapping: Record<string, string> = {
+            chatgpt: 'ChatGPT',
+            claude: 'Claude',
+            gemini: 'Gemini',
+            perplexity: 'Perplexity',
+            copilot: 'Copilot',
+            grok: 'Grok',
+          };
+          if (mapping[normalized]) {
+            setSource(mapping[normalized]);
+          } else {
+            detectAndSetPlatform(storedContent);
+          }
+        } else {
+          detectAndSetPlatform(storedContent);
+        }
         
         // Clean up
         sessionStorage.removeItem('vanwinkle_chat');
@@ -90,16 +108,69 @@ export default function SubmitPage() {
       if (prefilledContent) {
         const decodedContent = decodeURIComponent(prefilledContent);
         setChatContent(decodedContent);
-        detectAndSetPlatform(decodedContent);
+        // Platform param may be present too
+        if (passedPlatform) {
+          const normalized = passedPlatform.trim().toLowerCase();
+          const mapping: Record<string, string> = {
+            chatgpt: 'ChatGPT',
+            claude: 'Claude',
+            gemini: 'Gemini',
+            perplexity: 'Perplexity',
+            copilot: 'Copilot',
+            grok: 'Grok',
+          };
+          if (mapping[normalized]) {
+            setSource(mapping[normalized]);
+          } else {
+            detectAndSetPlatform(decodedContent);
+          }
+        } else {
+          detectAndSetPlatform(decodedContent);
+        }
         window.history.replaceState({}, '', window.location.pathname);
       }
     }
   }, []);
 
-  // Function to detect platform from conversation content
+  // Function to detect platform from conversation content or embedded meta
   const detectAndSetPlatform = (content: string) => {
     if (!content) return;
     
+    // Check for embedded vanwinkle metadata header
+    try {
+      const metaStart = content.indexOf('--- vanwinkle-meta ---');
+      const metaEnd = content.indexOf('--- end-vanwinkle-meta ---');
+      if (metaStart !== -1 && metaEnd !== -1 && metaEnd > metaStart) {
+        const metaBlock = content.slice(metaStart, metaEnd);
+        const platformLine = metaBlock.split('\n').find(l => l.toLowerCase().startsWith('platform:'));
+        const urlLine = metaBlock.split('\n').find(l => l.toLowerCase().startsWith('url:'));
+        if (platformLine) {
+          const p = platformLine.split(':')[1]?.trim();
+          const mapping: Record<string, string> = {
+            chatgpt: 'ChatGPT',
+            claude: 'Claude',
+            gemini: 'Gemini',
+            perplexity: 'Perplexity',
+            copilot: 'Copilot',
+            grok: 'Grok',
+            ChatGPT: 'ChatGPT',
+            Claude: 'Claude',
+            Gemini: 'Gemini',
+            Perplexity: 'Perplexity',
+            Copilot: 'Copilot',
+            Grok: 'Grok',
+          };
+          if (p && mapping[p]) {
+            setSource(mapping[p]);
+          }
+        }
+        if (urlLine) {
+          const u = urlLine.split(':').slice(1).join(':').trim();
+          if (u) setShareUrl(u);
+        }
+      }
+    } catch {}
+
     let detectedPlatform = null;
     
     // Check for platform-specific markers in the content
