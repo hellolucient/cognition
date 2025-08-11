@@ -78,6 +78,7 @@ export default function SupabaseProvider({
           data: {
             name: name || null,
           },
+          emailRedirectTo: `${window.location.origin}/auth/callback`,
         },
       })
       return { error }
