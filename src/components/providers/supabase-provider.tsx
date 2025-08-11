@@ -36,10 +36,22 @@ export default function SupabaseProvider({
 
     getSession()
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       setSession(session)
       setUser(session?.user ?? null)
       router.refresh()
+
+      // Ensure an app user row exists after OAuth sign-in
+      if (event === 'SIGNED_IN' && session?.user) {
+        try {
+          await fetch('/api/auth/create-user', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+          })
+        } catch (err) {
+          console.warn('Failed to ensure user record exists:', err)
+        }
+      }
     })
 
     return () => {
