@@ -25,6 +25,8 @@ export default function AdminPage() {
   const [updating, setUpdating] = useState(false);
   const [testing, setTesting] = useState<string | null>(null);
   const [selectedProvider, setSelectedProvider] = useState<string>("");
+  const [myCodes, setMyCodes] = useState<{ id: string; code: string; createdAt: string; expiresAt: string | null; usedAt: string | null; isActive: boolean }[]>([]);
+  const [loadingCodes, setLoadingCodes] = useState<boolean>(false);
   const [waitlist, setWaitlist] = useState<{ id: string; email: string; message: string | null; createdAt: string; notified: boolean }[]>([]);
   const [waitlistTotal, setWaitlistTotal] = useState<number>(0);
   const [loadingWaitlist, setLoadingWaitlist] = useState<boolean>(false);
@@ -36,6 +38,7 @@ export default function AdminPage() {
     if (user) {
       fetchPlatformStatus();
       fetchWaitlist();
+      fetchMyCodes();
     }
   }, [user]);
 
@@ -106,6 +109,48 @@ export default function AdminPage() {
       setCopied(code);
       setTimeout(() => setCopied(null), 1500);
     } catch {}
+  };
+
+  const copyLink = async (code: string) => {
+    const url = `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}?invite=${encodeURIComponent(code)}`;
+    try {
+      await navigator.clipboard.writeText(url);
+      setCopied(url);
+      setTimeout(() => setCopied(null), 1500);
+    } catch {}
+  };
+
+  const fetchMyCodes = async () => {
+    setLoadingCodes(true);
+    try {
+      const res = await fetch('/api/user/invite-codes');
+      const data = await res.json();
+      if (res.ok) {
+        setMyCodes(data.codes || []);
+      }
+    } catch (e) {
+      console.error('Failed to fetch user codes', e);
+    } finally {
+      setLoadingCodes(false);
+    }
+  };
+
+  const generateMyCodes = async (count: number) => {
+    try {
+      const res = await fetch('/api/invite/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ count }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        alert(data.error || 'Failed to generate codes');
+        return;
+      }
+      await fetchMyCodes();
+    } catch (e) {
+      alert('Failed to generate codes');
+    }
   };
 
   const updatePlatformProvider = async () => {
@@ -399,12 +444,13 @@ export default function AdminPage() {
                               <Button size="sm" variant="ghost" onClick={() => copyCode(code)}>
                                 {copied === code ? 'Copied' : 'Copy'}
                               </Button>
+                              <Button size="sm" variant="ghost" onClick={() => copyLink(code)}>Copy Link</Button>
                             </div>
                           ))}
                         </div>
                         <div className="flex items-center gap-2">
                           {mailto && (
-                            <a href={mailto} className="text-sm underline">Compose Email</a>
+                            <a href={mailto} className="text-sm underline">Send Email</a>
                           )}
                         </div>
                       </div>
@@ -413,6 +459,39 @@ export default function AdminPage() {
                 );
               })}
             </div>
+          </CardContent>
+        </Card>
+
+        {/* Your Invite Codes */}
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between">
+            <div>
+              <CardTitle>Your Invite Codes</CardTitle>
+              <CardDescription>Share codes with friends to invite them to Cognition</CardDescription>
+            </div>
+            <Button onClick={() => generateMyCodes(3)} disabled={loadingCodes}>Generate 3 More</Button>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {loadingCodes && <div className="text-sm text-muted-foreground">Loading codes...</div>}
+            {myCodes
+              .filter(c => !c.usedAt)
+              .map(c => {
+                const link = `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}?invite=${encodeURIComponent(c.code)}`;
+                const mailto = `mailto:?subject=${encodeURIComponent('Your Cognition Invite Code')}&body=${encodeURIComponent(`Here is your Cognition invite code: ${c.code}\n\nUse it on the Sign Up tab at ${link}`)}`;
+                return (
+                  <div key={c.id} className="border rounded-md p-4 flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="font-mono text-lg">{c.code}</div>
+                      <span className="text-xs bg-black/90 text-white rounded px-2 py-1">Available</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Button size="sm" variant="outline" onClick={() => copyCode(c.code)}>{copied === c.code ? 'Copied' : 'Copy Code'}</Button>
+                      <Button size="sm" variant="outline" onClick={() => copyLink(c.code)}>Copy Link</Button>
+                      <a className="text-sm underline" href={mailto}>Send Email</a>
+                    </div>
+                  </div>
+                )
+            })}
           </CardContent>
         </Card>
       </div>
