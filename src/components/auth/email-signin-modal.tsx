@@ -31,6 +31,11 @@ export function EmailSignInModal({ isOpen, onClose }: EmailSignInModalProps) {
   const [signUpError, setSignUpError] = useState('')
   const [signUpSuccess, setSignUpSuccess] = useState('')
 
+  // Invite request state (for users without a code)
+  const [requestLoading, setRequestLoading] = useState(false)
+  const [requestSuccess, setRequestSuccess] = useState('')
+  const [requestError, setRequestError] = useState('')
+
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault()
     
@@ -119,6 +124,38 @@ export function EmailSignInModal({ isOpen, onClose }: EmailSignInModalProps) {
       setSignUpError(err.message || 'An unexpected error occurred')
     } finally {
       setSignUpLoading(false)
+    }
+  }
+
+  const handleRequestInvite = async () => {
+    setRequestError('')
+    setRequestSuccess('')
+
+    if (!signUpEmail.trim()) {
+      setRequestError('Please enter your email above to request an invite')
+      return
+    }
+
+    setRequestLoading(true)
+    try {
+      const response = await fetch('/api/waitlist', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: signUpEmail.trim(),
+          message: `Signup invite request. Name: ${signUpName.trim() || '(not provided)'}${signUpInvite ? ` | Entered code: ${signUpInvite}` : ''}`,
+        }),
+      })
+
+      const data = await response.json()
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to request invite')
+      }
+      setRequestSuccess('Request submitted! We will email you when an invite is available.')
+    } catch (err: any) {
+      setRequestError(err.message || 'Failed to request invite')
+    } finally {
+      setRequestLoading(false)
     }
   }
 
@@ -256,8 +293,30 @@ export function EmailSignInModal({ isOpen, onClose }: EmailSignInModalProps) {
                 />
               </div>
 
+              <div className="text-xs text-muted-foreground">
+                Don&apos;t have an invite code?
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="ml-2"
+                  onClick={handleRequestInvite}
+                  disabled={requestLoading}
+                >
+                  {requestLoading ? 'Requesting...' : 'Request an Invite'}
+                </Button>
+              </div>
+
               {signUpError && (
                 <div className="text-sm text-red-600 bg-red-50 p-3 rounded-md">{signUpError}</div>
+              )}
+
+              {requestError && (
+                <div className="text-sm text-red-600 bg-red-50 p-3 rounded-md">{requestError}</div>
+              )}
+
+              {requestSuccess && (
+                <div className="text-sm text-blue-600 bg-blue-50 p-3 rounded-md">{requestSuccess}</div>
               )}
 
               {signUpSuccess && (
