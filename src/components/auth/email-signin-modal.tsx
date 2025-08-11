@@ -14,7 +14,7 @@ interface EmailSignInModalProps {
 }
 
 export function EmailSignInModal({ isOpen, onClose }: EmailSignInModalProps) {
-  const { signInWithEmail } = useSupabase()
+  const { signInWithEmail, supabase } = useSupabase()
   
   // Sign In State
   const [signInEmail, setSignInEmail] = useState('')
@@ -22,7 +22,14 @@ export function EmailSignInModal({ isOpen, onClose }: EmailSignInModalProps) {
   const [signInLoading, setSignInLoading] = useState(false)
   const [signInError, setSignInError] = useState('')
 
-  // Removed sign-up state: invite-only signup is handled elsewhere
+  // Sign Up State (invite required)
+  const [signUpName, setSignUpName] = useState('')
+  const [signUpEmail, setSignUpEmail] = useState('')
+  const [signUpPassword, setSignUpPassword] = useState('')
+  const [signUpInvite, setSignUpInvite] = useState('')
+  const [signUpLoading, setSignUpLoading] = useState(false)
+  const [signUpError, setSignUpError] = useState('')
+  const [signUpSuccess, setSignUpSuccess] = useState('')
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -59,7 +66,61 @@ export function EmailSignInModal({ isOpen, onClose }: EmailSignInModalProps) {
     }
   }
 
-  // Removed sign-up handler
+  const handleSignUp = async (e: React.FormEvent) => {
+    e.preventDefault()
+
+    if (!signUpEmail.trim() || !signUpPassword.trim() || !signUpInvite.trim()) {
+      setSignUpError('Email, password, and invite code are required')
+      return
+    }
+
+    if (signUpPassword.length < 6) {
+      setSignUpError('Password must be at least 6 characters')
+      return
+    }
+
+    setSignUpLoading(true)
+    setSignUpError('')
+    setSignUpSuccess('')
+
+    try {
+      const response = await fetch('/api/auth/signup-with-invite', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          inviteCode: signUpInvite.trim().toUpperCase(),
+          email: signUpEmail.trim(),
+          password: signUpPassword,
+          name: signUpName.trim() || null,
+        }),
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to create account')
+      }
+
+      // Attempt auto sign-in; if email confirmation is required this will likely fail gracefully
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email: signUpEmail.trim(),
+        password: signUpPassword,
+      })
+
+      if (signInError) {
+        setSignUpSuccess('Account created! Please check your email and click the confirmation link before signing in.')
+      } else {
+        // If it did sign in, close and reset
+        onClose()
+        resetForms()
+        return
+      }
+    } catch (err: any) {
+      setSignUpError(err.message || 'An unexpected error occurred')
+    } finally {
+      setSignUpLoading(false)
+    }
+  }
 
   const resetForms = () => {
     // Sign In
@@ -68,7 +129,14 @@ export function EmailSignInModal({ isOpen, onClose }: EmailSignInModalProps) {
     setSignInError('')
     setSignInLoading(false)
     
-    // No sign-up state to reset
+    // Sign Up
+    setSignUpName('')
+    setSignUpEmail('')
+    setSignUpPassword('')
+    setSignUpInvite('')
+    setSignUpError('')
+    setSignUpSuccess('')
+    setSignUpLoading(false)
   }
 
   const handleClose = () => {
@@ -84,8 +152,9 @@ export function EmailSignInModal({ isOpen, onClose }: EmailSignInModalProps) {
         </DialogHeader>
         
         <Tabs defaultValue="signin" className="w-full">
-          <TabsList className="grid w-full grid-cols-1">
+          <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="signin">Sign In</TabsTrigger>
+            <TabsTrigger value="signup">Sign Up</TabsTrigger>
           </TabsList>
           
           <TabsContent value="signin" className="space-y-4 mt-4">
@@ -132,7 +201,74 @@ export function EmailSignInModal({ isOpen, onClose }: EmailSignInModalProps) {
             </form>
           </TabsContent>
           
-          {/* Sign-up removed: invite-only flow */}
+          <TabsContent value="signup" className="space-y-4 mt-4">
+            <form onSubmit={handleSignUp} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="signup-name">Name (optional)</Label>
+                <Input
+                  id="signup-name"
+                  type="text"
+                  placeholder="Your name"
+                  value={signUpName}
+                  onChange={(e) => setSignUpName(e.target.value)}
+                  disabled={signUpLoading}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="signup-email">Email</Label>
+                <Input
+                  id="signup-email"
+                  type="email"
+                  placeholder="your@email.com"
+                  value={signUpEmail}
+                  onChange={(e) => setSignUpEmail(e.target.value)}
+                  disabled={signUpLoading}
+                  required
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="signup-password">Password</Label>
+                <Input
+                  id="signup-password"
+                  type="password"
+                  placeholder="••••••••"
+                  value={signUpPassword}
+                  onChange={(e) => setSignUpPassword(e.target.value)}
+                  disabled={signUpLoading}
+                  required
+                />
+                <p className="text-xs text-muted-foreground">Must be at least 6 characters</p>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="signup-invite">Invite Code</Label>
+                <Input
+                  id="signup-invite"
+                  type="text"
+                  placeholder="ABC12345"
+                  value={signUpInvite}
+                  onChange={(e) => setSignUpInvite(e.target.value.toUpperCase())}
+                  maxLength={8}
+                  disabled={signUpLoading}
+                  required
+                />
+              </div>
+
+              {signUpError && (
+                <div className="text-sm text-red-600 bg-red-50 p-3 rounded-md">{signUpError}</div>
+              )}
+
+              {signUpSuccess && (
+                <div className="text-sm text-green-600 bg-green-50 p-3 rounded-md">{signUpSuccess}</div>
+              )}
+
+              <Button type="submit" className="w-full" disabled={signUpLoading}>
+                {signUpLoading ? 'Creating Account...' : 'Create Account'}
+              </Button>
+            </form>
+          </TabsContent>
         </Tabs>
       </DialogContent>
     </Dialog>
