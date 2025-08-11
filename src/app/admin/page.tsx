@@ -2,9 +2,10 @@
 
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+// already imported above
 import { useSupabase } from "@/components/providers/supabase-provider";
 import Link from "next/link";
 
@@ -24,10 +25,15 @@ export default function AdminPage() {
   const [updating, setUpdating] = useState(false);
   const [testing, setTesting] = useState<string | null>(null);
   const [selectedProvider, setSelectedProvider] = useState<string>("");
+  const [waitlist, setWaitlist] = useState<{ id: string; email: string; message: string | null; createdAt: string; notified: boolean }[]>([]);
+  const [waitlistTotal, setWaitlistTotal] = useState<number>(0);
+  const [loadingWaitlist, setLoadingWaitlist] = useState<boolean>(false);
+  const [invitingId, setInvitingId] = useState<string | null>(null);
 
   useEffect(() => {
     if (user) {
       fetchPlatformStatus();
+      fetchWaitlist();
     }
   }, [user]);
 
@@ -46,6 +52,45 @@ export default function AdminPage() {
       console.error('Failed to fetch platform status:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchWaitlist = async () => {
+    setLoadingWaitlist(true);
+    try {
+      const res = await fetch('/api/admin/waitlist');
+      const data = await res.json();
+      if (res.ok) {
+        setWaitlist(data.entries);
+        setWaitlistTotal(data.total);
+      }
+    } catch (e) {
+      console.error('Failed to fetch waitlist', e);
+    } finally {
+      setLoadingWaitlist(false);
+    }
+  };
+
+  const generateInvitesForEntry = async (entryId: string) => {
+    setInvitingId(entryId);
+    try {
+      const res = await fetch('/api/admin/waitlist', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ entryId, count: 1 }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        alert(data.error || 'Failed to generate invite');
+        return;
+      }
+      await fetchWaitlist();
+      const first = data.codes?.[0]?.code;
+      alert(`Invite code generated for ${data.email}: ${first}`);
+    } catch (e) {
+      alert('Failed to generate invite');
+    } finally {
+      setInvitingId(null);
     }
   };
 
@@ -285,6 +330,46 @@ export default function AdminPage() {
                 <strong>Note:</strong> This affects summary and title generation for new posts. 
                 User contributions will still use their own API keys and can choose any provider.
               </p>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Waitlist Management */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Waitlist</CardTitle>
+            <CardDescription>Approve requests and generate invite codes</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="text-sm text-muted-foreground">Total entries: {waitlistTotal}</div>
+              <Button variant="outline" size="sm" onClick={fetchWaitlist} disabled={loadingWaitlist}>
+                {loadingWaitlist ? 'Refreshing...' : 'Refresh'}
+              </Button>
+            </div>
+
+            <div className="divide-y border rounded-md">
+              {waitlist.length === 0 && (
+                <div className="p-4 text-sm text-muted-foreground">No waitlist entries</div>
+              )}
+              {waitlist.map((w) => (
+                <div key={w.id} className="p-4 flex items-center gap-4 justify-between">
+                  <div>
+                    <div className="font-medium">{w.email}</div>
+                    <div className="text-xs text-muted-foreground">{new Date(w.createdAt).toLocaleString()} {w.notified ? '• Notified' : ''}</div>
+                    {w.message && <div className="text-sm mt-1 max-w-xl whitespace-pre-wrap">{w.message}</div>}
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      size="sm"
+                      onClick={() => generateInvitesForEntry(w.id)}
+                      disabled={invitingId === w.id}
+                    >
+                      {invitingId === w.id ? 'Generating...' : 'Generate Invite'}
+                    </Button>
+                  </div>
+                </div>
+              ))}
             </div>
           </CardContent>
         </Card>
