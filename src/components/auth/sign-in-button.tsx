@@ -8,7 +8,7 @@ import { InviteSignupModal } from "./invite-signup-modal"
 import { EmailSignInModal } from "./email-signin-modal"
 
 export default function SignInButton() {
-  const { user, signInWithGithub, signOut } = useSupabase()
+  const { user, signOut } = useSupabase()
   const [showWaitlist, setShowWaitlist] = useState(false)
   const [showInviteSignup, setShowInviteSignup] = useState(false)
   const [showEmailSignIn, setShowEmailSignIn] = useState(false)
@@ -31,9 +31,6 @@ export default function SignInButton() {
       <div className="flex items-center gap-1 md:gap-2">
         <Button onClick={() => setShowEmailSignIn(true)} variant="default" size="sm">
           Sign In
-        </Button>
-        <Button onClick={signInWithGithub} variant="outline" size="sm" className="hidden sm:flex">
-          Sign in with GitHub
         </Button>
         <Button onClick={() => setShowInviteSignup(true)} variant="outline" size="sm" className="hidden md:flex">
           Have Invite Code?
