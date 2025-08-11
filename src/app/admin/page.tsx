@@ -417,6 +417,24 @@ export default function AdminPage() {
                 const mailto = first
                   ? `mailto:${encodeURIComponent(w.email)}?subject=${encodeURIComponent('Your Cognition Invite Code')}&body=${encodeURIComponent(`Hi\n\nHere is your Cognition invite code: ${first}\n\nUse it on the Sign Up tab at ${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'} .\n\nEnjoy!`)}`
                   : undefined;
+                const sendEmail = async () => {
+                  if (!first) return;
+                  try {
+                    const res = await fetch('/api/admin/send-invite-email', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ toEmail: w.email, code: first }),
+                    });
+                    if (!res.ok) {
+                      const data = await res.json();
+                      alert(data.error || 'Failed to send email');
+                      return;
+                    }
+                    alert('Email sent');
+                  } catch (e) {
+                    alert('Failed to send email');
+                  }
+                };
                 return (
                   <div key={w.id} className="p-4 space-y-3">
                     <div className="flex items-center gap-4 justify-between">
@@ -450,7 +468,10 @@ export default function AdminPage() {
                         </div>
                         <div className="flex items-center gap-2">
                           {mailto && (
-                            <a href={mailto} className="text-sm underline">Send Email</a>
+                            <>
+                              <a href={mailto} className="text-sm underline">Open Mail App</a>
+                              <Button size="sm" onClick={sendEmail}>Send via Gmail SMTP</Button>
+                            </>
                           )}
                         </div>
                       </div>
