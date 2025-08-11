@@ -29,6 +29,8 @@ export default function AdminPage() {
   const [waitlistTotal, setWaitlistTotal] = useState<number>(0);
   const [loadingWaitlist, setLoadingWaitlist] = useState<boolean>(false);
   const [invitingId, setInvitingId] = useState<string | null>(null);
+  const [generatedCodesByEntry, setGeneratedCodesByEntry] = useState<Record<string, string[]>>({});
+  const [copied, setCopied] = useState<string | null>(null);
 
   useEffect(() => {
     if (user) {
@@ -84,14 +86,26 @@ export default function AdminPage() {
         alert(data.error || 'Failed to generate invite');
         return;
       }
+      // Save generated codes in local state for display
+      setGeneratedCodesByEntry(prev => ({
+        ...prev,
+        [entryId]: (data.codes || []).map((c: any) => c.code),
+      }));
+      // Refresh row state to reflect notified flag
       await fetchWaitlist();
-      const first = data.codes?.[0]?.code;
-      alert(`Invite code generated for ${data.email}: ${first}`);
     } catch (e) {
       alert('Failed to generate invite');
     } finally {
       setInvitingId(null);
     }
+  };
+
+  const copyCode = async (code: string) => {
+    try {
+      await navigator.clipboard.writeText(code);
+      setCopied(code);
+      setTimeout(() => setCopied(null), 1500);
+    } catch {}
   };
 
   const updatePlatformProvider = async () => {
@@ -352,24 +366,52 @@ export default function AdminPage() {
               {waitlist.length === 0 && (
                 <div className="p-4 text-sm text-muted-foreground">No waitlist entries</div>
               )}
-              {waitlist.map((w) => (
-                <div key={w.id} className="p-4 flex items-center gap-4 justify-between">
-                  <div>
-                    <div className="font-medium">{w.email}</div>
-                    <div className="text-xs text-muted-foreground">{new Date(w.createdAt).toLocaleString()} {w.notified ? '• Notified' : ''}</div>
-                    {w.message && <div className="text-sm mt-1 max-w-xl whitespace-pre-wrap">{w.message}</div>}
+              {waitlist.map((w) => {
+                const generated = generatedCodesByEntry[w.id] || [];
+                const first = generated[0];
+                const mailto = first
+                  ? `mailto:${encodeURIComponent(w.email)}?subject=${encodeURIComponent('Your Cognition Invite Code')}&body=${encodeURIComponent(`Hi\n\nHere is your Cognition invite code: ${first}\n\nUse it on the Sign Up tab at ${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'} .\n\nEnjoy!`)}`
+                  : undefined;
+                return (
+                  <div key={w.id} className="p-4 space-y-3">
+                    <div className="flex items-center gap-4 justify-between">
+                      <div>
+                        <div className="font-medium">{w.email}</div>
+                        <div className="text-xs text-muted-foreground">{new Date(w.createdAt).toLocaleString()} {w.notified ? '• Notified' : ''}</div>
+                        {w.message && <div className="text-sm mt-1 max-w-xl whitespace-pre-wrap">{w.message}</div>}
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Button
+                          size="sm"
+                          onClick={() => generateInvitesForEntry(w.id)}
+                          disabled={invitingId === w.id}
+                        >
+                          {invitingId === w.id ? 'Generating...' : 'Generate Invite'}
+                        </Button>
+                      </div>
+                    </div>
+                    {generated.length > 0 && (
+                      <div className="bg-muted rounded p-3 flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          {generated.map((code) => (
+                            <div key={code} className="bg-white border rounded px-2 py-1 text-sm flex items-center gap-2">
+                              <span className="font-mono">{code}</span>
+                              <Button size="sm" variant="ghost" onClick={() => copyCode(code)}>
+                                {copied === code ? 'Copied' : 'Copy'}
+                              </Button>
+                            </div>
+                          ))}
+                        </div>
+                        <div className="flex items-center gap-2">
+                          {mailto && (
+                            <a href={mailto} className="text-sm underline">Compose Email</a>
+                          )}
+                        </div>
+                      </div>
+                    )}
                   </div>
-                  <div className="flex items-center gap-2">
-                    <Button
-                      size="sm"
-                      onClick={() => generateInvitesForEntry(w.id)}
-                      disabled={invitingId === w.id}
-                    >
-                      {invitingId === w.id ? 'Generating...' : 'Generate Invite'}
-                    </Button>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </CardContent>
         </Card>
