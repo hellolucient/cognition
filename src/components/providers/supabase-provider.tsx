@@ -11,7 +11,6 @@ type SupabaseContext = {
   supabase: ReturnType<typeof createClient>
   signOut: () => Promise<void>
   signInWithEmail: (email: string, password: string) => Promise<{ error?: any }>
-  signUpWithEmail: (email: string, password: string, name?: string) => Promise<{ error?: any }>
 }
 
 const Context = createContext<SupabaseContext | undefined>(undefined)
@@ -73,19 +72,7 @@ export default function SupabaseProvider({
       })
       return { error }
     },
-    signUpWithEmail: async (email: string, password: string, name?: string) => {
-      const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          data: {
-            name: name || null,
-          },
-          emailRedirectTo: `${window.location.origin}/auth/callback`,
-        },
-      })
-      return { error }
-    }
+    
   }
 
   return <Context.Provider value={value}>{children}</Context.Provider>
