@@ -210,6 +210,7 @@ export function EmailSignInModal({ isOpen, onClose }: EmailSignInModalProps) {
                 <Input
                   id="signin-email"
                   type="email"
+                  autoComplete="username"
                   placeholder="your@email.com"
                   value={signInEmail}
                   onChange={(e) => setSignInEmail(e.target.value)}
@@ -281,6 +282,7 @@ export function EmailSignInModal({ isOpen, onClose }: EmailSignInModalProps) {
                 <Input
                   id="signup-email"
                   type="email"
+                  autoComplete="email"
                   placeholder="your@email.com"
                   value={signUpEmail}
                   onChange={(e) => setSignUpEmail(e.target.value)}
@@ -294,6 +296,7 @@ export function EmailSignInModal({ isOpen, onClose }: EmailSignInModalProps) {
                 <Input
                   id="signup-password"
                   type="password"
+                  autoComplete="new-password"
                   placeholder="••••••••"
                   value={signUpPassword}
                   onChange={(e) => setSignUpPassword(e.target.value)}
