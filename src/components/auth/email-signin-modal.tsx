@@ -22,6 +22,9 @@ export function EmailSignInModal({ isOpen, onClose }: EmailSignInModalProps) {
   const [signInLoading, setSignInLoading] = useState(false)
   const [signInError, setSignInError] = useState('')
 
+  // Tabs
+  const [activeTab, setActiveTab] = useState<'signin' | 'signup'>('signin')
+
   // Sign Up State (invite required)
   const [signUpName, setSignUpName] = useState('')
   const [signUpEmail, setSignUpEmail] = useState('')
@@ -188,7 +191,7 @@ export function EmailSignInModal({ isOpen, onClose }: EmailSignInModalProps) {
           <DialogTitle>Sign In to vanwinkle</DialogTitle>
         </DialogHeader>
         
-        <Tabs defaultValue="signin" className="w-full">
+        <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'signin' | 'signup')} className="w-full">
           <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="signin">Sign In</TabsTrigger>
             <TabsTrigger value="signup">Sign Up</TabsTrigger>
@@ -224,7 +227,20 @@ export function EmailSignInModal({ isOpen, onClose }: EmailSignInModalProps) {
               
               {signInError && (
                 <div className="text-sm text-red-600 bg-red-50 p-3 rounded-md">
-                  {signInError}
+                  <div>{signInError}</div>
+                  <div className="mt-2 text-xs text-red-700">
+                    No account?
+                    <button
+                      type="button"
+                      className="underline ml-1"
+                      onClick={() => {
+                        setActiveTab('signup')
+                        if (signInEmail) setSignUpEmail(signInEmail)
+                      }}
+                    >
+                      Sign up here
+                    </button>
+                  </div>
                 </div>
               )}
               
