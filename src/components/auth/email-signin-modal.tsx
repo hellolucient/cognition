@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -24,6 +24,11 @@ export function EmailSignInModal({ isOpen, onClose }: EmailSignInModalProps) {
 
   // Tabs
   const [activeTab, setActiveTab] = useState<'signin' | 'signup'>('signin')
+
+  // Always default to Sign In when modal opens
+  useEffect(() => {
+    if (isOpen) setActiveTab('signin')
+  }, [isOpen])
 
   // Sign Up State (invite required)
   const [signUpName, setSignUpName] = useState('')
@@ -180,6 +185,7 @@ export function EmailSignInModal({ isOpen, onClose }: EmailSignInModalProps) {
 
   const handleClose = () => {
     resetForms()
+    setActiveTab('signin')
     onClose()
   }
 

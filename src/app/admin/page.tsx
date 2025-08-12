@@ -477,22 +477,24 @@ export default function AdminPage() {
                         </div>
                         <div className="flex items-center gap-2">
                           {mailto && (
-                            <Button size="sm" onClick={sendEmail} disabled={emailSendingFor === w.id} className="cursor-pointer">
-                              {emailSendingFor === w.id ? 'Sending…' : 'Send via Gmail SMTP'}
+                            <Button
+                              size="sm"
+                              onClick={sendEmail}
+                              disabled={emailSendingFor === w.id || emailSentFor === w.id}
+                              className="cursor-pointer"
+                            >
+                              {emailSendingFor === w.id
+                                ? 'Sending…'
+                                : emailSentFor === w.id
+                                  ? 'Email Sent'
+                                  : 'Send via Gmail SMTP'}
                             </Button>
                           )}
                         </div>
                       </div>
                     )}
-                    {(emailSentFor === w.id || emailErrorFor === w.id) && (
-                      <div className="text-sm mt-2">
-                        {emailSentFor === w.id && (
-                          <span className="text-green-600">Email sent.</span>
-                        )}
-                        {emailErrorFor === w.id && (
-                          <span className="text-red-600">Failed to send email. Try again.</span>
-                        )}
-                      </div>
+                    {emailErrorFor === w.id && (
+                      <div className="text-sm mt-2 text-red-600">Failed to send email. Try again.</div>
                     )}
                   </div>
                 );
