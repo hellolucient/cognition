@@ -1,28 +1,41 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, createContext, useContext } from 'react';
 import { useSupabase } from '@/components/providers/supabase-provider';
 import { AdminNavLink } from '@/components/admin/admin-nav-link';
 import Link from 'next/link';
 import { Badge } from '@/components/ui/badge';
 
-export function NavWithNotifications() {
+// Create a context to share pending count between desktop and mobile nav
+const PendingCountContext = createContext<{
+  pendingCount: number;
+  fetchPendingCount: () => Promise<void>;
+}>({
+  pendingCount: 0,
+  fetchPendingCount: async () => {},
+});
+
+// Provider component that handles the polling logic once
+export function PendingCountProvider({ children }: { children: React.ReactNode }) {
   const { user } = useSupabase();
   const [pendingCount, setPendingCount] = useState(0);
 
-  useEffect(() => {
-    if (user) {
-      fetchPendingCount();
-      // Refresh count every 30 seconds
-      const interval = setInterval(fetchPendingCount, 30000);
-      return () => clearInterval(interval);
-    }
-  }, [user]);
-
   const fetchPendingCount = async () => {
+    // Only fetch if user is authenticated
+    if (!user) {
+      setPendingCount(0);
+      return;
+    }
+
     try {
       const response = await fetch('/api/pending-shares/count');
       if (!response.ok) {
+        // If 401, user is not authenticated - don't spam logs
+        if (response.status === 401) {
+          setPendingCount(0);
+          return;
+        }
+        console.warn('Failed to fetch pending count:', response.status, response.statusText);
         setPendingCount(0);
         return;
       }
@@ -34,6 +47,35 @@ export function NavWithNotifications() {
       setPendingCount(0);
     }
   };
+
+  useEffect(() => {
+    if (user) {
+      fetchPendingCount();
+      // Refresh count every 30 seconds, but only if user is authenticated
+      const interval = setInterval(() => {
+        if (user) {
+          fetchPendingCount();
+        }
+      }, 30000);
+      return () => clearInterval(interval);
+    } else {
+      setPendingCount(0);
+    }
+  }, [user]);
+
+  return (
+    <PendingCountContext.Provider value={{ pendingCount, fetchPendingCount }}>
+      {children}
+    </PendingCountContext.Provider>
+  );
+}
+
+// Hook to use the pending count
+const usePendingCount = () => useContext(PendingCountContext);
+
+export function NavWithNotifications() {
+  const { user } = useSupabase();
+  const { pendingCount } = usePendingCount();
 
   return (
     <nav className="hidden md:flex items-center gap-4 text-sm">
@@ -56,31 +98,7 @@ export function NavWithNotifications() {
 // Mobile navigation component
 export function MobileNavWithNotifications() {
   const { user } = useSupabase();
-  const [pendingCount, setPendingCount] = useState(0);
-
-  useEffect(() => {
-    if (user) {
-      fetchPendingCount();
-      const interval = setInterval(fetchPendingCount, 30000);
-      return () => clearInterval(interval);
-    }
-  }, [user]);
-
-  const fetchPendingCount = async () => {
-    try {
-      const response = await fetch('/api/pending-shares/count');
-      if (!response.ok) {
-        setPendingCount(0);
-        return;
-      }
-      const data = await response.json();
-      const value = Number(data?.pending);
-      setPendingCount(Number.isFinite(value) && value > 0 ? value : 0);
-    } catch (err) {
-      console.error('Error fetching pending count:', err);
-      setPendingCount(0);
-    }
-  };
+  const { pendingCount } = usePendingCount();
 
   return (
     <nav className="md:hidden flex items-center gap-4 text-sm">
