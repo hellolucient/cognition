@@ -68,7 +68,7 @@ export function WaitlistModal({ isOpen, onClose }: WaitlistModalProps) {
         {!isSuccess ? (
           <>
             <div className="mb-6">
-              <h2 className="text-2xl font-bold mb-2">Join Cognition</h2>
+              <h2 className="text-2xl font-bold mb-2">Join vanwinkle</h2>
               <p className="text-muted-foreground">
                 We're building something special and scaling carefully. Join our waitlist to get early access!
               </p>
@@ -91,7 +91,7 @@ export function WaitlistModal({ isOpen, onClose }: WaitlistModalProps) {
                 <Label htmlFor="message">Tell us about yourself (optional)</Label>
                 <Textarea
                   id="message"
-                  placeholder="What brings you to Cognition? What kind of AI conversations do you have?"
+                  placeholder="What brings you to vanwinkle? What kind of AI conversations do you have?"
                   value={message}
                   onChange={(e) => setMessage(e.target.value)}
                   rows={3}
@@ -129,12 +129,12 @@ export function WaitlistModal({ isOpen, onClose }: WaitlistModalProps) {
             <p className="text-muted-foreground mb-6">
               We're working hard to let more users in. Keep a close eye on your inbox and follow{" "}
               <a 
-                href="https://twitter.com/cognition_ai" 
+                href="https://twitter.com/vanwinkleapp" 
                 target="_blank" 
                 rel="noopener noreferrer"
                 className="text-blue-600 hover:underline"
               >
-                @cognition_ai
+                @vanwinkleapp
               </a>{" "}
               where we'll release invite codes!
             </p>
