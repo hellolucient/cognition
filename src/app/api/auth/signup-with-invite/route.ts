@@ -116,9 +116,9 @@ export async function POST(request: NextRequest) {
       }
     })
 
-    // Generate 5 initial invite codes for the new user
+    // Generate 3 initial invite codes for the new user
     const newCodes = []
-    for (let i = 0; i < 5; i++) {
+    for (let i = 0; i < 3; i++) {
       let code = generateInviteCode()
       
       // Ensure uniqueness

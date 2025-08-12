@@ -29,14 +29,45 @@ export default function SupabaseProvider({
     const getSession = async () => {
       const { data: { session } } = await supabase.auth.getSession()
       setSession(session)
-      setUser(session?.user ?? null)
+      if (session?.user) {
+        // Try to hydrate name from our DB profile
+        try {
+          const res = await fetch('/api/user/profile')
+          const data = await res.json()
+          if (res.ok && data?.profile?.name) {
+            const patched = { ...session.user, user_metadata: { ...(session.user.user_metadata || {}), name: data.profile.name } } as any
+            setUser(patched)
+          } else {
+            setUser(session.user)
+          }
+        } catch {
+          setUser(session.user)
+        }
+      } else {
+        setUser(null)
+      }
     }
 
     getSession()
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       setSession(session)
-      setUser(session?.user ?? null)
+      if (session?.user) {
+        try {
+          const res = await fetch('/api/user/profile')
+          const data = await res.json()
+          if (res.ok && data?.profile?.name) {
+            const patched = { ...session.user, user_metadata: { ...(session.user.user_metadata || {}), name: data.profile.name } } as any
+            setUser(patched)
+          } else {
+            setUser(session.user)
+          }
+        } catch {
+          setUser(session.user)
+        }
+      } else {
+        setUser(null)
+      }
       router.refresh()
 
       // Ensure an app user row exists after OAuth sign-in
