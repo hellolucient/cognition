@@ -469,10 +469,7 @@ export default function AdminPage() {
                         </div>
                         <div className="flex items-center gap-2">
                           {mailto && (
-                            <>
-                              <a href={mailto} className="text-sm underline">Open Mail App</a>
-                              <Button size="sm" onClick={sendEmail}>Send via Gmail SMTP</Button>
-                            </>
+                            <Button size="sm" onClick={sendEmail}>Send via Gmail SMTP</Button>
                           )}
                         </div>
                       </div>

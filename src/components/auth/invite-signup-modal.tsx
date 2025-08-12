@@ -167,9 +167,10 @@ export function InviteSignupModal({ isOpen, onClose, onSuccess, initialCode, ini
   };
 
   const handleSuccess = () => {
-    handleClose();
+    // Close modal and navigate to home
+    onClose();
     onSuccess?.();
-    // No need to reload - user is already signed in via Supabase
+    window.location.href = '/';
   };
 
   if (!isOpen) return null;
@@ -231,12 +232,13 @@ export function InviteSignupModal({ isOpen, onClose, onSuccess, initialCode, ini
 
             <div className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="name">Name (optional)</Label>
+                <Label htmlFor="name">Name</Label>
                 <Input
                   id="name"
                   placeholder="Your name"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
+                  required
                 />
               </div>
 
@@ -333,7 +335,7 @@ export function InviteSignupModal({ isOpen, onClose, onSuccess, initialCode, ini
                 🐦 Share Your First Code on X
               </Button>
               
-              <Button onClick={handleSuccess} className="w-full">
+              <Button onClick={handleSuccess} className="w-full cursor-pointer">
                 Start Exploring!
               </Button>
             </div>
