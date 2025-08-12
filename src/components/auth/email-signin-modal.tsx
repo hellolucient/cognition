@@ -339,7 +339,7 @@ export function EmailSignInModal({ isOpen, onClose }: EmailSignInModalProps) {
                 <div className="text-sm text-green-600 bg-green-50 p-3 rounded-md">{signUpSuccess}</div>
               )}
 
-              <Button type="submit" className="w-full" disabled={signUpLoading}>
+              <Button type="submit" className="w-full" disabled={signUpLoading || !!requestSuccess}>
                 {signUpLoading ? 'Creating Account...' : 'Create Account'}
               </Button>
             </form>
