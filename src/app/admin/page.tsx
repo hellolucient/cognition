@@ -414,8 +414,9 @@ export default function AdminPage() {
               {waitlist.map((w) => {
                 const generated = generatedCodesByEntry[w.id] || [];
                 const first = generated[0];
+                const link = `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}?invite=${encodeURIComponent(first || '')}&email=${encodeURIComponent(w.email)}`
                 const mailto = first
-                  ? `mailto:${encodeURIComponent(w.email)}?subject=${encodeURIComponent('Your Cognition Invite Code')}&body=${encodeURIComponent(`Hi\n\nHere is your Cognition invite code: ${first}\n\nUse it on the Sign Up tab at ${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'} .\n\nEnjoy!`)}`
+                  ? `mailto:${encodeURIComponent(w.email)}?subject=${encodeURIComponent('Your Cognition Invite Code')}&body=${encodeURIComponent(`Hi\n\nHere is your Cognition invite code: ${first}\n\nUse it on the Sign Up tab: ${link}\n\nEnjoy!`)}`
                   : undefined;
                 const sendEmail = async () => {
                   if (!first) return;

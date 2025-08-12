@@ -10,9 +10,11 @@ interface InviteSignupModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSuccess?: () => void;
+  initialCode?: string;
+  initialEmail?: string;
 }
 
-export function InviteSignupModal({ isOpen, onClose, onSuccess }: InviteSignupModalProps) {
+export function InviteSignupModal({ isOpen, onClose, onSuccess, initialCode, initialEmail }: InviteSignupModalProps) {
   const { supabase } = useSupabase();
   const [step, setStep] = useState<"code" | "signup" | "success">("code");
   const [inviteCode, setInviteCode] = useState("");
@@ -24,6 +26,26 @@ export function InviteSignupModal({ isOpen, onClose, onSuccess }: InviteSignupMo
   const [inviteInfo, setInviteInfo] = useState<any>(null);
   const [newInviteCodes, setNewInviteCodes] = useState<string[]>([]);
   const [copiedStates, setCopiedStates] = useState<{[key: string]: boolean}>({});
+
+  // Prefill from props
+  useEffect(() => {
+    if (isOpen) {
+      if (initialCode) {
+        const code = initialCode.trim().toUpperCase();
+        setInviteCode(code);
+        // Optionally auto-validate if code present
+        if (code.length >= 6) {
+          // Small delay to ensure state is applied
+          setTimeout(() => {
+            validateInviteCode();
+          }, 0);
+        }
+      }
+      if (initialEmail) {
+        setEmail(initialEmail.trim());
+      }
+    }
+  }, [isOpen, initialCode, initialEmail]);
 
   const validateInviteCode = async () => {
     if (!inviteCode.trim()) {
@@ -104,7 +126,7 @@ export function InviteSignupModal({ isOpen, onClose, onSuccess }: InviteSignupMo
         // Still show success but with a note about email confirmation
         setNewInviteCodes(data.inviteCodes);
         setStep("success");
-        setError("Account created! You may need to check your email for confirmation before signing in.");
+        setError("Account created! Check your email for confirmation before signing in.");
       } else {
         // Sign-in successful
         setNewInviteCodes(data.inviteCodes);

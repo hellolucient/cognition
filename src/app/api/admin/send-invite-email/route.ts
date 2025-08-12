@@ -44,7 +44,7 @@ export async function POST(req: NextRequest) {
     }
 
     const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'
-    const inviteLink = `${siteUrl}?invite=${encodeURIComponent(code)}`
+    const inviteLink = `${siteUrl}?invite=${encodeURIComponent(code)}&email=${encodeURIComponent(toEmail)}`
 
     const transporter = nodemailer.createTransport({
       host: process.env.SMTP_HOST || 'smtp.gmail.com',

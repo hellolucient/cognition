@@ -1,17 +1,34 @@
 'use client'
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { useSupabase } from "../providers/supabase-provider"
 import { WaitlistModal } from "./waitlist-modal"
 import { InviteSignupModal } from "./invite-signup-modal"
 import { EmailSignInModal } from "./email-signin-modal"
+import { useSearchParams, useRouter } from "next/navigation"
 
 export default function SignInButton() {
   const { user, signOut } = useSupabase()
   const [showWaitlist, setShowWaitlist] = useState(false)
   const [showInviteSignup, setShowInviteSignup] = useState(false)
   const [showEmailSignIn, setShowEmailSignIn] = useState(false)
+  const [initialInviteCode, setInitialInviteCode] = useState<string | undefined>(undefined)
+  const [initialInviteEmail, setInitialInviteEmail] = useState<string | undefined>(undefined)
+  const searchParams = useSearchParams()
+  const router = useRouter()
+
+  useEffect(() => {
+    const invite = searchParams.get('invite') || undefined
+    const email = searchParams.get('email') || undefined
+    if (invite || email) {
+      setInitialInviteCode(invite || undefined)
+      setInitialInviteEmail(email || undefined)
+      setShowInviteSignup(true)
+      // Clean the URL so refresh doesn't re-open
+      router.replace('/', { scroll: false })
+    }
+  }, [searchParams, router])
 
   if (user) {
     return (
@@ -53,6 +70,8 @@ export default function SignInButton() {
       <InviteSignupModal
         isOpen={showInviteSignup}
         onClose={() => setShowInviteSignup(false)}
+        initialCode={initialInviteCode}
+        initialEmail={initialInviteEmail}
       />
     </>
   )
