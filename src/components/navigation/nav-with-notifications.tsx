@@ -71,7 +71,14 @@ export function PendingCountProvider({ children }: { children: React.ReactNode }
 }
 
 // Hook to use the pending count
-const usePendingCount = () => useContext(PendingCountContext);
+const usePendingCount = () => {
+  const context = useContext(PendingCountContext);
+  if (!context) {
+    // Fallback if context is not available
+    return { pendingCount: 0, fetchPendingCount: async () => {} };
+  }
+  return context;
+};
 
 export function NavWithNotifications() {
   const { user } = useSupabase();

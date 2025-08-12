@@ -69,8 +69,8 @@ export default function AdminPage() {
       const res = await fetch('/api/admin/waitlist');
       const data = await res.json();
       if (res.ok) {
-        setWaitlist(data.entries);
-        setWaitlistTotal(data.total);
+        setWaitlist(data.entries || []);
+        setWaitlistTotal(data.total || 0);
       }
     } catch (e) {
       console.error('Failed to fetch waitlist', e);
@@ -411,10 +411,10 @@ export default function AdminPage() {
             </div>
 
             <div className="divide-y border rounded-md">
-              {waitlist.length === 0 && (
+              {(!waitlist || waitlist.length === 0) && (
                 <div className="p-4 text-sm text-muted-foreground">No waitlist entries</div>
               )}
-              {waitlist.map((w) => {
+              {waitlist && waitlist.map((w) => {
                 const generated = generatedCodesByEntry[w.id] || [];
                 const first = generated[0];
                 const link = `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}?invite=${encodeURIComponent(first || '')}&email=${encodeURIComponent(w.email)}`
