@@ -297,9 +297,9 @@ export function InviteSignupModal({ isOpen, onClose, onSuccess, initialCode, ini
         {step === "success" && (
           <div className="text-center py-4">
             <div className="text-4xl mb-4">🎉</div>
-            <h2 className="text-2xl font-bold mb-2">Welcome to Cognition!</h2>
+            <h2 className="text-2xl font-bold mb-2">welcome to vanwinkle!</h2>
             <p className="text-muted-foreground mb-4">
-              Your account has been created successfully. You now have 5 invite codes to share with friends!
+              Your account has been created successfully. You now have 3 invite codes to share with friends!
             </p>
             
             {error && (
