@@ -76,8 +76,8 @@ export function EmailSignInModal({ isOpen, onClose }: EmailSignInModalProps) {
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault()
 
-    if (!signUpEmail.trim() || !signUpPassword.trim() || !signUpInvite.trim()) {
-      setSignUpError('Email, password, and invite code are required')
+    if (!signUpName.trim() || !signUpEmail.trim() || !signUpPassword.trim() || !signUpInvite.trim()) {
+      setSignUpError('Name, email, password, and invite code are required')
       return
     }
 
@@ -256,7 +256,7 @@ export function EmailSignInModal({ isOpen, onClose }: EmailSignInModalProps) {
           <TabsContent value="signup" className="space-y-4 mt-4">
             <form onSubmit={handleSignUp} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="signup-name">Name (optional)</Label>
+                <Label htmlFor="signup-name">Name</Label>
                 <Input
                   id="signup-name"
                   type="text"
@@ -264,6 +264,7 @@ export function EmailSignInModal({ isOpen, onClose }: EmailSignInModalProps) {
                   value={signUpName}
                   onChange={(e) => setSignUpName(e.target.value)}
                   disabled={signUpLoading}
+                  required
                 />
               </div>
 
