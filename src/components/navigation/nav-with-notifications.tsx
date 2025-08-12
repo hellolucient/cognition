@@ -22,12 +22,16 @@ export function NavWithNotifications() {
   const fetchPendingCount = async () => {
     try {
       const response = await fetch('/api/pending-shares/count');
-      if (response.ok) {
-        const data = await response.json();
-        setPendingCount(data.pending);
+      if (!response.ok) {
+        setPendingCount(0);
+        return;
       }
+      const data = await response.json();
+      const value = Number(data?.pending);
+      setPendingCount(Number.isFinite(value) && value > 0 ? value : 0);
     } catch (err) {
       console.error('Error fetching pending count:', err);
+      setPendingCount(0);
     }
   };
 
@@ -65,12 +69,16 @@ export function MobileNavWithNotifications() {
   const fetchPendingCount = async () => {
     try {
       const response = await fetch('/api/pending-shares/count');
-      if (response.ok) {
-        const data = await response.json();
-        setPendingCount(data.pending);
+      if (!response.ok) {
+        setPendingCount(0);
+        return;
       }
+      const data = await response.json();
+      const value = Number(data?.pending);
+      setPendingCount(Number.isFinite(value) && value > 0 ? value : 0);
     } catch (err) {
       console.error('Error fetching pending count:', err);
+      setPendingCount(0);
     }
   };
 

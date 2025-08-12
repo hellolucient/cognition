@@ -223,6 +223,7 @@ export function EmailSignInModal({ isOpen, onClose }: EmailSignInModalProps) {
                 <Input
                   id="signin-password"
                   type="password"
+                  autoComplete="current-password"
                   placeholder="••••••••"
                   value={signInPassword}
                   onChange={(e) => setSignInPassword(e.target.value)}
