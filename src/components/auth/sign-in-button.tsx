@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from "react"
+import { Suspense, useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { useSupabase } from "../providers/supabase-provider"
 import { WaitlistModal } from "./waitlist-modal"
@@ -15,20 +15,23 @@ export default function SignInButton() {
   const [showEmailSignIn, setShowEmailSignIn] = useState(false)
   const [initialInviteCode, setInitialInviteCode] = useState<string | undefined>(undefined)
   const [initialInviteEmail, setInitialInviteEmail] = useState<string | undefined>(undefined)
-  const searchParams = useSearchParams()
   const router = useRouter()
 
-  useEffect(() => {
-    const invite = searchParams.get('invite') || undefined
-    const email = searchParams.get('email') || undefined
-    if (invite || email) {
-      setInitialInviteCode(invite || undefined)
-      setInitialInviteEmail(email || undefined)
-      setShowInviteSignup(true)
-      // Clean the URL so refresh doesn't re-open
-      router.replace('/', { scroll: false })
-    }
-  }, [searchParams, router])
+  function InviteQueryListener() {
+    const searchParams = useSearchParams()
+    useEffect(() => {
+      const invite = searchParams.get('invite') || undefined
+      const email = searchParams.get('email') || undefined
+      if (invite || email) {
+        setInitialInviteCode(invite || undefined)
+        setInitialInviteEmail(email || undefined)
+        setShowInviteSignup(true)
+        router.replace('/', { scroll: false })
+      }
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [searchParams])
+    return null
+  }
 
   if (user) {
     return (
@@ -45,6 +48,9 @@ export default function SignInButton() {
 
   return (
     <>
+      <Suspense fallback={null}>
+        <InviteQueryListener />
+      </Suspense>
       <div className="flex items-center gap-1 md:gap-2">
         <Button onClick={() => setShowEmailSignIn(true)} variant="default" size="sm">
           Sign In
