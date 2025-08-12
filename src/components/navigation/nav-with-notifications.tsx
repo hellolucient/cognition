@@ -76,12 +76,6 @@ export function MobileNavWithNotifications() {
 
   return (
     <nav className="md:hidden flex items-center gap-4 text-sm">
-      <Link href="/submit" className="text-muted-foreground hover:text-foreground">
-        Submit
-      </Link>
-      <Link href="/save-for-later" className="text-muted-foreground hover:text-foreground">
-        💾
-      </Link>
       <Link href="/settings" className="text-muted-foreground hover:text-foreground relative">
         Settings
         {user && pendingCount > 0 && (
