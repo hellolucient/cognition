@@ -33,6 +33,9 @@ export default function AdminPage() {
   const [invitingId, setInvitingId] = useState<string | null>(null);
   const [generatedCodesByEntry, setGeneratedCodesByEntry] = useState<Record<string, string[]>>({});
   const [copied, setCopied] = useState<string | null>(null);
+  const [emailSendingFor, setEmailSendingFor] = useState<string | null>(null);
+  const [emailSentFor, setEmailSentFor] = useState<string | null>(null);
+  const [emailErrorFor, setEmailErrorFor] = useState<string | null>(null);
 
   useEffect(() => {
     if (user) {
@@ -421,6 +424,9 @@ export default function AdminPage() {
                 const sendEmail = async () => {
                   if (!first) return;
                   try {
+                    setEmailErrorFor(null);
+                    setEmailSentFor(null);
+                    setEmailSendingFor(w.id);
                     const res = await fetch('/api/admin/send-invite-email', {
                       method: 'POST',
                       headers: { 'Content-Type': 'application/json' },
@@ -428,12 +434,14 @@ export default function AdminPage() {
                     });
                     if (!res.ok) {
                       const data = await res.json();
-                      alert(data.error || 'Failed to send email');
+                      setEmailErrorFor(w.id);
                       return;
                     }
-                    alert('Email sent');
+                    setEmailSentFor(w.id);
                   } catch (e) {
-                    alert('Failed to send email');
+                    setEmailErrorFor(w.id);
+                  } finally {
+                    setEmailSendingFor(null);
                   }
                 };
                 return (
@@ -469,9 +477,21 @@ export default function AdminPage() {
                         </div>
                         <div className="flex items-center gap-2">
                           {mailto && (
-                            <Button size="sm" onClick={sendEmail}>Send via Gmail SMTP</Button>
+                            <Button size="sm" onClick={sendEmail} disabled={emailSendingFor === w.id} className="cursor-pointer">
+                              {emailSendingFor === w.id ? 'Sending…' : 'Send via Gmail SMTP'}
+                            </Button>
                           )}
                         </div>
+                      </div>
+                    )}
+                    {(emailSentFor === w.id || emailErrorFor === w.id) && (
+                      <div className="text-sm mt-2">
+                        {emailSentFor === w.id && (
+                          <span className="text-green-600">Email sent.</span>
+                        )}
+                        {emailErrorFor === w.id && (
+                          <span className="text-red-600">Failed to send email. Try again.</span>
+                        )}
                       </div>
                     )}
                   </div>
