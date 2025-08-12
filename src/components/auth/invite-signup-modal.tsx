@@ -187,9 +187,7 @@ export function InviteSignupModal({ isOpen, onClose, onSuccess, initialCode, ini
           <>
             <div className="mb-6">
               <h2 className="text-2xl font-bold mb-2">Enter Invite Code</h2>
-              <p className="text-muted-foreground">
-                Have an invite code? Enter it below to create your account.
-              </p>
+              <p className="text-muted-foreground">Have an invite code? Enter it below to create your account.</p>
             </div>
 
             <div className="space-y-4">

@@ -192,8 +192,9 @@ export function EmailSignInModal({ isOpen, onClose }: EmailSignInModalProps) {
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
       <DialogContent className="sm:max-w-md">
-        <DialogHeader>
+          <DialogHeader>
           <DialogTitle>Sign In to vanwinkle</DialogTitle>
+          <DialogDescription className="sr-only">Enter your credentials to sign in or switch to the Sign Up tab to create an account with an invite code.</DialogDescription>
         </DialogHeader>
         
         <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'signin' | 'signup')} className="w-full">

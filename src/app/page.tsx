@@ -71,8 +71,8 @@ export default function HomePage() {
     }
   };
 
-  // Get all unique tags from threads
-  const allTags = Array.from(new Set(threads.flatMap(thread => thread.tags))).slice(0, 10);
+  // Get all unique tags from threads (guard against missing tags)
+  const allTags = Array.from(new Set(threads.flatMap(thread => thread.tags || []))).slice(0, 10);
 
   // Filter threads by selected tag and sort by net upvotes (upvotes - downvotes)
   const filteredThreads = (selectedTag 
