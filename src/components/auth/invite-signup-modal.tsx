@@ -80,6 +80,11 @@ export function InviteSignupModal({ isOpen, onClose, onSuccess, initialCode, ini
   };
 
   const handleSignup = async () => {
+    if (!name.trim()) {
+      setError("Name is required");
+      return;
+    }
+
     if (!email.trim() || !password.trim()) {
       setError("Email and password are required");
       return;
@@ -276,8 +281,8 @@ export function InviteSignupModal({ isOpen, onClose, onSuccess, initialCode, ini
               <div className="flex gap-3">
                 <Button
                   onClick={handleSignup}
-                  disabled={isLoading}
-                  className="flex-1"
+                  disabled={isLoading || !name.trim() || !email.trim() || password.length < 6}
+                  className="flex-1 cursor-pointer"
                 >
                   {isLoading ? "Creating Account..." : "Create Account"}
                 </Button>
