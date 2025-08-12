@@ -54,12 +54,11 @@ export function EmailSignInModal({ isOpen, onClose }: EmailSignInModalProps) {
       const { error } = await signInWithEmail(signInEmail.trim(), signInPassword)
       
       if (error) {
-        // Provide more helpful error messages
-        let errorMessage = error.message || 'Failed to sign in'
-        if (errorMessage.includes('Email not confirmed')) {
-          errorMessage = 'Please check your email and click the confirmation link before signing in.'
-        } else if (errorMessage.includes('Invalid login credentials')) {
-          errorMessage = 'Invalid email or password. Please check your credentials.'
+        // Normalize to a user-friendly default, with an additional hint for unconfirmed accounts
+        let errorMessage = 'Invalid email or password. Please check your credentials.'
+        const raw = (error.message || '').toLowerCase()
+        if (raw.includes('email not confirmed') || raw.includes('confirm')) {
+          errorMessage = 'Invalid email or password. If you recently signed up, please check your email and click the confirmation link before signing in.'
         }
         setSignInError(errorMessage)
       } else {
