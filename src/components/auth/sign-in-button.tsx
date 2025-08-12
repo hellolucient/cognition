@@ -37,7 +37,7 @@ export default function SignInButton() {
     return (
       <div className="flex items-center gap-2 md:gap-4">
         <span className="text-sm text-muted-foreground hidden sm:block">
-          Welcome, {user.user_metadata?.name || user.email}!
+          Welcome, {user.user_metadata?.name ?? user.email?.split('@')[0]}!
         </span>
         <Button variant="outline" onClick={signOut} size="sm">
           Sign Out

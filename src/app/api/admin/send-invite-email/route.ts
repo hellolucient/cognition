@@ -58,10 +58,10 @@ export async function POST(req: NextRequest) {
 
     const from = process.env.SMTP_FROM || process.env.SMTP_USER || 'no-reply@example.com'
 
-    const subject = 'Your Cognition Invite Code'
+    const subject = 'Your vanwinkle Invite Code'
     const text = `Hi,
 
-Here is your Cognition invite code: ${code}
+Here is your vanwinkle invite code: ${code}
 
 Use it on the Sign Up tab: ${inviteLink}
 
@@ -69,7 +69,7 @@ Thanks!`
     const html = `
       <div style="font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif; line-height:1.6;">
         <p>Hi,</p>
-        <p>Here is your <strong>Cognition</strong> invite code:</p>
+        <p>Here is your <strong>vanwinkle</strong> invite code:</p>
         <p style="font-size:20px; font-weight:700; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;">${code}</p>
         <p>
           Use it on the Sign Up tab here:

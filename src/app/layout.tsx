@@ -17,7 +17,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "vanwinkle - AI Conversation Platform",
+  title: "vanwinkle - Collaborative AI Conversations",
   description: "Share and discuss interesting AI conversations",
   icons: {
     icon: [

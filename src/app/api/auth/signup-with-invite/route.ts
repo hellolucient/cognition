@@ -100,6 +100,13 @@ export async function POST(request: NextRequest) {
       }
     })
 
+    // If this email existed on the waitlist, remove it now that an account is created
+    try {
+      await prisma.waitlistEntry.delete({ where: { email: authData.user.email! } })
+    } catch (_) {
+      // ignore if not present
+    }
+
     // Mark invite code as used
     await prisma.inviteCode.update({
       where: { id: invite.id },
