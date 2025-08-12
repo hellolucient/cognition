@@ -76,7 +76,7 @@ export default function HomePage() {
 
   // Filter threads by selected tag and sort by net upvotes (upvotes - downvotes)
   const filteredThreads = (selectedTag 
-    ? threads.filter(thread => thread.tags.includes(selectedTag))
+    ? threads.filter(thread => thread.tags?.includes(selectedTag))
     : threads)
     .sort((a, b) => {
       const aNetVotes = a._count.upvotes - a._count.downvotes;
@@ -203,9 +203,9 @@ export default function HomePage() {
                   </div>
 
                   {/* Tags */}
-                  {thread.tags.length > 0 && (
+                  {(thread.tags?.length ?? 0) > 0 && (
                     <div className="flex flex-wrap gap-1">
-                      {thread.tags.map((tag) => (
+                      {(thread.tags || []).map((tag) => (
                         <Badge 
                           key={tag} 
                           variant="outline" 
