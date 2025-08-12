@@ -62,7 +62,15 @@ export default function HomePage() {
       const response = await fetch('/api/threads');
       if (response.ok) {
         const data = await response.json();
-        setThreads(data);
+        const safe = Array.isArray(data)
+          ? data.map((t: any) => ({
+              ...t,
+              tags: Array.isArray(t?.tags) ? t.tags : [],
+              _count: t?._count || { comments: 0, upvotes: 0, downvotes: 0 },
+              author: t?.author || { id: '', name: null, avatarUrl: null },
+            }))
+          : [];
+        setThreads(safe);
       }
     } catch (error) {
       console.error('Error fetching threads:', error);
