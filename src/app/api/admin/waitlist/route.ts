@@ -52,15 +52,23 @@ export async function GET(_request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const entries = await prisma.waitlistEntry.findMany({
-      orderBy: { createdAt: 'desc' },
-      take: 100,
-      select: { id: true, email: true, message: true, createdAt: true, notified: true },
-    })
+    const [waiting, invited, totals] = await Promise.all([
+      prisma.waitlistEntry.findMany({
+        where: { notified: false },
+        orderBy: { createdAt: 'desc' },
+        take: 100,
+        select: { id: true, email: true, message: true, createdAt: true, notified: true },
+      }),
+      prisma.waitlistEntry.findMany({
+        where: { notified: true },
+        orderBy: { createdAt: 'desc' },
+        take: 100,
+        select: { id: true, email: true, message: true, createdAt: true, notified: true },
+      }),
+      prisma.waitlistEntry.aggregate({ _count: true })
+    ])
 
-    const totals = await prisma.waitlistEntry.aggregate({ _count: true })
-
-    return NextResponse.json({ total: totals._count, entries })
+    return NextResponse.json({ total: totals._count, waiting, invited })
   } catch (error: any) {
     console.error('GET /api/admin/waitlist error:', error)
     return NextResponse.json({ error: 'Failed to fetch waitlist' }, { status: 500 })

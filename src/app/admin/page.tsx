@@ -487,7 +487,7 @@ export default function AdminPage() {
                                 ? 'Sending…'
                                 : emailSentFor === w.id
                                   ? 'Email Sent'
-                                  : 'Send via Gmail SMTP'}
+                                  : 'Send Invite Email'}
                             </Button>
                           )}
                         </div>
