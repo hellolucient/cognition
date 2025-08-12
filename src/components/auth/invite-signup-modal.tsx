@@ -330,7 +330,7 @@ export function InviteSignupModal({ isOpen, onClose, onSuccess, initialCode, ini
             <div className="space-y-3">
               <Button
                 onClick={() => {
-                  const tweetText = `Just joined @cognition_ai - a platform where AI conversations become collaborative knowledge! 🧠✨\n\nWant an invite? Use code: ${newInviteCodes[0]}\n\n#AI #Collaboration #Cognition`;
+                  const tweetText = `Just joined @vanwinkleapp — collaborative AI conversations! 🧠✨\n\nWant an invite? Use code: ${newInviteCodes[0]}\n\n#AI #Collaboration #vanwinkleapp`;
                   const tweetUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(tweetText)}`;
                   window.open(tweetUrl, '_blank');
                 }}
