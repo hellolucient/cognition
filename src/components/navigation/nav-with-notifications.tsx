@@ -93,6 +93,8 @@ export function MobileNavWithNotifications() {
           </Badge>
         )}
       </Link>
+      {/* Show Admin link on mobile when authorized */}
+      <AdminNavLink />
     </nav>
   );
 }
