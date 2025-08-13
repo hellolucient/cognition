@@ -4,6 +4,7 @@ import { useState, useEffect, use } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useSupabase } from "@/components/providers/supabase-provider";
+import { AILoadingModal } from "@/components/ui/ai-loading-modal";
 import Link from "next/link";
 
 interface UserFollowInfo {
@@ -162,6 +163,8 @@ export default function FollowersPage({ params }: { params: Promise<{ id: string
           </CardContent>
         </Card>
       </div>
+      
+      <AILoadingModal isLoading={loading} />
     </main>
   );
 }
