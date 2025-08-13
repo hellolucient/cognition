@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 
@@ -8,19 +8,42 @@ export default function TextSelectionDebugPage() {
   const [selectedText, setSelectedText] = useState("");
   const [showModal, setShowModal] = useState(false);
 
-  const handleTextSelection = () => {
+  // Also try with native DOM event listeners
+  useEffect(() => {
+    const handleDocumentMouseUp = () => {
+      console.log('🔍 Document mouseup fired!');
+      const selection = window.getSelection();
+      const text = selection?.toString().trim();
+      console.log('🔍 Document selection:', text);
+    };
+
+    document.addEventListener('mouseup', handleDocumentMouseUp);
+    return () => document.removeEventListener('mouseup', handleDocumentMouseUp);
+  }, []);
+
+  const handleTextSelection = (event: React.MouseEvent) => {
+    console.log('🔍 onMouseUp event fired!', event);
+    
     const selection = window.getSelection();
     const selectedText = selection?.toString().trim();
     
     console.log('🔍 Text Selection Debug:', {
       selection,
       selectedText,
-      length: selectedText?.length
+      length: selectedText?.length,
+      rangeCount: selection?.rangeCount
     });
     
     if (selectedText && selectedText.length > 5) {
+      console.log('✅ Text selection valid, showing modal');
       setSelectedText(selectedText);
       setShowModal(true);
+    } else {
+      console.log('❌ Text selection invalid:', {
+        hasText: !!selectedText,
+        length: selectedText?.length,
+        minLength: 5
+      });
     }
   };
 
@@ -40,8 +63,10 @@ export default function TextSelectionDebugPage() {
         <div className="bg-muted p-6 rounded-lg">
           <h2 className="text-lg font-semibold mb-4">Test Content</h2>
           <div 
-            className="text-gray-800 select-text cursor-text space-y-4"
+            className="text-gray-800 select-text cursor-text space-y-4 border-2 border-dashed border-blue-300 p-4"
             onMouseUp={handleTextSelection}
+            onMouseDown={() => console.log('🔍 onMouseDown fired!')}
+            onClick={() => console.log('🔍 onClick fired!')}
           >
             <p>
               This is a test paragraph for text selection. Try highlighting some of this text 
@@ -64,6 +89,19 @@ export default function TextSelectionDebugPage() {
           <h3 className="font-semibold">Debug Info:</h3>
           <p>Open browser console to see selection debug logs.</p>
           <p>Selected text length must be &gt; 5 characters.</p>
+          <p className="text-sm text-gray-600 mt-2">
+            <strong>Events to watch for:</strong><br/>
+            • onMouseDown (when you press mouse)<br/>
+            • onMouseUp (when you release mouse)<br/>
+            • onClick (single click)<br/>
+          </p>
+          <Button 
+            onClick={() => console.log('🔍 Manual test - current selection:', window.getSelection()?.toString())}
+            size="sm"
+            className="mt-2"
+          >
+            Test Current Selection
+          </Button>
         </div>
       </div>
 
