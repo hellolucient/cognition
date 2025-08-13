@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useSupabase } from "@/components/providers/supabase-provider";
 import { AvatarUpload } from "@/components/ui/avatar-upload";
+import { AILoadingModal } from "@/components/ui/ai-loading-modal";
 import Link from "next/link";
 
 interface User {
@@ -398,6 +399,8 @@ export default function ProfilePage({ params }: { params: Promise<{ id: string }
           </div>
         )}
       </div>
+      
+      <AILoadingModal isLoading={loading} />
     </main>
   );
 }

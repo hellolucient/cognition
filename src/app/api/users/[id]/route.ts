@@ -89,7 +89,7 @@ export async function GET(
       }
     });
 
-    return NextResponse.json({
+    const response = NextResponse.json({
       user: {
         ...user,
         isFollowing,
@@ -102,6 +102,10 @@ export async function GET(
       recentThreads,
       isOwnProfile: currentUser?.id === userId,
     });
+    
+    // Cache profile data for 30s (private since includes follow status)
+    response.headers.set('Cache-Control', 'private, max-age=30');
+    return response;
 
   } catch (error: any) {
     console.error('Get user profile error:', error);

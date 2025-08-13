@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { useSupabase } from "@/components/providers/supabase-provider";
 import { AIProvider, getProviderDisplayName, getProviderDocsUrl } from "@/lib/ai-providers";
+import { AILoadingModal } from "@/components/ui/ai-loading-modal";
 import Link from "next/link";
 
 interface InviteCode {
@@ -882,6 +883,8 @@ export default function SettingsPage() {
           </div>
         </div>
       </div>
+      
+      <AILoadingModal isLoading={loading || pendingSharesLoading || savingApiKey} />
     </main>
   );
 }
