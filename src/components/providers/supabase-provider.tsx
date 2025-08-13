@@ -97,8 +97,17 @@ export default function SupabaseProvider({
     loading,
     supabase,
     signOut: async () => {
-      await supabase.auth.signOut()
-      router.push('/')
+      try {
+        const { error } = await supabase.auth.signOut()
+        if (error) {
+          console.error('Sign out error:', error)
+          throw error
+        }
+        router.push('/')
+      } catch (error) {
+        console.error('Failed to sign out:', error)
+        throw error
+      }
     },
     signInWithEmail: async (email: string, password: string) => {
       const { data, error } = await supabase.auth.signInWithPassword({

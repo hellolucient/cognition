@@ -15,7 +15,22 @@ export default function SignInButton() {
   const [showEmailSignIn, setShowEmailSignIn] = useState(false)
   const [initialInviteCode, setInitialInviteCode] = useState<string | undefined>(undefined)
   const [initialInviteEmail, setInitialInviteEmail] = useState<string | undefined>(undefined)
+  const [isSigningOut, setIsSigningOut] = useState(false)
   const router = useRouter()
+
+  const handleSignOut = async () => {
+    if (isSigningOut) return // Prevent double clicks
+    
+    setIsSigningOut(true)
+    try {
+      await signOut()
+    } catch (error) {
+      console.error('Sign out failed:', error)
+      // Reset loading state if sign out fails
+      setIsSigningOut(false)
+    }
+    // Note: Don't reset isSigningOut on success, as the component will unmount
+  }
 
   function InviteQueryListener() {
     const searchParams = useSearchParams()
@@ -39,8 +54,21 @@ export default function SignInButton() {
         <span className="text-sm text-muted-foreground hidden sm:block">
           Welcome, {user.user_metadata?.name ?? user.email?.split('@')[0]}!
         </span>
-        <Button variant="outline" onClick={signOut} size="sm">
-          Sign Out
+        <Button 
+          variant="outline" 
+          onClick={handleSignOut} 
+          size="sm"
+          disabled={isSigningOut}
+          className="transition-all duration-200 hover:scale-105 active:scale-95"
+        >
+          {isSigningOut ? (
+            <>
+              <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-current mr-1"></div>
+              Signing Out...
+            </>
+          ) : (
+            'Sign Out'
+          )}
         </Button>
       </div>
     )
