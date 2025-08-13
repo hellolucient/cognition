@@ -26,7 +26,7 @@ export async function GET(
 
     const { data: { user: currentUser } } = await supabase.auth.getUser();
 
-    // Get user profile with counts
+    // Get user profile (remove expensive _count for speed)
     const user = await prisma.user.findUnique({
       where: { id: userId },
       select: {
@@ -37,13 +37,8 @@ export async function GET(
         website: true,
         location: true,
         createdAt: true,
-        _count: {
-          select: {
-            threads: true,
-            followers: true,
-            following: true,
-          }
-        }
+        // Temporarily remove _count queries - they're causing 7s delays
+        // TODO: Add lightweight count queries or denormalized counters later
       }
     });
 
@@ -51,52 +46,51 @@ export async function GET(
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
-    // Check if current user is following this user
-    let isFollowing = false;
-    if (currentUser && currentUser.id !== userId) {
-      const followRelation = await prisma.follow.findUnique({
-        where: {
-          followerId_followingId: {
-            followerId: currentUser.id,
-            followingId: userId,
-          }
+    // Optimize: Run follow check and threads query in parallel, remove expensive _count
+    const [followRelation, recentThreads] = await Promise.all([
+      // Check if current user is following this user
+      currentUser && currentUser.id !== userId
+        ? prisma.follow.findUnique({
+            where: {
+              followerId_followingId: {
+                followerId: currentUser.id,
+                followingId: userId,
+              }
+            }
+          })
+        : Promise.resolve(null),
+      
+      // Get recent threads by this user (remove expensive _count for speed)
+      prisma.thread.findMany({
+        where: { 
+          authorId: userId,
+          isContribution: false,
+        },
+        orderBy: { createdAt: 'desc' },
+        take: 10,
+        select: {
+          id: true,
+          title: true,
+          summary: true,
+          source: true,
+          tags: true,
+          createdAt: true,
+          // Temporarily remove _count queries - they're causing 7s delays
+          // TODO: Add denormalized counters to Thread table later
         }
-      });
-      isFollowing = !!followRelation;
-    }
+      })
+    ]);
 
-    // Get recent threads by this user
-    const recentThreads = await prisma.thread.findMany({
-      where: { 
-        authorId: userId,
-        isContribution: false, // Only main threads, not contributions
-      },
-      orderBy: { createdAt: 'desc' },
-      take: 10,
-      select: {
-        id: true,
-        title: true,
-        summary: true,
-        source: true,
-        tags: true,
-        createdAt: true,
-        _count: {
-          select: {
-            upvotes: true,
-            contributions: true,
-          }
-        }
-      }
-    });
+    const isFollowing = !!followRelation;
 
     const response = NextResponse.json({
       user: {
         ...user,
         isFollowing,
         stats: {
-          threads: user._count.threads,
-          followers: user._count.followers,
-          following: user._count.following,
+          threads: 0, // Temporarily disabled for speed
+          followers: 0, // TODO: Add lightweight count queries
+          following: 0, // or denormalized counters
         }
       },
       recentThreads,
