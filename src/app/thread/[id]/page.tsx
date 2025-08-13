@@ -35,6 +35,11 @@ export default function ThreadPage({ params }: { params: Promise<{ id: string }>
   const [thread, setThread] = useState<Thread | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  
+  // Debug AI modal loading state
+  useEffect(() => {
+    console.log('🤖 Thread AI Modal - Loading state changed:', loading);
+  }, [loading]);
   const [voteLoading, setVoteLoading] = useState(false);
   const [hasUpvoted, setHasUpvoted] = useState(false);
   const [hasDownvoted, setHasDownvoted] = useState(false);
@@ -273,7 +278,10 @@ export default function ThreadPage({ params }: { params: Promise<{ id: string }>
             <div className="text-sm font-medium text-blue-700 mb-1">Human</div>
             <div 
               className={`text-gray-800 ${allowSelection ? 'select-text cursor-text' : ''}`}
-              onMouseUp={() => allowSelection && handleTextSelection(messageText, 'Human')}
+              onMouseUp={() => {
+                console.log('🔍 Human onMouseUp fired, allowSelection:', allowSelection);
+                allowSelection && handleTextSelection(messageText, 'Human');
+              }}
             >
               {messageText}
             </div>
@@ -289,7 +297,10 @@ export default function ThreadPage({ params }: { params: Promise<{ id: string }>
             <div className="text-sm font-medium text-gray-700 mb-1">Assistant</div>
             <div 
               className={`text-gray-800 ${allowSelection ? 'select-text cursor-text' : ''}`}
-              onMouseUp={() => allowSelection && handleTextSelection(messageText, 'Assistant')}
+              onMouseUp={() => {
+                console.log('🔍 Assistant onMouseUp fired, allowSelection:', allowSelection);
+                allowSelection && handleTextSelection(messageText, 'Assistant');
+              }}
             >
               {messageText}
             </div>
@@ -303,7 +314,10 @@ export default function ThreadPage({ params }: { params: Promise<{ id: string }>
           <div 
             key={index} 
             className={`mb-2 text-gray-800 ${allowSelection ? 'select-text cursor-text' : ''}`}
-            onMouseUp={() => allowSelection && handleTextSelection(trimmed, 'Human')}
+            onMouseUp={() => {
+              console.log('🔍 Regular text onMouseUp fired, allowSelection:', allowSelection);
+              allowSelection && handleTextSelection(trimmed, 'Human');
+            }}
           >
             {trimmed}
           </div>
