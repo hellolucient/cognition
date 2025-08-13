@@ -292,15 +292,16 @@ export function EmailSignInModal({ isOpen, onClose }: EmailSignInModalProps) {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="signup-password">Password</Label>
+                <Label htmlFor="signup-password">Password (minimum 6 characters)</Label>
                 <Input
                   id="signup-password"
                   type="password"
                   autoComplete="new-password"
-                  placeholder="••••••••"
+                  placeholder="At least 6 characters"
                   value={signUpPassword}
                   onChange={(e) => setSignUpPassword(e.target.value)}
                   disabled={signUpLoading}
+                  minLength={6}
                   required
                 />
                 <p className="text-xs text-muted-foreground">Must be at least 6 characters</p>

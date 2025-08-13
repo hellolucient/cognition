@@ -34,6 +34,13 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    if (password.length < 6) {
+      return NextResponse.json(
+        { error: 'Password must be at least 6 characters' },
+        { status: 400 }
+      )
+    }
+
     // Validate invite code first
     const invite = await prisma.inviteCode.findUnique({
       where: { code: inviteCode.trim().toUpperCase() },

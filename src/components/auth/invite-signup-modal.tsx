@@ -258,7 +258,7 @@ export function InviteSignupModal({ isOpen, onClose, onSuccess, initialCode, ini
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="password">Password</Label>
+                <Label htmlFor="password">Password (minimum 6 characters)</Label>
                 <Input
                   id="password"
                   type="password"
@@ -268,6 +268,7 @@ export function InviteSignupModal({ isOpen, onClose, onSuccess, initialCode, ini
                   minLength={6}
                   required
                 />
+                <p className="text-xs text-muted-foreground">Must be at least 6 characters</p>
               </div>
 
               {error && (
