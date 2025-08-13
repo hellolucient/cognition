@@ -44,6 +44,28 @@ Instead of AI conversations disappearing into private chat histories, vanwinkle 
 - **Take enhanced discussions** to your private AI sessions
 - **Build upon community insights** in your own projects
 
+## 🧠 **AI History Loading Experience**
+
+Transform boring loading screens into educational moments with our AI history modal system:
+
+### 📚 **30+ Educational Snippets**
+- **Historical Milestones**: From Turing machines (1936) to ChatGPT phenomenon (2022)
+- **Key Innovations**: Neural networks, expert systems, backpropagation, transformers
+- **Fascinating Facts**: AI Winter, Deep Blue vs Kasparov, AlphaGo, protein folding breakthroughs
+- **Modern Developments**: GANs, reinforcement learning, multimodal AI, ethics emergence
+
+### ⚡ **Smart Display Logic**
+- **1.5s delay**: Prevents flashing on quick loads
+- **Persistent display**: Stays visible until user closes (doesn't auto-hide)
+- **User control**: "Don't show again" option with settings page toggle
+- **Random selection**: Different snippet each time for continuous learning
+
+### 🎯 **Triggers During**:
+- Page loading (homepage, threads, profiles)
+- Contribution submission and AI processing
+- Bookmarklet authentication checks
+- Summary generation and posting
+
 ## 🔖 **ChatGPT Bookmarklet Magic**
 
 Our intelligent bookmarklet makes sharing ChatGPT conversations effortless:
@@ -79,6 +101,16 @@ Our intelligent bookmarklet makes sharing ChatGPT conversations effortless:
 - ✅ **Tag-based Discovery** - Filter and organize by topics
 - ✅ **Source Attribution** - Track which AI model was used
 - ✅ **Export System** - Download conversations in multiple formats (TXT, MD, JSON)
+- ✅ **Social Sharing** - Share threads to X/Twitter and copy links
+
+### Social Features
+- ✅ **User Profiles** - Customizable profiles with avatar, bio, website, and location
+- ✅ **Follow System** - Follow users to see their latest contributions
+- ✅ **In-App Notifications** - Get notified when followed users post or follow you
+- ✅ **Following Feed** - Filter main feed to show only posts from followed users
+- ✅ **Profile Pages** - View user profiles with follower/following counts and recent threads
+- ✅ **Avatar Upload** - Upload and manage profile pictures
+- ✅ **Social Discovery** - Find interesting users through their contributions
 
 ### User Experience
 - ✅ **Invite-Only System** - Controlled growth with invite codes
@@ -87,8 +119,10 @@ Our intelligent bookmarklet makes sharing ChatGPT conversations effortless:
 - ✅ **Anonymous Reading** - Browse without an account
 - ✅ **Responsive Design** - Works on all devices
 - ✅ **Chat-like Formatting** - Familiar conversation display with Human/AI blocks
-- ✅ **Smart Navigation** - Auto-scroll to new contributions
-- ✅ **User Settings** - Manage API keys and invite codes
+- ✅ **Smart Navigation** - Auto-scroll to new contributions showing full posts
+- ✅ **User Settings** - Manage API keys, invite codes, and preferences
+- ✅ **AI History Modals** - Educational AI facts during loading screens (30+ snippets)
+- ✅ **Loading Experience** - Turn delays into learning moments with AI history
 
 ### Technical Features
 - ✅ **Next.js 15** with App Router and React 18
@@ -208,28 +242,37 @@ Open [http://localhost:3000](http://localhost:3000) to see the platform.
 ## 🏗 Architecture
 
 ### Database Schema
-- **Users** - Authentication, profile data, encrypted API keys, invite system
+- **Users** - Authentication, profile data, encrypted API keys, invite system, bio, website, location
 - **Threads** - Original AI conversations and contributions with titles
+- **Follow** - User following relationships for social features
+- **Notification** - In-app notifications for follows and new posts
 - **Comments** - Community discussion (coming soon)
 - **Upvotes** - Community curation (coming soon)
 - **InviteCode** - Invite code management and tracking
 - **WaitlistEntry** - User waitlist for controlled growth
 
 ### API Routes
-- `/api/threads` - CRUD operations for conversations
+- `/api/threads` - CRUD operations for conversations with following filter
 - `/api/contribute` - Add AI or manual contributions using user's stored API keys
 - `/api/generate-summary` - AI-powered conversation summaries and titles
 - `/api/user/api-key` - Secure API key management (encrypted storage)
+- `/api/users/[id]/*` - User profiles, follow/unfollow, avatar upload, following/followers lists
+- `/api/notifications` - In-app notification management (fetch, mark as read)
 - `/api/invite/*` - Invite code validation and generation
 - `/api/waitlist` - Waitlist management
 - `/api/admin/*` - Admin panel endpoints for platform management
 
 ### Key Components
-- **Thread Feed** - Main discovery interface with tag filtering
+- **Thread Feed** - Main discovery interface with tag filtering and following feed
 - **Contribution System** - Collaborative conversation building with AI/manual options
-- **Quote/Reference** - Targeted response to specific text with modal interface
+- **Quote/Reference** - Targeted response to specific text with modal interface (5+ character minimum)
 - **Export System** - Download enhanced conversations in multiple formats
-- **User Settings** - API key management and invite code generation
+- **User Profiles** - Customizable profiles with avatar, bio, social links, and activity
+- **Follow System** - Social connections with notifications and activity feeds
+- **Notification Bell** - Real-time in-app notifications for social interactions
+- **AI Loading Modals** - Educational AI history during loading states (30+ facts)
+- **Social Sharing** - Share threads to X/Twitter with proper domain URLs
+- **User Settings** - API key management, invite codes, and AI modal preferences
 - **Admin Panel** - Platform AI provider configuration and management
 - **Invite System** - Controlled user onboarding with waitlist
 
@@ -260,9 +303,15 @@ Features like **invite-only signup** and **waitlist management** ensure the comm
 - [x] User settings and API key management
 - [x] Admin panel for platform management
 
-### Phase 2: Community Features 🚧
+### Phase 2: Social Features ✅
+- [x] User profiles with avatars, bios, and social links
+- [x] Follow/unfollow system with notifications
+- [x] In-app notification system
+- [x] Following feed filtering
+- [x] Social sharing (X/Twitter, copy link)
+- [x] Profile pages with follower/following lists
+- [x] AI loading modals with educational content (30+ snippets)
 - [ ] Comments and upvoting system
-- [ ] User profiles and reputation scoring
 - [ ] Advanced moderation tools
 - [ ] Community guidelines and reporting
 
