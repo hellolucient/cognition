@@ -11,6 +11,7 @@ export default function EmailDebugPage() {
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<any>(null);
   const [config, setConfig] = useState<any>(null);
+  const [userLookup, setUserLookup] = useState<any>(null);
 
   const handleResendEmail = async () => {
     if (!email.trim()) {
@@ -43,6 +44,29 @@ export default function EmailDebugPage() {
       setConfig(data);
     } catch (error: any) {
       setConfig({ error: error.message });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const lookupUser = async () => {
+    if (!email.trim()) {
+      alert("Please enter an email address");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const response = await fetch('/api/debug/user-lookup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: email.trim() }),
+      });
+
+      const data = await response.json();
+      setUserLookup(data);
+    } catch (error: any) {
+      setUserLookup({ error: error.message });
     } finally {
       setLoading(false);
     }
@@ -85,12 +109,12 @@ export default function EmailDebugPage() {
           </CardContent>
         </Card>
 
-        {/* Resend Email */}
+        {/* User Lookup */}
         <Card>
           <CardHeader>
-            <CardTitle>Resend Confirmation Email</CardTitle>
+            <CardTitle>User Lookup</CardTitle>
             <CardDescription>
-              Try to resend a confirmation email for a specific address
+              Check if a user account exists and its confirmation status
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -103,12 +127,27 @@ export default function EmailDebugPage() {
               />
             </div>
             
-            <Button onClick={handleResendEmail} disabled={loading || !email.trim()}>
-              {loading ? "Sending..." : "Resend Confirmation Email"}
-            </Button>
+            <div className="flex gap-2">
+              <Button onClick={lookupUser} disabled={loading || !email.trim()}>
+                {loading ? "Looking up..." : "Lookup User"}
+              </Button>
+              <Button onClick={handleResendEmail} disabled={loading || !email.trim()} variant="outline">
+                {loading ? "Sending..." : "Resend Confirmation"}
+              </Button>
+            </div>
+
+            {userLookup && (
+              <div className="bg-muted p-4 rounded-lg">
+                <h4 className="font-medium mb-2">User Lookup Result:</h4>
+                <pre className="text-sm overflow-auto">
+                  {JSON.stringify(userLookup, null, 2)}
+                </pre>
+              </div>
+            )}
 
             {result && (
               <div className="bg-muted p-4 rounded-lg">
+                <h4 className="font-medium mb-2">Email Resend Result:</h4>
                 <pre className="text-sm overflow-auto">
                   {JSON.stringify(result, null, 2)}
                 </pre>
