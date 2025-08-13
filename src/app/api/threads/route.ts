@@ -92,16 +92,21 @@ export async function POST(request: NextRequest) {
     })
 
     // Create notifications for followers (async, don't wait)
-    prisma.follow.findMany({
-      where: { followingId: user.id },
-      select: { followerId: true }
-    }).then(async (followers) => {
+    prisma.user.findUnique({
+      where: { id: user.id },
+      select: { name: true }
+    }).then(async (currentUser) => {
+      const followers = await prisma.follow.findMany({
+        where: { followingId: user.id },
+        select: { followerId: true }
+      });
+      
       if (followers.length > 0) {
         const notifications = followers.map(follow => ({
           userId: follow.followerId,
           type: 'new_post',
           title: 'New Post',
-          message: `${user.email?.split('@')[0] || 'Someone you follow'} shared a new AI conversation`,
+          message: `${currentUser?.name || user.email?.split('@')[0] || 'Someone you follow'} shared a new AI conversation`,
           threadId: thread.id,
           fromUserId: user.id,
         }));

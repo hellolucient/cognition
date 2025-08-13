@@ -34,6 +34,12 @@ export async function POST(
       return NextResponse.json({ error: 'Cannot follow yourself' }, { status: 400 });
     }
 
+    // Get the current user's info from database
+    const currentUser = await prisma.user.findUnique({
+      where: { id: user.id },
+      select: { id: true, name: true }
+    });
+
     // Check if target user exists
     const targetUser = await prisma.user.findUnique({
       where: { id: targetUserId },
@@ -72,7 +78,7 @@ export async function POST(
         userId: targetUserId,
         type: 'new_follower',
         title: 'New Follower',
-        message: `${user.email?.split('@')[0] || 'Someone'} started following you`,
+        message: `${currentUser?.name || user.email?.split('@')[0] || 'Someone'} started following you`,
         fromUserId: user.id,
       }
     });
