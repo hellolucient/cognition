@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import Link from "next/link";
 import { useState, useEffect, use } from "react";
 import { useSupabase } from "@/components/providers/supabase-provider";
@@ -32,6 +33,7 @@ export default function ContributePage({ params }: { params: Promise<{ id: strin
   const [contributionType, setContributionType] = useState<"ai" | "manual" | null>(null);
   const [userPrompt, setUserPrompt] = useState("");
   const [manualContribution, setManualContribution] = useState("");
+  const [selectedProvider, setSelectedProvider] = useState("openai");
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [referencedText, setReferencedText] = useState("");
@@ -40,7 +42,7 @@ export default function ContributePage({ params }: { params: Promise<{ id: strin
   const [selectedText, setSelectedText] = useState("");
   const [selectedSource, setSelectedSource] = useState("");
   const [showReferenceModal, setShowReferenceModal] = useState(false);
-  const { user } = useSupabase();
+  const { user, loading: authLoading } = useSupabase();
 
   const handleTextSelection = (text: string, source: string) => {
     if (!user) {
@@ -188,6 +190,7 @@ export default function ContributePage({ params }: { params: Promise<{ id: strin
           manualContent: contributionType === "manual" ? manualContribution : null,
           referencedText: referencedText || null,
           referencedSource: referencedSource || null,
+          provider: contributionType === "ai" ? selectedProvider : null,
         }),
       });
 
@@ -208,6 +211,16 @@ export default function ContributePage({ params }: { params: Promise<{ id: strin
       setIsSubmitting(false);
     }
   };
+
+  if (authLoading) {
+    return (
+      <main className="container mx-auto py-8">
+        <div className="text-center">
+          <div className="text-lg">Loading...</div>
+        </div>
+      </main>
+    );
+  }
 
   if (!user) {
     return (
@@ -316,6 +329,19 @@ export default function ContributePage({ params }: { params: Promise<{ id: strin
                 </p>
               </div>
               <div className="grid w-full gap-2">
+                <Label htmlFor="ai-provider">AI Provider</Label>
+                <Select value={selectedProvider} onValueChange={setSelectedProvider}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select AI provider" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="openai">OpenAI (GPT-4o-mini)</SelectItem>
+                    <SelectItem value="anthropic">Anthropic (Claude)</SelectItem>
+                    <SelectItem value="google">Google (Gemini)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="grid w-full gap-2">
                 <Label htmlFor="user-prompt">Your prompt for the AI</Label>
                 <Textarea
                   id="user-prompt"
@@ -420,6 +446,8 @@ export default function ContributePage({ params }: { params: Promise<{ id: strin
                   setReferencedText(selectedText);
                   setReferencedSource(selectedSource);
                   setShowReferenceModal(false);
+                  // Clear browser selection to allow new selections
+                  window.getSelection()?.removeAllRanges();
                   // Scroll to contribution form
                   document.querySelector('[data-contribution-form]')?.scrollIntoView({ 
                     behavior: 'smooth', 
@@ -432,7 +460,11 @@ export default function ContributePage({ params }: { params: Promise<{ id: strin
               </Button>
               <Button 
                 variant="outline" 
-                onClick={() => setShowReferenceModal(false)}
+                onClick={() => {
+                  setShowReferenceModal(false);
+                  // Clear browser selection to allow new selections
+                  window.getSelection()?.removeAllRanges();
+                }}
               >
                 Cancel
               </Button>

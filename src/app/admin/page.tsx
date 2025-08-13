@@ -19,7 +19,7 @@ interface PlatformStatus {
 }
 
 export default function AdminPage() {
-  const { user } = useSupabase();
+  const { user, loading: authLoading } = useSupabase();
   const [status, setStatus] = useState<PlatformStatus | null>(null);
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState(false);
@@ -215,6 +215,16 @@ export default function AdminPage() {
 
   // Simple admin check - you can make this more sophisticated
   const isAdmin = user?.email === 'trent.munday@gmail.com'; // Update this with your email
+
+  if (authLoading) {
+    return (
+      <main className="container mx-auto py-8">
+        <div className="text-center">
+          <div className="text-lg">Loading...</div>
+        </div>
+      </main>
+    );
+  }
 
   if (!user) {
     return (

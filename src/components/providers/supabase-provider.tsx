@@ -8,6 +8,7 @@ import { createContext, useContext, useEffect, useState } from 'react'
 type SupabaseContext = {
   user: User | null
   session: Session | null
+  loading: boolean
   supabase: ReturnType<typeof createClient>
   signOut: () => Promise<void>
   signInWithEmail: (email: string, password: string) => Promise<{ error?: any }>
@@ -22,6 +23,7 @@ export default function SupabaseProvider({
 }) {
   const [user, setUser] = useState<User | null>(null)
   const [session, setSession] = useState<Session | null>(null)
+  const [loading, setLoading] = useState(true)
   const router = useRouter()
   const supabase = createClient()
 
@@ -46,6 +48,7 @@ export default function SupabaseProvider({
       } else {
         setUser(null)
       }
+      setLoading(false)
     }
 
     getSession()
@@ -91,6 +94,7 @@ export default function SupabaseProvider({
   const value = {
     session,
     user,
+    loading,
     supabase,
     signOut: async () => {
       await supabase.auth.signOut()

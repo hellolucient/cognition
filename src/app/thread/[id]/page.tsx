@@ -498,6 +498,8 @@ export default function ThreadPage({ params }: { params: Promise<{ id: string }>
                     setShowReferenceModal(false);
                     setSelectedText("");
                     setSelectedSource("");
+                    // Clear browser selection to allow new selections
+                    window.getSelection()?.removeAllRanges();
                   }}
                 >
                   Cancel
