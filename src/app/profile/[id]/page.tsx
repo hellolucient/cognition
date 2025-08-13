@@ -34,7 +34,7 @@ interface Thread {
   source: string | null;
   tags: string[];
   createdAt: string;
-  _count: {
+  _count?: {
     upvotes: number;
     contributions: number;
   };
@@ -358,7 +358,7 @@ export default function ProfilePage({ params }: { params: Promise<{ id: string }
                         
                         <div className="flex items-center gap-4">
                           <span className="text-sm text-muted-foreground">
-                            {thread._count.upvotes} upvotes
+                            {thread._count?.upvotes ?? 0} upvotes
                           </span>
                           <Button variant="outline" size="sm" asChild>
                             <Link href={`/thread/${thread.id}`}>View</Link>
