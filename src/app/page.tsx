@@ -82,14 +82,14 @@ export default function HomePage() {
   };
 
   const shareOnX = (thread: Thread) => {
-    const url = `${window.location.origin}/thread/${thread.id}`;
+    const url = `https://www.vanwinkleapp.com/thread/${thread.id}`;
     const text = `Check out this AI conversation: "${thread.title || thread.summary}"\n\n${url}\n\n#AI #vanwinkle`;
     const tweetUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`;
     window.open(tweetUrl, '_blank');
   };
 
   const copyThreadLink = async (threadId: string) => {
-    const url = `${window.location.origin}/thread/${threadId}`;
+    const url = `https://www.vanwinkleapp.com/thread/${threadId}`;
     try {
       await navigator.clipboard.writeText(url);
       alert('Link copied to clipboard!');

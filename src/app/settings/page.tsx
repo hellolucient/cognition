@@ -136,7 +136,7 @@ export default function SettingsPage() {
   };
 
   const getShareUrl = (code: string) => {
-    return `${window.location.origin}?invite=${code}`;
+    return `https://www.vanwinkleapp.com?invite=${code}`;
   };
 
   const shareOnX = (code: string) => {
