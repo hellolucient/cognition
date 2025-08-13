@@ -10,6 +10,7 @@ import Link from "next/link";
 import { useState, useEffect, use } from "react";
 import { useSupabase } from "@/components/providers/supabase-provider";
 import { WaitlistModal } from "@/components/auth/waitlist-modal";
+import { AILoadingModal } from "@/components/ui/ai-loading-modal";
 
 interface Thread {
   id: string;
@@ -522,6 +523,8 @@ export default function ContributePage({ params }: { params: Promise<{ id: strin
         isOpen={showWaitlist} 
         onClose={() => setShowWaitlist(false)} 
       />
+
+      <AILoadingModal isLoading={loading} />
     </main>
   );
 }

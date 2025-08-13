@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useState, useEffect } from "react";
 import { useSupabase } from "@/components/providers/supabase-provider";
 import { BookmarkletModal } from "@/components/bookmarklet/bookmarklet-modal";
+import { AILoadingModal } from "@/components/ui/ai-loading-modal";
 
 interface Thread {
   id: string;
@@ -326,6 +327,8 @@ export default function HomePage() {
         isOpen={showBookmarkletModal} 
         onClose={() => setShowBookmarkletModal(false)} 
       />
+
+      <AILoadingModal isLoading={loading} />
     </main>
   );
 }
