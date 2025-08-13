@@ -44,13 +44,16 @@ export async function GET(request: NextRequest) {
       }
     });
 
-    return NextResponse.json({
+    const response = NextResponse.json({
       hasOpenAI: !!dbUser?.encryptedOpenAIKey,
       hasAnthropic: !!dbUser?.encryptedAnthropicKey,
       hasGoogle: !!dbUser?.encryptedGoogleKey,
       // Legacy field for backward compatibility
       hasApiKey: !!(dbUser?.encryptedOpenAIKey || dbUser?.encryptedAnthropicKey || dbUser?.encryptedGoogleKey)
     });
+    // Cache private user data for 30s
+    response.headers.set('Cache-Control', 'private, max-age=30');
+    return response;
 
   } catch (error) {
     console.error('Error checking API key status:', error);

@@ -1,15 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { PrismaClient } from '@prisma/client'
-
-const prisma = new PrismaClient({
-  datasources: {
-    db: {
-      url: process.env.DATABASE_URL,
-    },
-  },
-  // Add connection resilience for regional connectivity issues
-  log: ['error'],
-})
+import prisma from '@/lib/prisma'
 
 export async function POST(request: NextRequest) {
   try {

@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { PrismaClient } from '@prisma/client'
+import prisma from '@/lib/prisma'
 
 export async function GET() {
   try {
@@ -12,16 +12,6 @@ export async function GET() {
       DATABASE_POOL_TIMEOUT: process.env.DATABASE_POOL_TIMEOUT || 'not set',
       DATABASE_CONNECT_TIMEOUT: process.env.DATABASE_CONNECT_TIMEOUT || 'not set',
     }
-
-    // Test database connection
-    const prisma = new PrismaClient({
-      datasources: {
-        db: {
-          url: process.env.DATABASE_URL,
-        },
-      },
-      log: ['error'],
-    })
 
     try {
       // Simple database test
@@ -43,8 +33,6 @@ export async function GET() {
         error: dbError.message,
         message: 'Database connection failed'
       }, { status: 500 })
-    } finally {
-      await prisma.$disconnect()
     }
 
   } catch (error: any) {

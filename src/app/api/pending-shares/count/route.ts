@@ -38,31 +38,25 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
-    const pendingCount = await prisma.pendingShare.count({
-      where: {
-        userId: user.id,
-        status: 'pending',
-      },
+    // Optimize: Single grouped query instead of 3 separate COUNTs
+    const counts = await prisma.pendingShare.groupBy({
+      by: ['status'],
+      where: { userId: user.id },
+      _count: { id: true }
     });
 
-    const completedCount = await prisma.pendingShare.count({
-      where: {
-        userId: user.id,
-        status: 'completed',
-      },
-    });
+    const pendingCount = counts.find(c => c.status === 'pending')?._count.id || 0;
+    const completedCount = counts.find(c => c.status === 'completed')?._count.id || 0;
+    const totalCount = pendingCount + completedCount;
 
-    const totalCount = await prisma.pendingShare.count({
-      where: {
-        userId: user.id,
-      },
-    });
-
-    return NextResponse.json({ 
+    const response = NextResponse.json({ 
       pending: pendingCount,
       completed: completedCount,
       total: totalCount
     });
+    // Cache private user data for 30s
+    response.headers.set('Cache-Control', 'private, max-age=30');
+    return response;
   } catch (error) {
     console.error('Error fetching pending shares count:', error);
     return NextResponse.json(

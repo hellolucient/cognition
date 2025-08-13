@@ -1,15 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { PrismaClient } from '@prisma/client'
-
-const prisma = new PrismaClient({
-  datasources: {
-    db: {
-      url: process.env.DATABASE_URL,
-    },
-  },
-  // Add connection resilience for regional connectivity issues
-  log: ['error'],
-})
+import prisma from '@/lib/prisma'
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -62,7 +52,10 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       )
     }
 
-    return NextResponse.json(thread)
+    // Add cache headers for public thread data
+    const response = NextResponse.json(thread)
+    response.headers.set('Cache-Control', 's-maxage=60, stale-while-revalidate=600')
+    return response
 
   } catch (error: any) {
     console.error('Error fetching thread:', error)

@@ -1,19 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
+import prisma from '@/lib/prisma';
 import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 import { encryptApiKey, validateApiKey } from '@/lib/encryption';
 import { AIProvider } from '@/lib/ai-providers';
-
-const prisma = new PrismaClient({
-  datasources: {
-    db: {
-      url: process.env.DATABASE_URL,
-    },
-  },
-  // Add connection resilience for regional connectivity issues
-  log: ['error'],
-});
 
 // Save or update API key
 export async function POST(request: NextRequest) {

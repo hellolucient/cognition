@@ -350,7 +350,10 @@ export async function GET(request: NextRequest) {
       }
     })
 
-    return NextResponse.json(threads)
+    const response = NextResponse.json(threads)
+    // Cache public thread list for 60s, allow stale for 10min
+    response.headers.set('Cache-Control', 's-maxage=60, stale-while-revalidate=600')
+    return response
 
   } catch (error: any) {
     console.error('Error fetching threads:', error)

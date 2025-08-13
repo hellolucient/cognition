@@ -1,15 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { PrismaClient } from '@prisma/client'
-
-const prisma = new PrismaClient({
-  datasources: {
-    db: {
-      url: process.env.DATABASE_URL,
-    },
-  },
-  // Add connection resilience for regional connectivity issues
-  log: ['error'],
-})
+import prisma from '@/lib/prisma'
 
 // Generate a random invite code
 function generateInviteCode(): string {
