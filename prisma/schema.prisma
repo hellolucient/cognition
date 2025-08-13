@@ -63,6 +63,11 @@ model Thread {
   upvotes          Upvote[]
   downvotes        Downvote[]
   notifications    Notification[]
+
+  @@index([authorId])
+  @@index([isContribution])
+  @@index([createdAt])
+  @@index([authorId, isContribution])
 }
 
 model Comment {
@@ -74,6 +79,9 @@ model Comment {
   threadId  String
   author    User     @relation(fields: [authorId], references: [id])
   thread    Thread   @relation(fields: [threadId], references: [id])
+
+  @@index([threadId])
+  @@index([authorId])
 }
 
 model Upvote {
@@ -85,6 +93,8 @@ model Upvote {
   user      User     @relation(fields: [userId], references: [id])
 
   @@unique([userId, threadId])
+  @@index([threadId])
+  @@index([userId])
 }
 
 model Downvote {
@@ -96,6 +106,8 @@ model Downvote {
   user      User     @relation(fields: [userId], references: [id])
 
   @@unique([userId, threadId])
+  @@index([threadId])
+  @@index([userId])
 }
 
 model InviteCode {

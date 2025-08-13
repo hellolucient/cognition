@@ -114,40 +114,34 @@ export async function POST(
       }
     }
 
-    // Get updated counts and user vote status
-    const upvoteCount = await prisma.upvote.count({
-      where: { threadId: threadId },
-    });
+    // Get updated counts and user vote status in parallel (reduce 4 queries to 2)
+    const [upvoteData, downvoteData] = await Promise.all([
+      prisma.upvote.findMany({
+        where: { threadId: threadId },
+        select: { userId: true }
+      }),
+      prisma.downvote.findMany({
+        where: { threadId: threadId },
+        select: { userId: true }
+      })
+    ]);
 
-    const downvoteCount = await prisma.downvote.count({
-      where: { threadId: threadId },
-    });
+    const upvoteCount = upvoteData.length;
+    const downvoteCount = downvoteData.length;
+    const hasUpvoted = upvoteData.some(vote => vote.userId === user.id);
+    const hasDownvoted = downvoteData.some(vote => vote.userId === user.id);
 
-    const hasUpvoted = await prisma.upvote.findUnique({
-      where: {
-        userId_threadId: {
-          userId: user.id,
-          threadId: threadId,
-        },
-      },
-    });
-
-    const hasDownvoted = await prisma.downvote.findUnique({
-      where: {
-        userId_threadId: {
-          userId: user.id,
-          threadId: threadId,
-        },
-      },
-    });
-
-    return NextResponse.json({ 
+    const response = NextResponse.json({ 
       success: true, 
       upvoteCount,
       downvoteCount,
-      hasUpvoted: !!hasUpvoted,
-      hasDownvoted: !!hasDownvoted
+      hasUpvoted,
+      hasDownvoted
     });
+    
+    // Cache vote data briefly to reduce repeated calls
+    response.headers.set('Cache-Control', 'private, max-age=5');
+    return response;
 
   } catch (error) {
     console.error('Error handling vote:', error);
@@ -184,39 +178,26 @@ export async function GET(
 
     const { data: { user } } = await supabase.auth.getUser();
 
-    // Get vote counts
-    const upvoteCount = await prisma.upvote.count({
-      where: { threadId: threadId },
-    });
+    // Optimize: Get counts and user status in parallel (reduce 4 queries to 2)
+    const [upvoteData, downvoteData] = await Promise.all([
+      prisma.upvote.findMany({
+        where: { threadId: threadId },
+        select: { userId: true }
+      }),
+      prisma.downvote.findMany({
+        where: { threadId: threadId },
+        select: { userId: true }
+      })
+    ]);
 
-    const downvoteCount = await prisma.downvote.count({
-      where: { threadId: threadId },
-    });
-
+    const upvoteCount = upvoteData.length;
+    const downvoteCount = downvoteData.length;
     let hasUpvoted = false;
     let hasDownvoted = false;
 
     if (user) {
-      const existingUpvote = await prisma.upvote.findUnique({
-        where: {
-          userId_threadId: {
-            userId: user.id,
-            threadId: threadId,
-          },
-        },
-      });
-
-      const existingDownvote = await prisma.downvote.findUnique({
-        where: {
-          userId_threadId: {
-            userId: user.id,
-            threadId: threadId,
-          },
-        },
-      });
-
-      hasUpvoted = !!existingUpvote;
-      hasDownvoted = !!existingDownvote;
+      hasUpvoted = upvoteData.some(vote => vote.userId === user.id);
+      hasDownvoted = downvoteData.some(vote => vote.userId === user.id);
     }
 
     return NextResponse.json({ 
