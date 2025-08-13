@@ -10,28 +10,17 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Email is required' }, { status: 400 });
     }
 
-    // Check if this is an admin request
-    const cookieStore = await cookies();
-    const supabase = createServerClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      {
-        cookies: {
-          get(name: string) { return cookieStore.get(name)?.value; },
-          set(name: string, value: string, options: any) { cookieStore.set({ name, value, ...options }); },
-          remove(name: string, options: any) { cookieStore.set({ name, value: '', ...options }); },
-        },
-      }
-    );
-
-    const { data: { user } } = await supabase.auth.getUser();
-    const isAdmin = user?.email === 'trent.munday@gmail.com';
-    
-    if (!isAdmin) {
-      return NextResponse.json({ error: 'Admin access required' }, { status: 403 });
+    // Check if service role key is available
+    if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
+      return NextResponse.json({ 
+        error: 'Service role key not configured', 
+        needsServiceKey: true,
+        message: 'Add SUPABASE_SERVICE_ROLE_KEY to environment variables'
+      });
     }
 
-    // Use Supabase Admin API to check user
+    // Use Supabase Admin API to check user (no auth required for this debug endpoint)
+    const cookieStore = await cookies();
     const adminSupabase = createServerClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.SUPABASE_SERVICE_ROLE_KEY!,

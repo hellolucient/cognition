@@ -57,14 +57,35 @@ export default function EmailDebugPage() {
 
     setLoading(true);
     try {
-      const response = await fetch('/api/debug/user-lookup', {
+      // Try simple check first (doesn't require service role key)
+      const simpleResponse = await fetch('/api/debug/simple-user-check', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: email.trim() }),
       });
+      const simpleData = await simpleResponse.json();
 
-      const data = await response.json();
-      setUserLookup(data);
+      // Try full lookup if possible
+      let fullData = null;
+      try {
+        const fullResponse = await fetch('/api/debug/user-lookup', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: email.trim() }),
+        });
+        fullData = await fullResponse.json();
+      } catch (e) {
+        // Full lookup failed, just use simple data
+      }
+
+      setUserLookup({
+        simple: simpleData,
+        full: fullData,
+        combined: {
+          ...simpleData,
+          supabaseAuth: fullData?.user || null,
+        }
+      });
     } catch (error: any) {
       setUserLookup({ error: error.message });
     } finally {
