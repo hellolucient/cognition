@@ -69,7 +69,9 @@ export default function AdminPage() {
       const res = await fetch('/api/admin/waitlist');
       const data = await res.json();
       if (res.ok) {
-        setWaitlist(data.entries || []);
+        // Combine waiting (not notified) and invited (notified) entries
+        const allEntries = [...(data.waiting || []), ...(data.invited || [])];
+        setWaitlist(allEntries);
         setWaitlistTotal(data.total || 0);
       }
     } catch (e) {

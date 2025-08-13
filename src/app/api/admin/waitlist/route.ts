@@ -68,7 +68,12 @@ export async function GET(_request: NextRequest) {
       prisma.waitlistEntry.aggregate({ _count: true })
     ])
 
-    return NextResponse.json({ total: totals._count, waiting, invited })
+    return NextResponse.json({ 
+      total: totals._count, 
+      waiting, 
+      invited,
+      entries: [...waiting, ...invited] // For backward compatibility
+    })
   } catch (error: any) {
     console.error('GET /api/admin/waitlist error:', error)
     return NextResponse.json({ error: 'Failed to fetch waitlist' }, { status: 500 })
