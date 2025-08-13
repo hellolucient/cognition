@@ -5,6 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 // already imported above
 import { useSupabase } from "@/components/providers/supabase-provider";
 import Link from "next/link";
@@ -36,6 +38,13 @@ export default function AdminPage() {
   const [emailSendingFor, setEmailSendingFor] = useState<string | null>(null);
   const [emailSentFor, setEmailSentFor] = useState<string | null>(null);
   const [emailErrorFor, setEmailErrorFor] = useState<string | null>(null);
+  
+  // User cleanup state
+  const [userLookupEmail, setUserLookupEmail] = useState<string>("");
+  const [userLookupResult, setUserLookupResult] = useState<any>(null);
+  const [cleanupResult, setCleanupResult] = useState<any>(null);
+  const [lookupLoading, setLookupLoading] = useState<boolean>(false);
+  const [cleanupLoading, setCleanupLoading] = useState<boolean>(false);
 
   useEffect(() => {
     if (user) {
@@ -210,6 +219,69 @@ export default function AdminPage() {
       alert(`${provider.charAt(0).toUpperCase() + provider.slice(1)} test failed`);
     } finally {
       setTesting(null);
+    }
+  };
+
+  // User cleanup functions
+  const lookupUser = async () => {
+    if (!userLookupEmail.trim()) {
+      alert("Please enter an email address");
+      return;
+    }
+
+    setLookupLoading(true);
+    setUserLookupResult(null);
+    setCleanupResult(null);
+
+    try {
+      const response = await fetch('/api/debug/user-lookup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: userLookupEmail.trim() })
+      });
+
+      const data = await response.json();
+      setUserLookupResult(data);
+    } catch (error) {
+      console.error('User lookup failed:', error);
+      setUserLookupResult({ error: 'Failed to lookup user' });
+    } finally {
+      setLookupLoading(false);
+    }
+  };
+
+  const cleanupUser = async () => {
+    if (!userLookupEmail.trim()) {
+      alert("Please enter an email address");
+      return;
+    }
+
+    if (!confirm(`Are you sure you want to completely delete all data for ${userLookupEmail}? This action cannot be undone.`)) {
+      return;
+    }
+
+    setCleanupLoading(true);
+    setCleanupResult(null);
+
+    try {
+      const response = await fetch('/api/debug/cleanup-user', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: userLookupEmail.trim() })
+      });
+
+      const data = await response.json();
+      setCleanupResult(data);
+      
+      // Clear lookup result after cleanup
+      if (data.success) {
+        setUserLookupResult(null);
+      }
+    } catch (error) {
+      console.error('User cleanup failed:', error);
+      setCleanupResult({ error: 'Failed to cleanup user' });
+    } finally {
+      setCleanupLoading(false);
     }
   };
 
@@ -545,6 +617,117 @@ export default function AdminPage() {
                   </div>
                 )
             })}
+          </CardContent>
+        </Card>
+
+        {/* User Management */}
+        <Card>
+          <CardHeader>
+            <CardTitle>User Management</CardTitle>
+            <CardDescription>
+              Look up and manage user accounts. Use with caution - cleanup operations cannot be undone.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            {/* User Lookup */}
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="userEmail">User Email</Label>
+                <div className="flex gap-2">
+                  <Input
+                    id="userEmail"
+                    type="email"
+                    placeholder="Enter user email to lookup"
+                    value={userLookupEmail}
+                    onChange={(e) => setUserLookupEmail(e.target.value)}
+                    className="flex-1"
+                  />
+                  <Button 
+                    onClick={lookupUser} 
+                    disabled={lookupLoading}
+                    variant="outline"
+                  >
+                    {lookupLoading ? 'Looking up...' : 'Lookup User'}
+                  </Button>
+                </div>
+              </div>
+
+              {/* User Lookup Results */}
+              {userLookupResult && (
+                <div className="border rounded-lg p-4 bg-muted/30">
+                  <h4 className="font-medium mb-2">User Lookup Results</h4>
+                  {userLookupResult.error ? (
+                    <div className="text-red-600 text-sm">{userLookupResult.error}</div>
+                  ) : (
+                    <div className="space-y-2 text-sm">
+                      <div><strong>Email:</strong> {userLookupResult.combined?.email}</div>
+                      {userLookupResult.combined?.database?.user && (
+                        <div>
+                          <strong>Database User:</strong> ✅ Found
+                          <div className="ml-4 text-xs text-muted-foreground">
+                            <div>ID: {userLookupResult.combined.database.user.id}</div>
+                            <div>Name: {userLookupResult.combined.database.user.name}</div>
+                            <div>Created: {new Date(userLookupResult.combined.database.user.createdAt).toLocaleString()}</div>
+                          </div>
+                        </div>
+                      )}
+                      {userLookupResult.combined?.supabaseAuth && (
+                        <div>
+                          <strong>Supabase Auth:</strong> ✅ Found
+                          <div className="ml-4 text-xs text-muted-foreground">
+                            <div>ID: {userLookupResult.combined.supabaseAuth.id}</div>
+                            <div>Confirmed: {userLookupResult.combined.supabaseAuth.confirmed ? '✅' : '❌'}</div>
+                            <div>Email Confirmed: {userLookupResult.combined.supabaseAuth.email_confirmed_at ? '✅' : '❌'}</div>
+                            <div>Last Sign In: {userLookupResult.combined.supabaseAuth.last_sign_in_at ? new Date(userLookupResult.combined.supabaseAuth.last_sign_in_at).toLocaleString() : 'Never'}</div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Cleanup Actions */}
+              {userLookupResult && !userLookupResult.error && (
+                <div className="border-l-4 border-red-500 bg-red-50 p-4 rounded">
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="text-red-600 font-medium">⚠️ Danger Zone</span>
+                  </div>
+                  <p className="text-sm text-red-700 mb-3">
+                    This will permanently delete ALL user data including database records and Supabase auth. This action cannot be undone.
+                  </p>
+                  <Button 
+                    onClick={cleanupUser} 
+                    disabled={cleanupLoading}
+                    variant="destructive"
+                    size="sm"
+                  >
+                    {cleanupLoading ? 'Deleting...' : '🗑️ Delete All User Data'}
+                  </Button>
+                </div>
+              )}
+
+              {/* Cleanup Results */}
+              {cleanupResult && (
+                <div className="border rounded-lg p-4 bg-muted/30">
+                  <h4 className="font-medium mb-2">Cleanup Results</h4>
+                  {cleanupResult.error ? (
+                    <div className="text-red-600 text-sm">{cleanupResult.error}</div>
+                  ) : cleanupResult.success ? (
+                    <div className="space-y-2 text-sm">
+                      <div className="text-green-600">✅ User cleanup completed successfully</div>
+                      <div className="text-xs text-muted-foreground">
+                        <div>Database records deleted: {cleanupResult.deletedRecords || 'Unknown'}</div>
+                        <div>Supabase auth deleted: {cleanupResult.authDeleted ? '✅' : '❌'}</div>
+                        <div>Timestamp: {new Date(cleanupResult.timestamp).toLocaleString()}</div>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="text-yellow-600 text-sm">Partial cleanup - check logs for details</div>
+                  )}
+                </div>
+              )}
+            </div>
           </CardContent>
         </Card>
       </div>

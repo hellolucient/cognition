@@ -72,16 +72,16 @@ Once you're logged in, let's make your profile shine:
 The bookmarklet makes sharing ChatGPT conversations super easy:
 
 ### **Installation**
-1. Go to **Settings** (top navigation)
-2. Scroll to **"ChatGPT Bookmarklet"** section
+1. Go to **Home Page**
+2. Scroll on **"Install Bookmarklet"** button
 3. **Drag the bookmarklet button** to your browser's bookmark bar
    - In Chrome/Safari: Make sure bookmark bar is visible (Cmd+Shift+B)
    - In Firefox: Drag to bookmarks toolbar
 
 ### **How to Use the Bookmarklet**
-1. **Have a ChatGPT conversation** (web or Mac app)
+1. **Have a AI chat conversation** (web or Mac app)
 2. **For Mac app users**: Click "Share" → Copy the share URL → Open in browser
-3. **Click the bookmarklet** in your bookmark bar
+3. **Click the 'Save to wvanwinkle' bookmarklet** in your bookmark bar
 4. **Magic happens**: vanwinkle opens with your conversation pre-filled!
 5. **Review and submit** your conversation
 
