@@ -291,7 +291,7 @@ interface AILoadingModalProps {
   delay?: number; // Delay before showing modal (default 1500ms)
 }
 
-export function AILoadingModal({ isLoading, delay = 1500 }: AILoadingModalProps) {
+export function AILoadingModal({ isLoading, delay = 800 }: AILoadingModalProps) {
   const [showModal, setShowModal] = useState(false);
   const [currentSnippet, setCurrentSnippet] = useState<AISnippet | null>(null);
   const [isVisible, setIsVisible] = useState(false);

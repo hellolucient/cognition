@@ -15,22 +15,47 @@ export function NotificationBell() {
   useEffect(() => {
     if (user) {
       fetchUnreadCount();
-      // Poll for new notifications every 30 seconds
-      const interval = setInterval(fetchUnreadCount, 30000);
+      // Poll for new notifications every 30 seconds, but only if user is still authenticated
+      const interval = setInterval(() => {
+        if (user) {
+          fetchUnreadCount();
+        }
+      }, 30000);
       return () => clearInterval(interval);
+    } else {
+      // Clear data when user logs out
+      setUnreadCount(0);
+      setNotifications([]);
     }
   }, [user]);
 
   const fetchUnreadCount = async () => {
+    // Only fetch if user is authenticated
+    if (!user) {
+      setUnreadCount(0);
+      setNotifications([]);
+      return;
+    }
+
     try {
       const response = await fetch('/api/notifications?limit=5');
-      if (response.ok) {
-        const data = await response.json();
-        setUnreadCount(data.unreadCount);
-        setNotifications(data.notifications);
+      if (!response.ok) {
+        // If 401, user is not authenticated - don't spam logs
+        if (response.status === 401) {
+          setUnreadCount(0);
+          setNotifications([]);
+          return;
+        }
+        console.warn('Failed to fetch notifications:', response.status, response.statusText);
+        return;
       }
+      const data = await response.json();
+      setUnreadCount(data.unreadCount || 0);
+      setNotifications(data.notifications || []);
     } catch (error) {
       console.error('Failed to fetch notifications:', error);
+      setUnreadCount(0);
+      setNotifications([]);
     }
   };
 
