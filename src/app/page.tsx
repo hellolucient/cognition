@@ -233,18 +233,28 @@ export default function HomePage() {
                   {/* Thread Header */}
                   <div className="flex items-start justify-between">
                     <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
-                        {thread.author.name?.[0]?.toUpperCase() || "?"}
-                      </div>
-                      <div className="text-sm text-muted-foreground">
-                        by {thread.author.name || "Anonymous"} • {formatDate(thread.createdAt)}
-                        {thread.source && (
-                          <>
-                            {" • "}
-                            <Badge variant="secondary">{thread.source}</Badge>
-                          </>
+                      <Link href={`/profile/${thread.author.id}`} className="flex items-center gap-3 hover:opacity-80">
+                        {thread.author.avatarUrl ? (
+                          <img 
+                            src={thread.author.avatarUrl} 
+                            alt="Author avatar" 
+                            className="w-8 h-8 rounded-full object-cover"
+                          />
+                        ) : (
+                          <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
+                            {thread.author.name?.[0]?.toUpperCase() || "?"}
+                          </div>
                         )}
-                      </div>
+                        <div className="text-sm text-muted-foreground">
+                          by {thread.author.name || "Anonymous"} • {formatDate(thread.createdAt)}
+                          {thread.source && (
+                            <>
+                              {" • "}
+                              <Badge variant="secondary">{thread.source}</Badge>
+                            </>
+                          )}
+                        </div>
+                      </Link>
                     </div>
                   </div>
 

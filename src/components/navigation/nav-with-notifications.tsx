@@ -3,6 +3,7 @@
 import { useState, useEffect, createContext, useContext } from 'react';
 import { useSupabase } from '@/components/providers/supabase-provider';
 import { AdminNavLink } from '@/components/admin/admin-nav-link';
+import { NotificationBell } from '@/components/ui/notification-bell';
 import Link from 'next/link';
 import { Badge } from '@/components/ui/badge';
 
@@ -97,6 +98,7 @@ export function NavWithNotifications() {
           </Badge>
         )}
       </Link>
+      <NotificationBell />
       <AdminNavLink />
     </nav>
   );
@@ -120,6 +122,7 @@ export function MobileNavWithNotifications() {
           </Badge>
         )}
       </Link>
+      <NotificationBell />
       {/* Show Admin link on mobile when authorized */}
       <AdminNavLink />
     </nav>
