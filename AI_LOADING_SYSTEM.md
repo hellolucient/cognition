@@ -6,7 +6,9 @@ Transform boring loading screens into delightful AI history lessons!
 
 - **Smart Delays**: Only shows after 1.5 seconds to avoid flashing on quick loads
 - **Educational**: Random AI history snippets with beautiful visuals
-- **User Control**: Users can close modal while loading continues in background
+- **Persistent Display**: Modal stays visible even after loading completes
+- **User Control**: Only closes when user clicks X button
+- **Visual Feedback**: Shows spinner during loading, checkmark when complete
 - **Colorful**: Each snippet has a unique color theme
 - **Responsive**: Works on all screen sizes
 
@@ -77,7 +79,7 @@ Currently features 10 educational snippets:
 - **Unique Colors**: Each snippet has its own theme color
 - **Emojis**: Visual icons for each topic
 - **Smooth Animations**: Fade in/out transitions
-- **Loading Indicator**: Shows loading continues in background
+- **Dynamic Status**: Spinner during loading → checkmark when complete
 - **Close Button**: Users maintain control
 
 ## 🔧 Customization
@@ -116,10 +118,11 @@ Each snippet can have:
 ## 🎯 Best Practices
 
 1. **Use for actual loading**: Only activate when genuinely loading
-2. **Reasonable delays**: 1-2 seconds prevents flashing
-3. **Let users close**: Always provide close option
-4. **Keep snippets educational**: Focus on real AI history
-5. **Test performance**: Ensure smooth animations
+2. **Reasonable delays**: 1-2 seconds prevents flashing  
+3. **Persistent design**: Modal stays until user closes (not auto-hide)
+4. **Let users decide**: Users can read snippet or close immediately
+5. **Keep snippets educational**: Focus on real AI history
+6. **Test performance**: Ensure smooth animations
 
 ## 🔄 Integration Examples
 

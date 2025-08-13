@@ -129,14 +129,9 @@ export function AILoadingModal({ isLoading, delay = 1500 }: AILoadingModalProps)
         // Small delay for fade-in animation
         setTimeout(() => setIsVisible(true), 50);
       }, delay);
-    } else {
-      // Loading finished, hide modal
-      setIsVisible(false);
-      setTimeout(() => {
-        setShowModal(false);
-        setCurrentSnippet(null);
-      }, 300); // Wait for fade-out
     }
+    // Note: We don't automatically hide when loading stops
+    // Modal stays visible until user manually closes it
 
     return () => {
       if (delayTimer) clearTimeout(delayTimer);
@@ -194,8 +189,19 @@ export function AILoadingModal({ isLoading, delay = 1500 }: AILoadingModalProps)
               {currentSnippet.year}
             </span>
             <div className="flex items-center space-x-2 text-white/60 text-sm">
-              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white/60"></div>
-              <span>Loading continues...</span>
+              {isLoading ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white/60"></div>
+                  <span>Loading continues...</span>
+                </>
+              ) : (
+                <>
+                  <div className="rounded-full h-4 w-4 bg-green-400 flex items-center justify-center">
+                    <span className="text-white text-xs">✓</span>
+                  </div>
+                  <span>Page loaded!</span>
+                </>
+              )}
             </div>
           </div>
         </div>
