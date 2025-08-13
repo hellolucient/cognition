@@ -12,6 +12,7 @@ export default function EmailDebugPage() {
   const [result, setResult] = useState<any>(null);
   const [config, setConfig] = useState<any>(null);
   const [userLookup, setUserLookup] = useState<any>(null);
+  const [cleanupResult, setCleanupResult] = useState<any>(null);
 
   const handleResendEmail = async () => {
     if (!email.trim()) {
@@ -93,6 +94,46 @@ export default function EmailDebugPage() {
     }
   };
 
+  const cleanupUser = async () => {
+    if (!email.trim()) {
+      alert("Please enter an email address");
+      return;
+    }
+
+    const confirmed = confirm(
+      `Are you sure you want to PERMANENTLY DELETE all data for ${email.trim()}?\n\n` +
+      `This will remove:\n` +
+      `- User account from database\n` +
+      `- User from Supabase Auth\n` +
+      `- All invite codes created/used\n` +
+      `- All pending shares\n` +
+      `- All threads created\n` +
+      `- Waitlist entries\n\n` +
+      `This action CANNOT be undone!`
+    );
+
+    if (!confirmed) return;
+
+    setLoading(true);
+    try {
+      const response = await fetch('/api/debug/cleanup-user', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          email: email.trim(), 
+          confirmDelete: true 
+        }),
+      });
+
+      const data = await response.json();
+      setCleanupResult(data);
+    } catch (error: any) {
+      setCleanupResult({ error: error.message });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <main className="container mx-auto py-8 max-w-2xl">
       <div className="space-y-6">
@@ -148,12 +189,15 @@ export default function EmailDebugPage() {
               />
             </div>
             
-            <div className="flex gap-2">
+            <div className="flex gap-2 flex-wrap">
               <Button onClick={lookupUser} disabled={loading || !email.trim()}>
                 {loading ? "Looking up..." : "Lookup User"}
               </Button>
               <Button onClick={handleResendEmail} disabled={loading || !email.trim()} variant="outline">
                 {loading ? "Sending..." : "Resend Confirmation"}
+              </Button>
+              <Button onClick={cleanupUser} disabled={loading || !email.trim()} variant="destructive">
+                {loading ? "Cleaning up..." : "🗑️ Cleanup User"}
               </Button>
             </div>
 
@@ -171,6 +215,15 @@ export default function EmailDebugPage() {
                 <h4 className="font-medium mb-2">Email Resend Result:</h4>
                 <pre className="text-sm overflow-auto">
                   {JSON.stringify(result, null, 2)}
+                </pre>
+              </div>
+            )}
+
+            {cleanupResult && (
+              <div className="bg-muted p-4 rounded-lg border-l-4 border-l-red-500">
+                <h4 className="font-medium mb-2">🗑️ Cleanup Result:</h4>
+                <pre className="text-sm overflow-auto">
+                  {JSON.stringify(cleanupResult, null, 2)}
                 </pre>
               </div>
             )}
@@ -213,6 +266,14 @@ export default function EmailDebugPage() {
               <h4 className="font-medium">4. Email Provider Limits</h4>
               <p className="text-sm text-muted-foreground">
                 Supabase's default email service has rate limits. For production, configure a custom SMTP provider.
+              </p>
+            </div>
+
+            <div className="space-y-2">
+              <h4 className="font-medium">🗑️ Testing Cleanup</h4>
+              <p className="text-sm text-muted-foreground">
+                Use the "Cleanup User" button to completely remove all traces of a test email from both the database and Supabase Auth. 
+                This ensures clean testing without conflicts between old and new accounts.
               </p>
             </div>
           </CardContent>
