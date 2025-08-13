@@ -36,6 +36,8 @@ export default function ContributePage({ params }: { params: Promise<{ id: strin
   const [selectedProvider, setSelectedProvider] = useState("openai");
 
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showSuccess, setShowSuccess] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
   const [referencedText, setReferencedText] = useState("");
   const [referencedSource, setReferencedSource] = useState("");
   const [showWaitlist, setShowWaitlist] = useState(false);
@@ -165,14 +167,12 @@ export default function ContributePage({ params }: { params: Promise<{ id: strin
     }
 
     if (contributionType === "ai" && !userPrompt.trim()) {
-      alert("Please enter a prompt for the AI.");
+      setErrorMessage("Please enter a prompt for the AI.");
       return;
     }
 
-
-
     if (contributionType === "manual" && !manualContribution.trim()) {
-      alert("Please enter your contribution.");
+      setErrorMessage("Please enter your contribution.");
       return;
     }
 
@@ -200,13 +200,16 @@ export default function ContributePage({ params }: { params: Promise<{ id: strin
         throw new Error(data.error || 'Failed to create contribution');
       }
       
-      alert("Contribution added successfully! Redirecting to the thread...");
+      // Show success state
+      setShowSuccess(true);
       
-      // Redirect to the parent thread to see the contribution, with scroll parameter
-      window.location.href = `/thread/${resolvedParams.id}?scroll=bottom`;
+      // Redirect after a short delay to show the success message
+      setTimeout(() => {
+        window.location.href = `/thread/${resolvedParams.id}?scroll=bottom`;
+      }, 1500);
       
     } catch (error: any) {
-      alert(`Error contributing: ${error.message}`);
+      setErrorMessage(error.message);
     } finally {
       setIsSubmitting(false);
     }
@@ -274,6 +277,25 @@ export default function ContributePage({ params }: { params: Promise<{ id: strin
           <p className="text-muted-foreground">
             Add your own insights or continue the conversation with AI. Your contribution will be added to the thread with proper attribution.
           </p>
+          
+          {/* Error Message */}
+          {errorMessage && (
+            <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+              <div className="flex items-center space-x-2">
+                <svg className="w-5 h-5 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span className="text-red-700 font-medium">Error:</span>
+              </div>
+              <p className="text-red-600 mt-1">{errorMessage}</p>
+              <button 
+                onClick={() => setErrorMessage("")}
+                className="text-red-500 hover:text-red-700 text-sm mt-2 underline"
+              >
+                Dismiss
+              </button>
+            </div>
+          )}
           
           {/* Reference Display */}
           {referencedText && referencedSource && (
@@ -468,6 +490,29 @@ export default function ContributePage({ params }: { params: Promise<{ id: strin
               >
                 Cancel
               </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Success Modal */}
+      {showSuccess && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-background rounded-lg p-8 max-w-md w-full mx-4 text-center">
+            <div className="space-y-4">
+              <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto">
+                <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+              </div>
+              <h3 className="text-xl font-semibold text-green-600">Success!</h3>
+              <p className="text-muted-foreground">
+                Your contribution has been added to the conversation.
+              </p>
+              <div className="flex items-center justify-center space-x-2 text-sm text-muted-foreground">
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary"></div>
+                <span>Redirecting to thread...</span>
+              </div>
             </div>
           </div>
         </div>
