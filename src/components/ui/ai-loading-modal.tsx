@@ -288,27 +288,37 @@ const AI_SNIPPETS: AISnippet[] = [
 
 interface AILoadingModalProps {
   isLoading: boolean;
-  delay?: number; // Delay before showing modal (default 1500ms)
+  delay?: number; // Delay before showing modal (default 800ms)
+  requireAuth?: boolean; // Whether to require authentication (default false)
 }
 
-export function AILoadingModal({ isLoading, delay = 800 }: AILoadingModalProps) {
+export function AILoadingModal({ isLoading, delay = 800, requireAuth = false }: AILoadingModalProps) {
   const [showModal, setShowModal] = useState(false);
   const [currentSnippet, setCurrentSnippet] = useState<AISnippet | null>(null);
   const [isVisible, setIsVisible] = useState(false);
   const [isDisabled, setIsDisabled] = useState(false);
+  const [userAuthenticated, setUserAuthenticated] = useState(false);
 
-  // Check localStorage for disabled state on mount
+  // Check localStorage for disabled state and auth state on mount
   useEffect(() => {
     const disabled = localStorage.getItem('ai-loading-modals-disabled') === 'true';
     setIsDisabled(disabled);
-    console.log('🤖 AI Loading Modal - Disabled state:', disabled);
-  }, []);
+    
+    // Check if user is authenticated (simple check for session cookie or localStorage)
+    const hasAuth = document.cookie.includes('sb-') || localStorage.getItem('supabase.auth.token');
+    setUserAuthenticated(!!hasAuth);
+    
+    console.log('🤖 AI Loading Modal - Disabled state:', disabled, 'Auth required:', requireAuth, 'User auth:', !!hasAuth);
+  }, [requireAuth]);
 
   useEffect(() => {
-    console.log('🤖 AI Loading Modal - State change:', { isLoading, isDisabled, delay });
+    console.log('🤖 AI Loading Modal - State change:', { isLoading, isDisabled, delay, requireAuth, userAuthenticated });
     let delayTimer: NodeJS.Timeout;
     
-    if (isLoading && !isDisabled) {
+    // Show modal if loading and not disabled, and either no auth required OR user is authenticated
+    const shouldShow = isLoading && !isDisabled && (!requireAuth || userAuthenticated);
+    
+    if (shouldShow) {
       console.log('🤖 AI Loading Modal - Starting delay timer for', delay, 'ms');
       // Start delay timer
       delayTimer = setTimeout(() => {
@@ -321,7 +331,7 @@ export function AILoadingModal({ isLoading, delay = 800 }: AILoadingModalProps) 
         setTimeout(() => setIsVisible(true), 50);
       }, delay);
     } else {
-      console.log('🤖 AI Loading Modal - Not showing:', { isLoading, isDisabled });
+      console.log('🤖 AI Loading Modal - Not showing:', { isLoading, isDisabled, requireAuth, userAuthenticated });
     }
     // Note: We don't automatically hide when loading stops
     // Modal stays visible until user manually closes it
@@ -332,7 +342,7 @@ export function AILoadingModal({ isLoading, delay = 800 }: AILoadingModalProps) 
         clearTimeout(delayTimer);
       }
     };
-  }, [isLoading, delay, isDisabled]);
+  }, [isLoading, delay, isDisabled, requireAuth, userAuthenticated]);
 
   const handleClose = () => {
     setIsVisible(false);
