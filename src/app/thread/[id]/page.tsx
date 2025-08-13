@@ -103,11 +103,31 @@ export default function ThreadPage({ params }: { params: Promise<{ id: string }>
       // Small delay to ensure content is rendered
       setTimeout(() => {
         if (scrollToBottom && thread.contributions && thread.contributions.length > 0) {
-          // Coming from contribute page - scroll to latest contribution
-          conversationRef.current?.scrollIntoView({ 
-            behavior: 'smooth', 
-            block: 'start' 
-          });
+          // Coming from contribute page - scroll to show the complete latest contribution
+          if (conversationRef.current) {
+            // Calculate scroll position to show the full contribution
+            const element = conversationRef.current;
+            const elementRect = element.getBoundingClientRect();
+            const elementTop = elementRect.top + window.scrollY;
+            const elementHeight = elementRect.height;
+            const viewportHeight = window.innerHeight;
+            
+            // If contribution is taller than viewport, scroll to top of contribution
+            // Otherwise, center it or position it to show the full content
+            let scrollPosition;
+            if (elementHeight > viewportHeight * 0.8) {
+              // Large contribution - scroll to top with some padding
+              scrollPosition = elementTop - 100;
+            } else {
+              // Smaller contribution - center it in viewport
+              scrollPosition = elementTop - (viewportHeight - elementHeight) / 2;
+            }
+            
+            window.scrollTo({ 
+              top: Math.max(0, scrollPosition), 
+              behavior: 'smooth' 
+            });
+          }
           
           // Clean up URL parameter
           const newUrl = window.location.pathname;

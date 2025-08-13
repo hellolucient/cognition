@@ -58,6 +58,9 @@ export default function SettingsPage() {
   const [savingApiKey, setSavingApiKey] = useState(false);
   const [apiKeyError, setApiKeyError] = useState("");
 
+  // AI Loading Modals state
+  const [aiModalsDisabled, setAiModalsDisabled] = useState(false);
+
   useEffect(() => {
     if (user) {
       fetchInviteCodes();
@@ -65,6 +68,9 @@ export default function SettingsPage() {
       fetchPendingShares();
       fetchPendingSharesCounts();
     }
+    // Check AI modals disabled state
+    const disabled = localStorage.getItem('ai-loading-modals-disabled') === 'true';
+    setAiModalsDisabled(disabled);
   }, [user]);
 
   // Ensure counts load immediately on first mount (session cookie auth works without waiting on context)
@@ -321,6 +327,17 @@ export default function SettingsPage() {
     }
   };
 
+  // AI Loading Modals functions
+  const toggleAiModals = () => {
+    const newState = !aiModalsDisabled;
+    setAiModalsDisabled(newState);
+    if (newState) {
+      localStorage.setItem('ai-loading-modals-disabled', 'true');
+    } else {
+      localStorage.removeItem('ai-loading-modals-disabled');
+    }
+  };
+
   if (!user) {
     return (
       <main className="container mx-auto py-8">
@@ -381,6 +398,35 @@ export default function SettingsPage() {
             <div><strong>Email:</strong> {user.email}</div>
             <div><strong>Name:</strong> {user.user_metadata?.name || "Not set"}</div>
             <div><strong>Member since:</strong> {new Date(user.created_at).toLocaleDateString()}</div>
+          </div>
+        </div>
+
+        {/* AI Loading Modals Settings */}
+        <div className="bg-muted/30 p-6 rounded-lg">
+          <h2 className="text-xl font-semibold mb-4">AI History Popups</h2>
+          <p className="text-muted-foreground mb-4">
+            During loading screens, we show educational AI history snippets to make waiting more interesting.
+          </p>
+          
+          <div className="flex items-center justify-between">
+            <div>
+              <div className="font-medium">
+                {aiModalsDisabled ? "AI History Popups Disabled" : "AI History Popups Enabled"}
+              </div>
+              <div className="text-sm text-muted-foreground">
+                {aiModalsDisabled 
+                  ? "You won't see educational AI snippets during loading"
+                  : "Random AI history facts appear during loading screens"
+                }
+              </div>
+            </div>
+            <Button
+              onClick={toggleAiModals}
+              variant={aiModalsDisabled ? "default" : "outline"}
+              size="sm"
+            >
+              {aiModalsDisabled ? "Enable Popups" : "Disable Popups"}
+            </Button>
           </div>
         </div>
 
