@@ -32,13 +32,14 @@ export default function HomePage() {
   const [loading, setLoading] = useState(true);
   const [selectedTag, setSelectedTag] = useState<string | null>(null);
   const [showBookmarkletModal, setShowBookmarkletModal] = useState(false);
+  const [showFollowingOnly, setShowFollowingOnly] = useState(false);
   const { user } = useSupabase();
 
 
 
   useEffect(() => {
     fetchThreads();
-  }, []);
+  }, [showFollowingOnly]);
 
   // Auto-scroll to threads section when redirected from successful post
   useEffect(() => {
@@ -59,7 +60,8 @@ export default function HomePage() {
 
   const fetchThreads = async () => {
     try {
-      const response = await fetch('/api/threads');
+      const url = showFollowingOnly ? '/api/threads?following=true' : '/api/threads';
+      const response = await fetch(url);
       if (response.ok) {
         const data = await response.json();
         const safe = Array.isArray(data)
@@ -76,6 +78,31 @@ export default function HomePage() {
       console.error('Error fetching threads:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const shareOnX = (thread: Thread) => {
+    const url = `${window.location.origin}/thread/${thread.id}`;
+    const text = `Check out this AI conversation: "${thread.title || thread.summary}"\n\n${url}\n\n#AI #vanwinkle`;
+    const tweetUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`;
+    window.open(tweetUrl, '_blank');
+  };
+
+  const copyThreadLink = async (threadId: string) => {
+    const url = `${window.location.origin}/thread/${threadId}`;
+    try {
+      await navigator.clipboard.writeText(url);
+      alert('Link copied to clipboard!');
+    } catch (err) {
+      console.error('Failed to copy link:', err);
+      // Fallback
+      const textArea = document.createElement('textarea');
+      textArea.value = url;
+      document.body.appendChild(textArea);
+      textArea.select();
+      document.execCommand('copy');
+      document.body.removeChild(textArea);
+      alert('Link copied to clipboard!');
     }
   };
 
@@ -133,6 +160,29 @@ export default function HomePage() {
         </div>
 
 
+
+        {/* Following Filter */}
+        {user && (
+          <div className="space-y-2">
+            <div className="text-sm font-medium">View:</div>
+            <div className="flex gap-2">
+              <Button
+                variant={!showFollowingOnly ? "default" : "outline"}
+                size="sm"
+                onClick={() => setShowFollowingOnly(false)}
+              >
+                All Posts
+              </Button>
+              <Button
+                variant={showFollowingOnly ? "default" : "outline"}
+                size="sm"
+                onClick={() => setShowFollowingOnly(true)}
+              >
+                Following Only
+              </Button>
+            </div>
+          </div>
+        )}
 
         {/* Tag Filter */}
         {allTags.length > 0 && (
@@ -231,12 +281,26 @@ export default function HomePage() {
                     <div className="flex items-center gap-4 text-sm text-muted-foreground">
                       <span>{thread._count.upvotes} upvotes</span>
                     </div>
-                    <div className="flex gap-2">
+                    <div className="flex gap-2 flex-wrap">
                       <Button variant="outline" size="sm" asChild>
                         <Link href={`/thread/${thread.id}`}>Read Full</Link>
                       </Button>
                       <Button variant="outline" size="sm" asChild>
                         <Link href={`/contribute/${thread.id}`}>Contribute</Link>
+                      </Button>
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        onClick={() => shareOnX(thread)}
+                      >
+                        𝕏 Share
+                      </Button>
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        onClick={() => copyThreadLink(thread.id)}
+                      >
+                        📋 Copy Link
                       </Button>
                     </div>
                   </div>

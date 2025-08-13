@@ -91,6 +91,29 @@ export async function POST(request: NextRequest) {
       }
     })
 
+    // Create notifications for followers (async, don't wait)
+    prisma.follow.findMany({
+      where: { followingId: user.id },
+      select: { followerId: true }
+    }).then(async (followers) => {
+      if (followers.length > 0) {
+        const notifications = followers.map(follow => ({
+          userId: follow.followerId,
+          type: 'new_post',
+          title: 'New Post',
+          message: `${user.email?.split('@')[0] || 'Someone you follow'} shared a new AI conversation`,
+          threadId: thread.id,
+          fromUserId: user.id,
+        }));
+
+        await prisma.notification.createMany({
+          data: notifications
+        });
+      }
+    }).catch(err => {
+      console.error('Failed to create notifications:', err);
+    });
+
     // Auto-detection: Try to match with pending shares
     try {
       // If we have the originating share URL from the bookmarklet, close it deterministically first
@@ -251,11 +274,54 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url)
     const limit = parseInt(searchParams.get('limit') || '20')
     const offset = parseInt(searchParams.get('offset') || '0')
+    const followingOnly = searchParams.get('following') === 'true'
+
+    // Get authenticated user for following filter
+    let currentUserId = null;
+    if (followingOnly) {
+      const cookieStore = await cookies()
+      const supabase = createServerClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+        {
+          cookies: {
+            get(name: string) { return cookieStore.get(name)?.value },
+            set(name: string, value: string, options: any) { cookieStore.set({ name, value, ...options }) },
+            remove(name: string, options: any) { cookieStore.set({ name, value: '', ...options }) },
+          },
+        }
+      )
+
+      const { data: { user } } = await supabase.auth.getUser()
+      if (user) {
+        currentUserId = user.id;
+      }
+    }
+
+    // Build where clause
+    let whereClause: any = {
+      isContribution: false  // Only show original threads, not contributions
+    };
+
+    if (followingOnly && currentUserId) {
+      // Get list of users the current user is following
+      const followedUsers = await prisma.follow.findMany({
+        where: { followerId: currentUserId },
+        select: { followingId: true }
+      });
+
+      if (followedUsers.length === 0) {
+        // User is not following anyone, return empty array
+        return NextResponse.json([]);
+      }
+
+      whereClause.authorId = {
+        in: followedUsers.map(f => f.followingId)
+      };
+    }
 
     const threads = await prisma.thread.findMany({
-      where: {
-        isContribution: false  // Only show original threads, not contributions
-      },
+      where: whereClause,
       take: limit,
       skip: offset,
       orderBy: {
