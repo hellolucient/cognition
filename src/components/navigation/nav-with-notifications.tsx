@@ -87,6 +87,11 @@ export function NavWithNotifications() {
 
   return (
     <nav className="hidden md:flex items-center gap-4 text-sm">
+      {user && (
+        <Link href={`/profile/${user.id}`} className="text-muted-foreground hover:text-foreground">
+          Profile
+        </Link>
+      )}
       <Link href="/settings" className="text-muted-foreground hover:text-foreground relative">
         Settings
         {user && pendingCount > 0 && (
@@ -111,6 +116,11 @@ export function MobileNavWithNotifications() {
 
   return (
     <nav className="md:hidden flex items-center gap-4 text-sm">
+      {user && (
+        <Link href={`/profile/${user.id}`} className="text-muted-foreground hover:text-foreground">
+          Profile
+        </Link>
+      )}
       <Link href="/settings" className="text-muted-foreground hover:text-foreground relative">
         Settings
         {user && pendingCount > 0 && (
