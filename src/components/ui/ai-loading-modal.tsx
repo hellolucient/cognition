@@ -9,6 +9,7 @@ interface AISnippet {
   description: string;
   year: string;
   image: string;
+  imageType: 'emoji' | 'file';
   color: string;
 }
 
@@ -18,7 +19,8 @@ const AI_SNIPPETS: AISnippet[] = [
     title: "SHAKEY THE ROBOT",
     description: "Built in the late 1960s, Shakey was the first mobile robot able to reason about its own actions. It could plan routes, push objects, and navigate rooms — slowly, but smartly.",
     year: "1960s",
-    image: "🤖",
+    image: "🤖", // Could be "/ai-history/shakey-robot.png" when you add images
+    imageType: 'emoji',
     color: "bg-blue-600"
   },
   {
@@ -27,6 +29,7 @@ const AI_SNIPPETS: AISnippet[] = [
     description: "Created in 1966, ELIZA was one of the first chatbots. It simulated conversation by using pattern matching and substitution, making people believe they were talking to a real therapist.",
     year: "1966",
     image: "💬",
+    imageType: 'emoji',
     color: "bg-green-600"
   },
   {
@@ -35,6 +38,7 @@ const AI_SNIPPETS: AISnippet[] = [
     description: "Alan Turing proposed in 1950 that a machine could be considered intelligent if it could engage in conversations indistinguishable from a human. Still a benchmark today!",
     year: "1950",
     image: "🧠",
+    imageType: 'emoji',
     color: "bg-purple-600"
   },
   {
@@ -43,6 +47,7 @@ const AI_SNIPPETS: AISnippet[] = [
     description: "Frank Rosenblatt's 1957 invention was the first artificial neural network. Though simple, it laid the groundwork for today's deep learning revolution.",
     year: "1957",
     image: "🔗",
+    imageType: 'emoji',
     color: "bg-orange-600"
   },
   {
@@ -51,6 +56,7 @@ const AI_SNIPPETS: AISnippet[] = [
     description: "IBM's chess computer made history in 1997 by defeating world champion Garry Kasparov. It could evaluate 200 million chess positions per second.",
     year: "1997",
     image: "♟️",
+    imageType: 'emoji',
     color: "bg-indigo-600"
   },
   {
@@ -59,6 +65,7 @@ const AI_SNIPPETS: AISnippet[] = [
     description: "The 1956 Dartmouth Summer Research Project coined the term 'Artificial Intelligence' and launched AI as an academic discipline. The field was born here!",
     year: "1956",
     image: "🎓",
+    imageType: 'emoji',
     color: "bg-red-600"
   },
   {
@@ -67,6 +74,7 @@ const AI_SNIPPETS: AISnippet[] = [
     description: "Developed in the 1970s and popularized in the 1980s, backpropagation became the key algorithm for training neural networks by learning from errors.",
     year: "1980s",
     image: "↩️",
+    imageType: 'emoji',
     color: "bg-teal-600"
   },
   {
@@ -75,6 +83,7 @@ const AI_SNIPPETS: AISnippet[] = [
     description: "OpenAI's first Generative Pre-trained Transformer in 2018 showed that unsupervised learning could create coherent text. The beginning of the modern AI era.",
     year: "2018",
     image: "🚀",
+    imageType: 'emoji',
     color: "bg-pink-600"
   },
   {
@@ -83,6 +92,7 @@ const AI_SNIPPETS: AISnippet[] = [
     description: "DeepMind's AlphaGo defeated the world Go champion in 2016, mastering a game with more possible positions than atoms in the observable universe.",
     year: "2016",
     image: "⚫",
+    imageType: 'emoji',
     color: "bg-gray-700"
   },
   {
@@ -91,6 +101,7 @@ const AI_SNIPPETS: AISnippet[] = [
     description: "Google's 2017 'Attention Is All You Need' paper introduced transformers, revolutionizing NLP and enabling ChatGPT, GPT-4, and modern language models.",
     year: "2017",
     image: "⚡",
+    imageType: 'emoji',
     color: "bg-yellow-600"
   }
 ];
@@ -147,7 +158,17 @@ export function AILoadingModal({ isLoading, delay = 1500 }: AILoadingModalProps)
       <div className={`${currentSnippet.color} rounded-lg p-8 max-w-md w-full mx-4 text-white transform transition-all duration-300 ${isVisible ? 'scale-100' : 'scale-95'}`}>
         {/* Header */}
         <div className="flex justify-between items-start mb-6">
-          <div className="text-4xl">{currentSnippet.image}</div>
+          <div className="w-16 h-16 flex items-center justify-center">
+            {currentSnippet.imageType === 'emoji' ? (
+              <div className="text-4xl">{currentSnippet.image}</div>
+            ) : (
+              <img 
+                src={currentSnippet.image} 
+                alt={currentSnippet.title}
+                className="w-full h-full object-contain rounded-lg"
+              />
+            )}
+          </div>
           <Button
             variant="ghost"
             size="sm"
