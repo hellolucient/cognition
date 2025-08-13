@@ -51,7 +51,7 @@ export default function ContributePage({ params }: { params: Promise<{ id: strin
     const selection = window.getSelection();
     const selectedText = selection?.toString().trim();
     
-    if (selectedText && selectedText.length > 10) { // Minimum selection length
+    if (selectedText && selectedText.length > 5) { // Minimum selection length - reduced for single sentences
       setSelectedText(selectedText);
       setSelectedSource(source);
       setShowReferenceModal(true);

@@ -164,7 +164,7 @@ export default function ThreadPage({ params }: { params: Promise<{ id: string }>
     const selection = window.getSelection();
     const selectedText = selection?.toString().trim();
     
-    if (selectedText && selectedText.length > 10) { // Minimum selection length
+    if (selectedText && selectedText.length > 5) { // Minimum selection length - reduced for single sentences
       setSelectedText(selectedText);
       setSelectedSource(source);
       setShowReferenceModal(true);
