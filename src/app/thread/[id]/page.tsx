@@ -105,23 +105,14 @@ export default function ThreadPage({ params }: { params: Promise<{ id: string }>
         if (scrollToBottom && thread.contributions && thread.contributions.length > 0) {
           // Coming from contribute page - scroll to show the complete latest contribution
           if (conversationRef.current) {
-            // Calculate scroll position to show the full contribution
+            // Scroll to a position well above the contribution to ensure full visibility
             const element = conversationRef.current;
             const elementRect = element.getBoundingClientRect();
             const elementTop = elementRect.top + window.scrollY;
-            const elementHeight = elementRect.height;
-            const viewportHeight = window.innerHeight;
             
-            // If contribution is taller than viewport, scroll to top of contribution
-            // Otherwise, center it or position it to show the full content
-            let scrollPosition;
-            if (elementHeight > viewportHeight * 0.8) {
-              // Large contribution - scroll to top with some padding
-              scrollPosition = elementTop - 100;
-            } else {
-              // Smaller contribution - center it in viewport
-              scrollPosition = elementTop - (viewportHeight - elementHeight) / 2;
-            }
+            // Scroll to show the contribution with generous padding above
+            // This ensures we see the full contribution, not just the title
+            const scrollPosition = elementTop - 200; // More padding to show full content
             
             window.scrollTo({ 
               top: Math.max(0, scrollPosition), 
@@ -136,7 +127,7 @@ export default function ThreadPage({ params }: { params: Promise<{ id: string }>
           // Normal "Read Full" navigation - scroll to top of page
           window.scrollTo({ top: 0, behavior: 'smooth' });
         }
-      }, 100);
+      }, 300); // Increased delay to ensure content is fully rendered
     }
   }, [thread]);
 
