@@ -168,18 +168,36 @@ export default function ThreadPage({ params }: { params: Promise<{ id: string }>
   const conversationRef = useRef<HTMLDivElement>(null);
 
   const handleTextSelection = (text: string, source: string) => {
-    if (!user) {
-      setShowWaitlist(true);
-      return;
-    }
-
+    console.log('🔍 Thread handleTextSelection called:', { text, source });
+    
     const selection = window.getSelection();
     const selectedText = selection?.toString().trim();
     
-    if (selectedText && selectedText.length > 5) { // Minimum selection length - reduced for single sentences
+    console.log('🔍 Thread text selection debug:', {
+      selection,
+      selectedText,
+      length: selectedText?.length,
+      user: !!user
+    });
+    
+    if (selectedText && selectedText.length > 5) {
+      console.log('✅ Thread text selection valid');
+      
+      if (!user) {
+        console.log('🔒 User not authenticated, showing waitlist');
+        setShowWaitlist(true);
+        return;
+      }
+      
       setSelectedText(selectedText);
       setSelectedSource(source);
       setShowReferenceModal(true);
+    } else {
+      console.log('❌ Thread text selection invalid:', {
+        hasText: !!selectedText,
+        length: selectedText?.length,
+        minLength: 5
+      });
     }
   };
 

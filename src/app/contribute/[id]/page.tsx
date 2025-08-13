@@ -48,18 +48,36 @@ export default function ContributePage({ params }: { params: Promise<{ id: strin
   const { user, loading: authLoading } = useSupabase();
 
   const handleTextSelection = (text: string, source: string) => {
-    if (!user) {
-      setShowWaitlist(true);
-      return;
-    }
-
+    console.log('🔍 Contribute handleTextSelection called:', { text, source });
+    
     const selection = window.getSelection();
     const selectedText = selection?.toString().trim();
     
-    if (selectedText && selectedText.length > 5) { // Minimum selection length - reduced for single sentences
+    console.log('🔍 Contribute text selection debug:', {
+      selection,
+      selectedText,
+      length: selectedText?.length,
+      user: !!user
+    });
+    
+    if (selectedText && selectedText.length > 5) {
+      console.log('✅ Contribute text selection valid');
+      
+      if (!user) {
+        console.log('🔒 User not authenticated, showing waitlist');
+        setShowWaitlist(true);
+        return;
+      }
+      
       setSelectedText(selectedText);
       setSelectedSource(source);
       setShowReferenceModal(true);
+    } else {
+      console.log('❌ Contribute text selection invalid:', {
+        hasText: !!selectedText,
+        length: selectedText?.length,
+        minLength: 5
+      });
     }
   };
 
