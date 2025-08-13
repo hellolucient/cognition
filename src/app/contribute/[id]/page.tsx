@@ -524,7 +524,7 @@ export default function ContributePage({ params }: { params: Promise<{ id: strin
         onClose={() => setShowWaitlist(false)} 
       />
 
-      <AILoadingModal isLoading={loading} />
+      <AILoadingModal isLoading={loading || isSubmitting} />
     </main>
   );
 }

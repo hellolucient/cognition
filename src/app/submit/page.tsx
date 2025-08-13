@@ -11,6 +11,7 @@ import { useSupabase } from "@/components/providers/supabase-provider";
 import { WaitlistModal } from "@/components/auth/waitlist-modal";
 import { InviteSignupModal } from "@/components/auth/invite-signup-modal";
 import { EmailSignInModal } from "@/components/auth/email-signin-modal";
+import { AILoadingModal } from "@/components/ui/ai-loading-modal";
 import Link from "next/link";
 
 const AI_SOURCES = [
@@ -37,7 +38,7 @@ const POPULAR_TAGS = [
 ];
 
 export default function SubmitPage() {
-  const { user } = useSupabase();
+  const { user, loading: authLoading } = useSupabase();
   const router = useRouter();
   const [chatContent, setChatContent] = useState("");
   const [source, setSource] = useState("");
@@ -587,6 +588,8 @@ export default function SubmitPage() {
         isOpen={showWaitlist} 
         onClose={() => setShowWaitlist(false)} 
       />
+
+      <AILoadingModal isLoading={authLoading || isGenerating || isPosting} />
     </main>
   );
 }
