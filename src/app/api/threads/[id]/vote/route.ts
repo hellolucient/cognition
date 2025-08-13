@@ -2,12 +2,14 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 import prisma from '@/lib/prisma';
+import { PerformanceTracker } from '@/lib/performance';
 
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    PerformanceTracker.start('Vote API - Total');
     const resolvedParams = await params;
     const threadId = resolvedParams.id;
     const { voteType } = await request.json(); // 'upvote' or 'downvote'
@@ -31,7 +33,9 @@ export async function POST(
       }
     );
 
+    PerformanceTracker.start('Vote API - Auth');
     const { data: { user } } = await supabase.auth.getUser();
+    PerformanceTracker.end('Vote API - Auth');
 
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -42,34 +46,46 @@ export async function POST(
     }
 
     // Check if thread exists
-    const thread = await prisma.thread.findUnique({
-      where: { id: threadId },
-    });
+    PerformanceTracker.start('Vote API - Thread Check');
+    const thread = await PerformanceTracker.trackQuery('thread.findUnique', () =>
+      prisma.thread.findUnique({
+        where: { id: threadId },
+      })
+    );
+    PerformanceTracker.end('Vote API - Thread Check');
 
     if (!thread) {
       return NextResponse.json({ error: 'Thread not found' }, { status: 404 });
     }
 
-    // Check existing votes
-    const existingUpvote = await prisma.upvote.findUnique({
-      where: {
-        userId_threadId: {
-          userId: user.id,
-          threadId: threadId,
-        },
-      },
-    });
-
-    const existingDownvote = await prisma.downvote.findUnique({
-      where: {
-        userId_threadId: {
-          userId: user.id,
-          threadId: threadId,
-        },
-      },
-    });
+    // Check existing votes in parallel
+    PerformanceTracker.start('Vote API - Existing Votes Check');
+    const [existingUpvote, existingDownvote] = await Promise.all([
+      PerformanceTracker.trackQuery('upvote.findUnique', () =>
+        prisma.upvote.findUnique({
+          where: {
+            userId_threadId: {
+              userId: user.id,
+              threadId: threadId,
+            },
+          },
+        })
+      ),
+      PerformanceTracker.trackQuery('downvote.findUnique', () =>
+        prisma.downvote.findUnique({
+          where: {
+            userId_threadId: {
+              userId: user.id,
+              threadId: threadId,
+            },
+          },
+        })
+      )
+    ]);
+    PerformanceTracker.end('Vote API - Existing Votes Check');
 
     // Handle vote logic
+    PerformanceTracker.start('Vote API - Vote Logic');
     if (voteType === 'upvote') {
       if (existingUpvote) {
         // Remove upvote (toggle off)
@@ -113,8 +129,10 @@ export async function POST(
         });
       }
     }
+    PerformanceTracker.end('Vote API - Vote Logic');
 
     // Get updated counts and user vote status in parallel (reduce 4 queries to 2)
+    PerformanceTracker.start('Vote API - Count Update');
     const [upvoteData, downvoteData] = await Promise.all([
       prisma.upvote.findMany({
         where: { threadId: threadId },
@@ -130,6 +148,9 @@ export async function POST(
     const downvoteCount = downvoteData.length;
     const hasUpvoted = upvoteData.some(vote => vote.userId === user.id);
     const hasDownvoted = downvoteData.some(vote => vote.userId === user.id);
+    PerformanceTracker.end('Vote API - Count Update');
+
+    const totalTime = PerformanceTracker.end('Vote API - Total');
 
     const response = NextResponse.json({ 
       success: true, 
@@ -137,6 +158,11 @@ export async function POST(
       downvoteCount,
       hasUpvoted,
       hasDownvoted
+    });
+    
+    // Add performance timing headers
+    PerformanceTracker.addServerTiming(response, {
+      'vote-total': totalTime,
     });
     
     // Cache vote data briefly to reduce repeated calls

@@ -301,14 +301,18 @@ export function AILoadingModal({ isLoading, delay = 1500 }: AILoadingModalProps)
   useEffect(() => {
     const disabled = localStorage.getItem('ai-loading-modals-disabled') === 'true';
     setIsDisabled(disabled);
+    console.log('🤖 AI Loading Modal - Disabled state:', disabled);
   }, []);
 
   useEffect(() => {
+    console.log('🤖 AI Loading Modal - State change:', { isLoading, isDisabled, delay });
     let delayTimer: NodeJS.Timeout;
     
     if (isLoading && !isDisabled) {
+      console.log('🤖 AI Loading Modal - Starting delay timer for', delay, 'ms');
       // Start delay timer
       delayTimer = setTimeout(() => {
+        console.log('🤖 AI Loading Modal - Delay timer fired, showing modal');
         // Pick a random snippet
         const randomSnippet = AI_SNIPPETS[Math.floor(Math.random() * AI_SNIPPETS.length)];
         setCurrentSnippet(randomSnippet);
@@ -316,12 +320,17 @@ export function AILoadingModal({ isLoading, delay = 1500 }: AILoadingModalProps)
         // Small delay for fade-in animation
         setTimeout(() => setIsVisible(true), 50);
       }, delay);
+    } else {
+      console.log('🤖 AI Loading Modal - Not showing:', { isLoading, isDisabled });
     }
     // Note: We don't automatically hide when loading stops
     // Modal stays visible until user manually closes it
 
     return () => {
-      if (delayTimer) clearTimeout(delayTimer);
+      if (delayTimer) {
+        console.log('🤖 AI Loading Modal - Clearing delay timer');
+        clearTimeout(delayTimer);
+      }
     };
   }, [isLoading, delay, isDisabled]);
 

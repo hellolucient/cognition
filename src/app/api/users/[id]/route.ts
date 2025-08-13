@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 import prisma from '@/lib/prisma';
+import { PerformanceTracker } from '@/lib/performance';
 
 // GET /api/users/[id] - Get user profile
 export async function GET(
@@ -9,6 +10,7 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    PerformanceTracker.start('Profile API - Total');
     const { id: userId } = await params;
     
     const cookieStore = await cookies();
@@ -24,10 +26,14 @@ export async function GET(
       }
     );
 
+    PerformanceTracker.start('Profile API - Auth');
     const { data: { user: currentUser } } = await supabase.auth.getUser();
+    PerformanceTracker.end('Profile API - Auth');
 
     // Get user profile (remove expensive _count for speed)
-    const user = await prisma.user.findUnique({
+    PerformanceTracker.start('Profile API - User Query');
+    const user = await PerformanceTracker.trackQuery('user.findUnique', () =>
+      prisma.user.findUnique({
       where: { id: userId },
       select: {
         id: true,
@@ -40,13 +46,15 @@ export async function GET(
         // Temporarily remove _count queries - they're causing 7s delays
         // TODO: Add lightweight count queries or denormalized counters later
       }
-    });
+    }));
+    PerformanceTracker.end('Profile API - User Query');
 
     if (!user) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
     // Optimize: Run follow check and threads query in parallel, remove expensive _count
+    PerformanceTracker.start('Profile API - Parallel Queries');
     const [followRelation, recentThreads] = await Promise.all([
       // Check if current user is following this user
       currentUser && currentUser.id !== userId
@@ -80,9 +88,12 @@ export async function GET(
         }
       })
     ]);
+    PerformanceTracker.end('Profile API - Parallel Queries');
 
     const isFollowing = !!followRelation;
 
+    const totalTime = PerformanceTracker.end('Profile API - Total');
+    
     const response = NextResponse.json({
       user: {
         ...user,
@@ -95,6 +106,11 @@ export async function GET(
       },
       recentThreads,
       isOwnProfile: currentUser?.id === userId,
+    });
+    
+    // Add performance timing headers for client visibility
+    PerformanceTracker.addServerTiming(response, {
+      'profile-total': totalTime,
     });
     
     // Cache profile data for 30s (private since includes follow status)

@@ -27,7 +27,24 @@ const prisma = globalThis.prisma ?? new PrismaClient({
       url: getDatabaseUrl(),
     },
   },
-  log: ['error'],
+  log: [
+    { level: 'query', emit: 'event' },
+    { level: 'error', emit: 'stdout' },
+    { level: 'info', emit: 'stdout' },
+    { level: 'warn', emit: 'stdout' },
+  ],
+});
+
+// Log slow queries for performance analysis
+prisma.$on('query', (e) => {
+  const duration = e.duration;
+  if (duration > 1000) {
+    console.warn(`🐌 SLOW QUERY (${duration}ms): ${e.query}`);
+  } else if (duration > 500) {
+    console.log(`⚠️ MODERATE QUERY (${duration}ms): ${e.query.substring(0, 100)}...`);
+  } else if (process.env.NODE_ENV === 'development') {
+    console.log(`✅ FAST QUERY (${duration}ms): ${e.query.substring(0, 50)}...`);
+  }
 });
 
 if (process.env.NODE_ENV !== 'production') {
