@@ -41,6 +41,8 @@ export default function ContributePage({ params }: { params: Promise<{ id: strin
   const [errorMessage, setErrorMessage] = useState("");
   const [streamingResponse, setStreamingResponse] = useState("");
   const [isStreaming, setIsStreaming] = useState(false);
+  const [streamingComplete, setStreamingComplete] = useState(false);
+  const [streamingError, setStreamingError] = useState("");
   const [referencedText, setReferencedText] = useState("");
   const [referencedSource, setReferencedSource] = useState("");
   const [showWaitlist, setShowWaitlist] = useState(false);
@@ -247,12 +249,16 @@ export default function ContributePage({ params }: { params: Promise<{ id: strin
                 try {
                   const data = JSON.parse(line.slice(6));
                   
-                  if (data.type === 'content') {
+                  if (data.type === 'start') {
+                    console.log('🚀 Streaming started:', data);
+                  } else if (data.type === 'content') {
                     fullResponse += data.content;
                     setStreamingResponse(fullResponse);
                   } else if (data.type === 'complete') {
                     // AI generation complete
+                    console.log('✅ Streaming complete:', data);
                     setIsStreaming(false);
+                    setStreamingComplete(true);
                     setShowSuccess(true);
                     
                     // Redirect after a short delay
@@ -260,6 +266,8 @@ export default function ContributePage({ params }: { params: Promise<{ id: strin
                       window.location.href = `/thread/${resolvedParams.id}?scroll=bottom`;
                     }, 1500);
                   } else if (data.type === 'error') {
+                    console.error('❌ Streaming error:', data.error);
+                    setStreamingError(data.error);
                     throw new Error(data.error);
                   }
                 } catch (parseError) {
@@ -270,6 +278,12 @@ export default function ContributePage({ params }: { params: Promise<{ id: strin
           }
         } finally {
           reader.releaseLock();
+          // If streaming finished but we didn't get a complete event, show manual option
+          if (!showSuccess && fullResponse && !streamingError) {
+            console.log('⚠️ Streaming finished without complete event - showing manual option');
+            setIsStreaming(false);
+            setStreamingComplete(true);
+          }
         }
         
       } else {
@@ -304,8 +318,10 @@ export default function ContributePage({ params }: { params: Promise<{ id: strin
       }
       
     } catch (error: any) {
+      console.error('💥 Contribution error:', error);
       setErrorMessage(error.message);
       setIsStreaming(false);
+      setStreamingError(error.message);
     } finally {
       setIsSubmitting(false);
     }
@@ -511,11 +527,73 @@ export default function ContributePage({ params }: { params: Promise<{ id: strin
         )}
 
         {/* Streaming Response Display */}
-        {isStreaming && streamingResponse && (
-          <div className="bg-blue-50 border border-blue-200 p-6 rounded-lg">
-            <div className="flex items-center gap-2 mb-3">
-              <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
-              <h3 className="font-medium text-blue-900">AI is responding...</h3>
+        {(isStreaming || streamingComplete) && streamingResponse && (
+          <div className={`border p-6 rounded-lg ${
+            isStreaming 
+              ? 'bg-blue-50 border-blue-200' 
+              : streamingComplete && !showSuccess
+              ? 'bg-yellow-50 border-yellow-200'
+              : 'bg-green-50 border-green-200'
+          }`}>
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                {isStreaming ? (
+                  <>
+                    <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
+                    <h3 className="font-medium text-blue-900">AI is responding...</h3>
+                  </>
+                ) : streamingComplete && !showSuccess ? (
+                  <>
+                    <div className="w-2 h-2 bg-yellow-500 rounded-full"></div>
+                    <h3 className="font-medium text-yellow-900">Response ready - save to thread?</h3>
+                  </>
+                ) : (
+                  <>
+                    <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                    <h3 className="font-medium text-green-900">Response saved!</h3>
+                  </>
+                )}
+              </div>
+              
+              {streamingComplete && !showSuccess && (
+                <Button 
+                  onClick={async () => {
+                    // Manually save the response
+                    try {
+                      setIsSubmitting(true);
+                      const response = await fetch('/api/contribute', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                          type: 'manual',
+                          parentThreadId: resolvedParams.id,
+                          manualContent: `AI Response (${selectedProvider}):\n\n${streamingResponse}`,
+                          referencedText: referencedText || null,
+                          referencedSource: referencedSource || null,
+                        }),
+                      });
+                      
+                      if (!response.ok) {
+                        const data = await response.json();
+                        throw new Error(data.error || 'Failed to save response');
+                      }
+                      
+                      setShowSuccess(true);
+                      setTimeout(() => {
+                        window.location.href = `/thread/${resolvedParams.id}?scroll=bottom`;
+                      }, 1500);
+                    } catch (error: any) {
+                      setErrorMessage(error.message);
+                    } finally {
+                      setIsSubmitting(false);
+                    }
+                  }}
+                  disabled={isSubmitting}
+                  size="sm"
+                >
+                  {isSubmitting ? 'Saving...' : 'Save to Thread'}
+                </Button>
+              )}
             </div>
             <div className="prose prose-sm max-w-none text-gray-800">
               {streamingResponse.split('\\n').map((line, index) => (
@@ -524,6 +602,11 @@ export default function ContributePage({ params }: { params: Promise<{ id: strin
                 </p>
               ))}
             </div>
+            {streamingError && (
+              <div className="mt-3 text-red-600 text-sm">
+                Error: {streamingError}
+              </div>
+            )}
           </div>
         )}
 
