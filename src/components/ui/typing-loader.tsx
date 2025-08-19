@@ -73,15 +73,15 @@ export function TypingLoader({
     setUserAuthenticated(!!hasAuth);
   }, [requireAuth]);
 
-  // Initialize messages when modal should show
+  // Initialize messages when modal should show (only when loading starts)
   useEffect(() => {
     let delayTimer: NodeJS.Timeout;
     
     // Show modal if loading and not disabled, and either no auth required OR user is authenticated
     const shouldShow = isLoading && !isDisabled && (!requireAuth || userAuthenticated);
     
-    if (shouldShow) {
-      // Start delay timer
+    if (shouldShow && !showModal) {
+      // Start delay timer only if modal is not already shown
       delayTimer = setTimeout(() => {
         // Always use the full variety of messages, ignoring customMessage
         // Shuffle messages for variety
@@ -99,7 +99,7 @@ export function TypingLoader({
         clearTimeout(delayTimer);
       }
     };
-  }, [isLoading, delay, isDisabled, requireAuth, userAuthenticated, customMessage]);
+  }, [isLoading, delay, isDisabled, requireAuth, userAuthenticated, showModal]);
 
   // Typing animation effect
   useEffect(() => {
