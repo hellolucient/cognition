@@ -83,14 +83,10 @@ export function TypingLoader({
     if (shouldShow) {
       // Start delay timer
       delayTimer = setTimeout(() => {
-        // Prepare messages - either custom message or shuffled random messages
-        if (customMessage) {
-          setAvailableMessages([customMessage]);
-        } else {
-          // Shuffle messages for variety
-          const shuffled = [...LOADING_MESSAGES].sort(() => Math.random() - 0.5);
-          setAvailableMessages(shuffled);
-        }
+        // Always use the full variety of messages, ignoring customMessage
+        // Shuffle messages for variety
+        const shuffled = [...LOADING_MESSAGES].sort(() => Math.random() - 0.5);
+        setAvailableMessages(shuffled);
         setCurrentMessageIndex(0);
         setShowModal(true);
         // Small delay for fade-in animation
@@ -130,9 +126,9 @@ export function TypingLoader({
     // Start pulsing after typing completes
     setIsPulsing(true);
     
-    // Pulse twice, then move to next message (if still loading and more messages available)
+    // Pulse twice, then move to next message (if more messages available)
     const pulseTimer = setTimeout(() => {
-      if (isLoading && currentMessageIndex < availableMessages.length - 1) {
+      if (currentMessageIndex < availableMessages.length - 1) {
         // Move to next message
         setCurrentMessageIndex(prev => prev + 1);
         setDisplayedText("");
@@ -144,7 +140,7 @@ export function TypingLoader({
     }, 2000); // 2 seconds of pulsing
 
     return () => clearTimeout(pulseTimer);
-  }, [isTypingComplete, isPulsing, isLoading, currentMessageIndex, availableMessages.length]);
+  }, [isTypingComplete, isPulsing, currentMessageIndex, availableMessages.length]);
 
   // Reset when loading stops or modal closes
   useEffect(() => {
