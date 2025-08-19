@@ -263,7 +263,8 @@ export default function ContributePage({ params }: { params: Promise<{ id: strin
                     
                     // Redirect after a short delay
                     setTimeout(() => {
-                      window.location.href = `/thread/${resolvedParams.id}?scroll=bottom`;
+                      // Force a hard navigation to ensure the page reloads with new content
+                      window.location.replace(`/thread/${resolvedParams.id}?scroll=bottom&t=${Date.now()}`);
                     }, 1500);
                   } else if (data.type === 'error') {
                     console.error('❌ Streaming error:', data.error);
@@ -313,7 +314,8 @@ export default function ContributePage({ params }: { params: Promise<{ id: strin
         
         // Redirect after a short delay
         setTimeout(() => {
-          window.location.href = `/thread/${resolvedParams.id}?scroll=bottom`;
+          // Force a hard navigation to ensure the page reloads with new content
+          window.location.replace(`/thread/${resolvedParams.id}?scroll=bottom&t=${Date.now()}`);
         }, 1500);
       }
       
@@ -567,9 +569,10 @@ export default function ContributePage({ params }: { params: Promise<{ id: strin
                         body: JSON.stringify({
                           type: 'manual',
                           parentThreadId: resolvedParams.id,
-                          manualContent: `AI Response (${selectedProvider}):\n\n${streamingResponse}`,
+                          manualContent: `Human: ${userPrompt}\n\nAssistant: ${streamingResponse}`,
                           referencedText: referencedText || null,
                           referencedSource: referencedSource || null,
+                          source: `AI Contribution (${selectedProvider})`, // Override the source to show it's AI
                         }),
                       });
                       
@@ -580,7 +583,8 @@ export default function ContributePage({ params }: { params: Promise<{ id: strin
                       
                       setShowSuccess(true);
                       setTimeout(() => {
-                        window.location.href = `/thread/${resolvedParams.id}?scroll=bottom`;
+                        // Force a hard navigation to ensure the page reloads with new content
+                        window.location.replace(`/thread/${resolvedParams.id}?scroll=bottom&t=${Date.now()}`);
                       }, 1500);
                     } catch (error: any) {
                       setErrorMessage(error.message);

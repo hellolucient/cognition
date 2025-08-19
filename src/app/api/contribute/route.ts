@@ -170,7 +170,7 @@ async function createStreamingResponse(params: StreamingParams) {
                   id: true,
                   name: true,
                   email: true,
-                  avatar_url: true,
+                  avatarUrl: true,
                 },
               },
             },
@@ -208,7 +208,7 @@ async function createStreamingResponse(params: StreamingParams) {
 
 export async function POST(request: NextRequest) {
   try {
-    const { type, parentThreadId, userPrompt, manualContent, referencedText, referencedSource, provider } = await request.json()
+    const { type, parentThreadId, userPrompt, manualContent, referencedText, referencedSource, provider, source } = await request.json()
 
     // Get the authenticated user
     const cookieStore = await cookies()
@@ -343,7 +343,7 @@ export async function POST(request: NextRequest) {
         data: {
           content,
           summary: contributionSummary,
-          source: 'Manual Contribution',
+          source: source || 'Manual Contribution', // Use provided source or default
           tags: parentThread.tags, // Inherit tags from parent
           authorId: user.id,
           parentThreadId: parentThreadId,
