@@ -180,89 +180,52 @@ export function TypingLoader({
 
   return (
     <div 
-      className={`fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center cursor-pointer transition-opacity duration-300 ${isVisible ? 'opacity-100' : 'opacity-0'}`}
-      onClick={handleClick}
+      className={`fixed inset-0 z-50 flex items-center justify-center transition-all duration-300 ${isVisible ? 'opacity-100' : 'opacity-0'}`}
+      onClick={handleClose}
     >
-      <div className={`max-w-2xl mx-4 p-8 bg-gradient-to-br from-blue-600 to-purple-700 rounded-2xl shadow-2xl text-white transform transition-all duration-300 ${isVisible ? 'scale-100' : 'scale-95'} ${isPulsing ? 'animate-pulse' : ''}`}>
-        {/* Header with close button */}
-        <div className="flex justify-between items-start mb-6">
-          <div className="w-12 h-12 flex items-center justify-center">
-            <div className="text-3xl">💭</div>
-          </div>
+      <div 
+        className="bg-gradient-to-r from-blue-600 to-purple-700 rounded-full px-4 py-2 text-white shadow-lg flex items-center space-x-3 max-w-sm cursor-pointer"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Icon */}
+        <div className="text-lg">💭</div>
+        
+        {/* Message */}
+        <div className="flex-1 text-sm">
+          {displayedText}
+          {!isTypingComplete && (
+            <span className="inline-block w-0.5 h-4 bg-white ml-1 animate-pulse"></span>
+          )}
+        </div>
+
+        {/* Status */}
+        <div className="flex items-center space-x-2">
+          {isLoading ? (
+            <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-white/60"></div>
+          ) : (
+            <div className="rounded-full h-3 w-3 bg-green-400 flex items-center justify-center">
+              <span className="text-white text-xs">✓</span>
+            </div>
+          )}
+        </div>
+      </div>
+      
+      {/* Disable option - positioned below the pill */}
+      {isVisible && (
+        <div className="absolute top-full mt-4 left-1/2 transform -translate-x-1/2">
           <Button
             variant="ghost"
             size="sm"
             onClick={(e) => {
               e.stopPropagation();
-              handleClose();
+              handleDisable();
             }}
-            className="text-white hover:bg-white/20 h-8 w-8 p-0"
+            className="text-gray-500 hover:text-gray-700 text-xs bg-white/90 hover:bg-white rounded-full px-3 py-1"
           >
-            ✕
+            Don't show again
           </Button>
         </div>
-
-        {/* Typed message */}
-        <div className="space-y-6">
-          <div className="relative">
-            <p className="text-lg md:text-xl font-medium leading-relaxed min-h-[3rem]">
-              {displayedText}
-              {/* Blinking cursor */}
-              {!isTypingComplete && (
-                <span className="inline-block w-0.5 h-6 bg-white ml-1 animate-pulse"></span>
-              )}
-            </p>
-          </div>
-
-          {/* Status indicator */}
-          <div className="flex items-center justify-between pt-4">
-            <div className="text-white/80 text-sm">
-              {availableMessages.length > 1 && (
-                <span>Message {currentMessageIndex + 1} of {availableMessages.length}</span>
-              )}
-            </div>
-            <div className="flex items-center space-x-2 text-white/60 text-sm">
-              {isLoading ? (
-                <>
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white/60"></div>
-                  <span>Loading continues...</span>
-                </>
-              ) : (
-                <>
-                  <div className="rounded-full h-4 w-4 bg-green-400 flex items-center justify-center">
-                    <span className="text-white text-xs">✓</span>
-                  </div>
-                  <span>Page loaded!</span>
-                </>
-              )}
-            </div>
-          </div>
-
-          {/* Dismiss hint */}
-          {(isTypingComplete || !isLoading) && (
-            <div className="text-center">
-              <div className="text-white/70 text-sm animate-fade-in mb-3">
-                Click anywhere to continue
-              </div>
-              
-              {/* Disable option */}
-              <div className="pt-3 border-t border-white/20">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleDisable();
-                  }}
-                  className="text-white/70 hover:text-white hover:bg-white/10 text-xs w-full justify-center"
-                >
-                  Don't show these messages again
-                </Button>
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
+      )}
     </div>
   );
 }
