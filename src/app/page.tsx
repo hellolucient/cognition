@@ -38,17 +38,44 @@ export default function HomePage() {
   const [isChangingView, setIsChangingView] = useState(false);
   const { user } = useSupabase();
 
+  // Simple cache for faster switching
+  const [threadCache, setThreadCache] = useState<Map<string, Thread[]>>(new Map());
+
 
 
   useEffect(() => {
     fetchThreads();
   }, [showFollowingOnly, sortBy]);
 
+  // Prefetch both sort options on mount for faster switching
+  useEffect(() => {
+    if (threads.length === 0) return; // Only prefetch after initial load
+    
+    const prefetchOtherSort = async () => {
+      const otherSort = sortBy === 'latest' ? 'popular' : 'latest';
+      const params = new URLSearchParams();
+      if (showFollowingOnly) params.append('following', 'true');
+      params.append('sort', otherSort);
+      
+      try {
+        // Prefetch in background - don't await or handle errors
+        fetch(`/api/threads?${params.toString()}`);
+      } catch {
+        // Silently fail prefetch
+      }
+    };
+    
+    // Prefetch after a short delay
+    const timer = setTimeout(prefetchOtherSort, 2000);
+    return () => clearTimeout(timer);
+  }, [threads.length, sortBy, showFollowingOnly]);
+
   // Handle successful post redirect
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
     if (urlParams.get('posted') === 'true') {
-      // Force refresh threads to show new post
+      // Clear cache and force refresh threads to show new post
+      setThreadCache(new Map());
       fetchThreads();
       // Clean up the URL parameters
       window.history.replaceState({}, '', '/');
@@ -62,6 +89,18 @@ export default function HomePage() {
       if (showFollowingOnly) params.append('following', 'true');
       if (sortBy) params.append('sort', sortBy);
       
+      const cacheKey = params.toString();
+      
+      // Check cache first for instant loading
+      if (threadCache.has(cacheKey)) {
+        const cachedData = threadCache.get(cacheKey)!;
+        setThreads(cachedData);
+        setIsChangingView(false);
+        setLoading(false);
+        console.log('✅ Loaded from cache:', cacheKey);
+        return;
+      }
+      
       const url = `/api/threads?${params.toString()}`;
       const response = await fetch(url);
       if (response.ok) {
@@ -74,7 +113,11 @@ export default function HomePage() {
               author: t?.author || { id: '', name: null, avatarUrl: null },
             }))
           : [];
+        
+        // Update cache
+        setThreadCache(prev => new Map(prev.set(cacheKey, safe)));
         setThreads(safe);
+        console.log('✅ Loaded from API and cached:', cacheKey);
       }
     } catch (error) {
       console.error('Error fetching threads:', error);

@@ -339,6 +339,22 @@ export default function SubmitPage() {
     }
   };
 
+  // Show loading state while auth is being checked (prevents flash)
+  if (authLoading) {
+    return (
+      <main className="container mx-auto max-w-2xl py-8">
+        <div className="flex flex-col items-center justify-center min-h-[60vh] text-center space-y-6">
+          <div className="text-6xl">💬</div>
+          <h1 className="text-3xl font-bold">Loading...</h1>
+          <div className="flex items-center gap-2">
+            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary"></div>
+            <p className="text-muted-foreground">Checking your account</p>
+          </div>
+        </div>
+      </main>
+    );
+  }
+
   if (!user) {
     return (
       <main className="container mx-auto max-w-2xl py-8">
