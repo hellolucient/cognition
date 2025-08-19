@@ -76,8 +76,11 @@ export default function BookmarkletLanding() {
     // If user is authenticated and we have content, redirect to submit page
     if (user && hasContent && !authLoading) {
       // Small delay to ensure smooth transition
+      const urlParams = new URLSearchParams(window.location.search);
+      const shareParam = urlParams.get('share') ? `&share=${urlParams.get('share')}` : '';
+      const platformParam = urlParams.get('platform') ? `&platform=${urlParams.get('platform')}` : '';
       setTimeout(() => {
-        window.location.href = '/submit?from=bookmarklet';
+        window.location.href = `/submit?from=bookmarklet${shareParam}${platformParam}`;
       }, 500);
     }
   }, [user, hasContent, authLoading]);

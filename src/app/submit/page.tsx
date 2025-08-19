@@ -61,6 +61,8 @@ export default function SubmitPage() {
     const fromBookmarklet = urlParams.get('from') === 'bookmarklet';
     const passedShare = urlParams.get('share');
     const passedPlatform = urlParams.get('platform');
+    const passedContent = urlParams.get('content');
+    
     if (passedShare) {
       try {
         setShareUrl(decodeURIComponent(passedShare));
@@ -70,11 +72,30 @@ export default function SubmitPage() {
     }
     
     if (fromBookmarklet) {
-      // Check sessionStorage for content from bookmarklet
-      const storedContent = sessionStorage.getItem('vanwinkle_chat');
-      console.log('Bookmarklet mode - sessionStorage content:', storedContent ? `Found ${storedContent.length} characters` : 'Not found');
-      if (storedContent) {
-        setChatContent(storedContent);
+      let contentToUse = '';
+      
+      // Priority 1: Check for content in URL parameter (new bookmarklet)
+      if (passedContent) {
+        try {
+          contentToUse = decodeURIComponent(passedContent);
+          console.log('✅ Content loaded from URL parameter:', contentToUse.length, 'characters');
+        } catch (error) {
+          console.error('Failed to decode content from URL:', error);
+        }
+      }
+      
+      // Priority 2: Check sessionStorage for content from bookmarklet (fallback)
+      if (!contentToUse) {
+        const storedContent = sessionStorage.getItem('vanwinkle_chat');
+        if (storedContent) {
+          contentToUse = storedContent;
+          console.log('✅ Content loaded from sessionStorage:', contentToUse.length, 'characters');
+          sessionStorage.removeItem('vanwinkle_chat');
+        }
+      }
+      
+      if (contentToUse) {
+        setChatContent(contentToUse);
         
         // Prefer URL param platform if present; else detect from content
         if (passedPlatform) {
@@ -90,18 +111,17 @@ export default function SubmitPage() {
           if (mapping[normalized]) {
             setSource(mapping[normalized]);
           } else {
-            detectAndSetPlatform(storedContent);
+            detectAndSetPlatform(contentToUse);
           }
         } else {
-          detectAndSetPlatform(storedContent);
+          detectAndSetPlatform(contentToUse);
         }
         
-        // Clean up
-        sessionStorage.removeItem('vanwinkle_chat');
+        // Clean up URL parameters
         window.history.replaceState({}, '', window.location.pathname);
-        console.log('Content loaded from bookmarklet');
+        console.log('✅ Bookmarklet content loaded and ready');
       } else {
-        console.log('No content found in sessionStorage from bookmarklet');
+        console.log('⚠️ No content found from bookmarklet (URL param or sessionStorage)');
       }
     } else {
       // Fallback: check URL parameters (for backwards compatibility)
