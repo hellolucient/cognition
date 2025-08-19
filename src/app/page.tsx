@@ -35,6 +35,7 @@ export default function HomePage() {
   const [showBookmarkletModal, setShowBookmarkletModal] = useState(false);
   const [showFollowingOnly, setShowFollowingOnly] = useState(false);
   const [sortBy, setSortBy] = useState<'latest' | 'popular'>('latest');
+  const [isChangingView, setIsChangingView] = useState(false);
   const { user } = useSupabase();
 
 
@@ -56,6 +57,7 @@ export default function HomePage() {
 
   const fetchThreads = async () => {
     try {
+      setIsChangingView(true);
       const params = new URLSearchParams();
       if (showFollowingOnly) params.append('following', 'true');
       if (sortBy) params.append('sort', sortBy);
@@ -78,6 +80,7 @@ export default function HomePage() {
       console.error('Error fetching threads:', error);
     } finally {
       setLoading(false);
+      setIsChangingView(false);
     }
   };
 
@@ -171,15 +174,17 @@ export default function HomePage() {
                   variant={!showFollowingOnly ? "default" : "outline"}
                   size="sm"
                   onClick={() => setShowFollowingOnly(false)}
+                  disabled={isChangingView}
                 >
-                  All Posts
+                  {isChangingView && !showFollowingOnly ? "Loading..." : "All Posts"}
                 </Button>
                 <Button
                   variant={showFollowingOnly ? "default" : "outline"}
                   size="sm"
                   onClick={() => setShowFollowingOnly(true)}
+                  disabled={isChangingView}
                 >
-                  Following Only
+                  {isChangingView && showFollowingOnly ? "Loading..." : "Following Only"}
                 </Button>
               </div>
             </div>
@@ -193,15 +198,17 @@ export default function HomePage() {
                 variant={sortBy === 'latest' ? "default" : "outline"}
                 size="sm"
                 onClick={() => setSortBy('latest')}
+                disabled={isChangingView}
               >
-                Latest Activity
+                {isChangingView && sortBy === 'latest' ? "Loading..." : "Latest Activity"}
               </Button>
               <Button
                 variant={sortBy === 'popular' ? "default" : "outline"}
                 size="sm"
                 onClick={() => setSortBy('popular')}
+                disabled={isChangingView}
               >
-                Popular
+                {isChangingView && sortBy === 'popular' ? "Loading..." : "Popular"}
               </Button>
             </div>
           </div>
