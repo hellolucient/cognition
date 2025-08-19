@@ -11,7 +11,7 @@ import { useSupabase } from "@/components/providers/supabase-provider";
 import { WaitlistModal } from "@/components/auth/waitlist-modal";
 import { InviteSignupModal } from "@/components/auth/invite-signup-modal";
 import { EmailSignInModal } from "@/components/auth/email-signin-modal";
-import { AILoadingModal } from "@/components/ui/ai-loading-modal";
+import { TypingLoader } from "@/components/ui/typing-loader";
 import Link from "next/link";
 
 const AI_SOURCES = [
@@ -642,7 +642,19 @@ export default function SubmitPage() {
         onClose={() => setShowWaitlist(false)} 
       />
 
-      <AILoadingModal isLoading={authLoading || isGenerating || isPosting} />
+      <TypingLoader 
+        isVisible={authLoading || isGenerating || isPosting} 
+        onDismiss={() => {
+          // For submit page, we don't want users to dismiss loading
+          // But we can add logic here if needed
+        }}
+        customMessage={
+          authLoading ? "Checking your account..." :
+          isGenerating ? "Crafting the perfect summary for your conversation..." :
+          isPosting ? "Launching your idea into the vanwinkle universe..." :
+          undefined
+        }
+      />
     </main>
   );
 }

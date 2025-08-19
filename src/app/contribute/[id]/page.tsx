@@ -10,7 +10,7 @@ import Link from "next/link";
 import { useState, useEffect, use } from "react";
 import { useSupabase } from "@/components/providers/supabase-provider";
 import { WaitlistModal } from "@/components/auth/waitlist-modal";
-import { AILoadingModal } from "@/components/ui/ai-loading-modal";
+import { TypingLoader } from "@/components/ui/typing-loader";
 
 interface Thread {
   id: string;
@@ -732,9 +732,12 @@ export default function ContributePage({ params }: { params: Promise<{ id: strin
         onClose={() => setShowWaitlist(false)} 
       />
 
-      <AILoadingModal 
-        isLoading={isSubmitting && contributionType === "ai" && !isStreaming && !streamingResponse} 
-        requireAuth={true} 
+      <TypingLoader 
+        isVisible={isSubmitting && contributionType === "ai" && !isStreaming && !streamingResponse} 
+        onDismiss={() => {
+          // Don't allow dismissing while AI is generating
+        }}
+        customMessage="Summoning the AI muses to craft your contribution..."
       />
     </main>
   );
