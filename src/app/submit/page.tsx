@@ -192,6 +192,10 @@ export default function SubmitPage() {
     if (detectedPlatform && AI_SOURCES.includes(detectedPlatform)) {
       setSource(detectedPlatform);
       console.log(`Auto-detected platform: ${detectedPlatform}`);
+    } else if (!source || source === "") {
+      // Only set to "Other" if no source is currently set
+      setSource('Other');
+      console.log('No platform detected, defaulting to Other');
     }
   };
 
@@ -418,6 +422,8 @@ export default function SubmitPage() {
                     try {
                       const text = await navigator.clipboard.readText();
                       setChatContent(text);
+                      // Auto-detect platform from pasted content
+                      detectAndSetPlatform(text);
                     } catch (err) {
                       alert('Could not read clipboard. Please paste manually (Cmd+V).');
                     }
@@ -430,7 +436,11 @@ export default function SubmitPage() {
                 id="chat-content"
                 placeholder="Paste your entire chat log here, including both your prompts and the AI's responses."
                 value={chatContent}
-                onChange={(e) => setChatContent(e.target.value)}
+                onChange={(e) => {
+                  setChatContent(e.target.value);
+                  // Auto-detect platform when content changes
+                  detectAndSetPlatform(e.target.value);
+                }}
                 required
                 rows={15}
               />
@@ -485,26 +495,31 @@ export default function SubmitPage() {
           {step === "input" && (
             <>
               <div className="grid w-full gap-2">
-                <Label htmlFor="source">AI Source</Label>
-                <Select value={source} onValueChange={setSource}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select AI source" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {AI_SOURCES.map((aiSource) => (
-                      <SelectItem key={aiSource} value={aiSource}>
-                        {aiSource}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                {source === "Other" && (
-                  <Input
-                    placeholder="Enter custom AI source"
-                    value={customSource}
-                    onChange={(e) => setCustomSource(e.target.value)}
-                  />
-                )}
+                <Label htmlFor="source">AI Platform (Auto-detected)</Label>
+                <div className="flex items-center gap-3 p-3 border rounded-md bg-muted/30">
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-medium text-muted-foreground">Detected:</span>
+                    <span className="font-medium">{source === "Other" ? "Unknown Platform" : source}</span>
+                  </div>
+                  {source !== "Other" && (
+                    <div className="text-xs text-green-600 bg-green-100 px-2 py-1 rounded">
+                      ✓ Verified
+                    </div>
+                  )}
+                  {source === "Other" && (
+                    <div className="flex-1">
+                      <Input
+                        placeholder="Enter AI platform name"
+                        value={customSource}
+                        onChange={(e) => setCustomSource(e.target.value)}
+                        className="h-8"
+                      />
+                    </div>
+                  )}
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Platform is automatically detected from your conversation content or bookmarklet data.
+                </p>
               </div>
               
               <div className="grid w-full gap-2">
