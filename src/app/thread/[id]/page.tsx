@@ -154,13 +154,26 @@ export default function ThreadPage({ params }: { params: Promise<{ id: string }>
   };
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffInMinutes = (now.getTime() - date.getTime()) / (1000 * 60);
+    
+    if (diffInMinutes < 1) {
+      return 'just now';
+    } else if (diffInMinutes < 60) {
+      return `${Math.floor(diffInMinutes)}m ago`;
+    } else if (diffInMinutes < 1440) { // 24 hours
+      return `${Math.floor(diffInMinutes / 60)}h ago`;
+    } else if (diffInMinutes < 10080) { // 7 days
+      return `${Math.floor(diffInMinutes / 1440)}d ago`;
+    } else {
+      // For older posts, show actual date
+      return date.toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric'
+      });
+    }
   };
 
   const [selectedText, setSelectedText] = useState("");

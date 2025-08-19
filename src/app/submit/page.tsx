@@ -174,18 +174,20 @@ export default function SubmitPage() {
 
     let detectedPlatform = null;
     
-    // Check for platform-specific markers in the content
-    if (content.includes('🤖 ChatGPT:')) {
+    // Check for platform-specific markers in the content (more flexible patterns)
+    const lowerContent = content.toLowerCase();
+    
+    if (lowerContent.includes('chatgpt') || content.includes('🤖 ChatGPT:') || lowerContent.includes('chat.openai') || lowerContent.includes('gpt-')) {
       detectedPlatform = 'ChatGPT';
-    } else if (content.includes('🤖 Claude:')) {
+    } else if (lowerContent.includes('claude') || content.includes('🤖 Claude:') || lowerContent.includes('anthropic')) {
       detectedPlatform = 'Claude';
-    } else if (content.includes('🤖 Gemini:')) {
+    } else if (lowerContent.includes('gemini') || content.includes('🤖 Gemini:') || lowerContent.includes('google ai') || lowerContent.includes('bard')) {
       detectedPlatform = 'Gemini';
-    } else if (content.includes('🤖 Copilot:')) {
+    } else if (lowerContent.includes('copilot') || content.includes('🤖 Copilot:') || lowerContent.includes('microsoft copilot')) {
       detectedPlatform = 'Copilot';
-    } else if (content.includes('🤖 Grok:')) {
+    } else if (lowerContent.includes('grok') || content.includes('🤖 Grok:') || lowerContent.includes('xai')) {
       detectedPlatform = 'Grok';
-    } else if (content.includes('🤖 Perplexity:')) {
+    } else if (lowerContent.includes('perplexity') || content.includes('🤖 Perplexity:')) {
       detectedPlatform = 'Perplexity';
     }
     
@@ -291,10 +293,10 @@ export default function SubmitPage() {
       // Success! Reset loading state and redirect
       setIsPosting(false);
       
-      // Force redirect using window.location as backup
+      // Add a longer delay to ensure database consistency and add cache busting
       setTimeout(() => {
-        window.location.href = '/?posted=true';
-      }, 100);
+        window.location.href = `/?posted=true&t=${Date.now()}`;
+      }, 1000);
       
     } catch (error: any) {
       alert(`Error posting: ${error.message}`);

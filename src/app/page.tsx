@@ -43,22 +43,16 @@ export default function HomePage() {
     fetchThreads();
   }, [showFollowingOnly, sortBy]);
 
-  // Auto-scroll to threads section when redirected from successful post
+  // Handle successful post redirect
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
-    if (urlParams.get('posted') === 'true' && threads.length > 0) {
-      // Small delay to ensure content is rendered, then scroll to threads section
-      setTimeout(() => {
-        const threadsSection = document.querySelector('.threads-feed');
-        if (threadsSection) {
-          // Scroll to the threads section, not the very top of the page
-          threadsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }
-        // Clean up the URL parameter
-        window.history.replaceState({}, '', '/');
-      }, 800);
+    if (urlParams.get('posted') === 'true') {
+      // Force refresh threads to show new post
+      fetchThreads();
+      // Clean up the URL parameters
+      window.history.replaceState({}, '', '/');
     }
-  }, [threads]); // Trigger when threads load
+  }, []);
 
   const fetchThreads = async () => {
     try {
@@ -123,12 +117,16 @@ export default function HomePage() {
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     const now = new Date();
-    const diffInHours = (now.getTime() - date.getTime()) / (1000 * 60 * 60);
+    const diffInMinutes = (now.getTime() - date.getTime()) / (1000 * 60);
     
-    if (diffInHours < 24) {
-      return `${Math.floor(diffInHours)}h ago`;
+    if (diffInMinutes < 1) {
+      return 'just now';
+    } else if (diffInMinutes < 60) {
+      return `${Math.floor(diffInMinutes)}m ago`;
+    } else if (diffInMinutes < 1440) { // 24 hours
+      return `${Math.floor(diffInMinutes / 60)}h ago`;
     } else {
-      return `${Math.floor(diffInHours / 24)}d ago`;
+      return `${Math.floor(diffInMinutes / 1440)}d ago`;
     }
   };
 
