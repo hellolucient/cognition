@@ -7,7 +7,7 @@ import Link from "next/link";
 import { useState, useEffect, use, useRef } from "react";
 import { useSupabase } from "@/components/providers/supabase-provider";
 import { WaitlistModal } from "@/components/auth/waitlist-modal";
-import { AILoadingModal } from "@/components/ui/ai-loading-modal";
+import { TypingLoader } from "@/components/ui/typing-loader";
 
 interface Thread {
   id: string;
@@ -394,9 +394,15 @@ export default function ThreadPage({ params }: { params: Promise<{ id: string }>
 
   if (loading) {
     return (
-      <main className="container mx-auto py-8">
-        <div className="text-center">Loading thread...</div>
-      </main>
+      <>
+        <main className="container mx-auto py-8">
+          <div className="text-center">Loading thread...</div>
+        </main>
+        <TypingLoader 
+          isLoading={loading}
+          customMessage="Assembling the conversation pieces... this might take a moment of philosophical reflection."
+        />
+      </>
     );
   }
 

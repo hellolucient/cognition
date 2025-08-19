@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { useSupabase } from "@/components/providers/supabase-provider";
 import { AIProvider, getProviderDisplayName, getProviderDocsUrl } from "@/lib/ai-providers";
-import { AILoadingModal } from "@/components/ui/ai-loading-modal";
+import { TypingLoader } from "@/components/ui/typing-loader";
 import Link from "next/link";
 
 interface InviteCode {
@@ -884,7 +884,15 @@ export default function SettingsPage() {
         </div>
       </div>
       
-      <AILoadingModal isLoading={loading || pendingSharesLoading || savingApiKey} />
+      <TypingLoader 
+        isLoading={loading || pendingSharesLoading || savingApiKey}
+        customMessage={
+          savingApiKey ? "Encrypting your API key with quantum-level security..." :
+          pendingSharesLoading ? "Digging through your saved conversation treasures..." :
+          loading ? "Loading your vanwinkle control center..." :
+          undefined
+        }
+      />
     </main>
   );
 }

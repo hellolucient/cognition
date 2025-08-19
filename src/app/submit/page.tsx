@@ -643,11 +643,7 @@ export default function SubmitPage() {
       />
 
       <TypingLoader 
-        isVisible={authLoading || isGenerating || isPosting} 
-        onDismiss={() => {
-          // For submit page, we don't want users to dismiss loading
-          // But we can add logic here if needed
-        }}
+        isLoading={authLoading || isGenerating || isPosting}
         customMessage={
           authLoading ? "Checking your account..." :
           isGenerating ? "Crafting the perfect summary for your conversation..." :

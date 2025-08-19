@@ -733,10 +733,7 @@ export default function ContributePage({ params }: { params: Promise<{ id: strin
       />
 
       <TypingLoader 
-        isVisible={isSubmitting && contributionType === "ai" && !isStreaming && !streamingResponse} 
-        onDismiss={() => {
-          // Don't allow dismissing while AI is generating
-        }}
+        isLoading={isSubmitting && contributionType === "ai" && !isStreaming && !streamingResponse}
         customMessage="Summoning the AI muses to craft your contribution..."
       />
     </main>

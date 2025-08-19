@@ -6,7 +6,7 @@ import Link from "next/link";
 import { useState, useEffect } from "react";
 import { useSupabase } from "@/components/providers/supabase-provider";
 import { BookmarkletModal } from "@/components/bookmarklet/bookmarklet-modal";
-import { AILoadingModal } from "@/components/ui/ai-loading-modal";
+import { TypingLoader } from "@/components/ui/typing-loader";
 
 interface Thread {
   id: string;
@@ -404,7 +404,10 @@ export default function HomePage() {
         onClose={() => setShowBookmarkletModal(false)} 
       />
 
-      <AILoadingModal isLoading={loading} />
+      <TypingLoader 
+        isLoading={loading && threads.length === 0}
+        customMessage="Gathering the collective wisdom of the vanwinkle universe..."
+      />
     </main>
   );
 }
