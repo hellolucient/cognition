@@ -179,44 +179,82 @@ export default function ThreadPage({ params }: { params: Promise<{ id: string }>
   const [selectedText, setSelectedText] = useState("");
   const [selectedSource, setSelectedSource] = useState("");
   const [showReferenceModal, setShowReferenceModal] = useState(false);
+  const [textSegmentVotes, setTextSegmentVotes] = useState<{[key: string]: 'like' | 'dislike' | null}>({});
   const [showWaitlist, setShowWaitlist] = useState(false);
   const [showExportModal, setShowExportModal] = useState(false);
   const [exportFormat, setExportFormat] = useState("text");
   const [isExporting, setIsExporting] = useState(false);
   const conversationRef = useRef<HTMLDivElement>(null);
 
-  const handleTextSelection = (text: string, source: string) => {
-    console.log('🔍 Thread handleTextSelection called:', { text, source });
-    
-    const selection = window.getSelection();
-    const selectedText = selection?.toString().trim();
-    
-    console.log('🔍 Thread text selection debug:', {
-      selection,
-      selectedText,
-      length: selectedText?.length,
-      user: !!user
-    });
-    
-    if (selectedText && selectedText.length > 5) {
-      console.log('✅ Thread text selection valid');
+  // Set up text selection listener that triggers immediately on selection
+  useEffect(() => {
+    const handleSelectionChange = () => {
+      const selection = window.getSelection();
+      const selectedText = selection?.toString().trim();
       
-      if (!user) {
-        console.log('🔒 User not authenticated, showing waitlist');
-        setShowWaitlist(true);
-        return;
+      if (selectedText && selectedText.length > 5) {
+        // Find which element contains the selection
+        const range = selection?.getRangeAt(0);
+        const container = range?.commonAncestorContainer;
+        
+        // Traverse up to find the source element
+        let sourceElement = container?.nodeType === Node.TEXT_NODE 
+          ? container.parentElement 
+          : container as Element;
+          
+        let source = 'Unknown';
+        while (sourceElement && sourceElement !== document.body) {
+          if (sourceElement.getAttribute('data-source')) {
+            source = sourceElement.getAttribute('data-source')!;
+            break;
+          }
+          sourceElement = sourceElement.parentElement;
+        }
+        
+        console.log('✅ Text selected:', { selectedText, source });
+        
+        if (!user) {
+          console.log('🔒 User not authenticated, showing waitlist');
+          setShowWaitlist(true);
+          return;
+        }
+        
+        setSelectedText(selectedText);
+        setSelectedSource(source);
+        setShowReferenceModal(true);
       }
-      
-      setSelectedText(selectedText);
-      setSelectedSource(source);
-      setShowReferenceModal(true);
-    } else {
-      console.log('❌ Thread text selection invalid:', {
-        hasText: !!selectedText,
-        length: selectedText?.length,
-        minLength: 5
-      });
-    }
+    };
+
+    document.addEventListener('selectionchange', handleSelectionChange);
+    return () => document.removeEventListener('selectionchange', handleSelectionChange);
+  }, [user]);
+
+  const handleTextSelection = (text: string, source: string) => {
+    // Keep this function for backward compatibility, but it's now handled by selectionchange
+    console.log('🔍 Thread handleTextSelection called (legacy):', { text, source });
+  };
+
+  const handleTextSegmentVote = async (text: string, voteType: 'like' | 'dislike') => {
+    if (!user) return;
+    
+    const segmentKey = `${text.slice(0, 50)}...`; // Use first 50 chars as key
+    const currentVote = textSegmentVotes[segmentKey];
+    const newVote = currentVote === voteType ? null : voteType; // Toggle if same vote
+    
+    // Update local state immediately
+    setTextSegmentVotes(prev => ({
+      ...prev,
+      [segmentKey]: newVote
+    }));
+    
+    // TODO: Send to API to persist vote
+    console.log('📊 Text segment vote:', { text: segmentKey, vote: newVote });
+  };
+
+  const getTextWithVoteIndicators = (text: string) => {
+    // For now, we'll just return the text as-is
+    // In the future, we could highlight voted segments
+    return text;
   };
 
   const handleContributeClick = () => {
@@ -290,13 +328,20 @@ export default function ThreadPage({ params }: { params: Promise<{ id: string }>
           <div key={index} className="mb-4 p-4 bg-blue-50 border-l-4 border-blue-500 rounded-r">
             <div className="text-sm font-medium text-blue-700 mb-1">Human</div>
             <div 
-              className={`text-gray-800 ${allowSelection ? 'select-text cursor-text' : ''}`}
-              onMouseUp={() => {
-                console.log('🔍 Human onMouseUp fired, allowSelection:', allowSelection);
-                allowSelection && handleTextSelection(messageText, 'Human');
-              }}
+              className={`text-gray-800 ${allowSelection ? 'select-text cursor-text' : ''} relative`}
+              data-source="Human"
             >
               {messageText}
+              {/* Vote indicator for Human messages */}
+              {Object.entries(textSegmentVotes).some(([key, vote]) => 
+                vote && messageText.includes(key.replace('...', ''))
+              ) && (
+                <span className="absolute -right-2 -top-2">
+                  {Object.entries(textSegmentVotes).find(([key, vote]) => 
+                    vote && messageText.includes(key.replace('...', ''))
+                  )?.[1] === 'like' ? '👍' : '👎'}
+                </span>
+              )}
             </div>
           </div>
         );
@@ -309,13 +354,20 @@ export default function ThreadPage({ params }: { params: Promise<{ id: string }>
           <div key={index} className="mb-4 p-4 bg-gray-50 border-l-4 border-gray-500 rounded-r">
             <div className="text-sm font-medium text-gray-700 mb-1">Assistant</div>
             <div 
-              className={`text-gray-800 ${allowSelection ? 'select-text cursor-text' : ''}`}
-              onMouseUp={() => {
-                console.log('🔍 Assistant onMouseUp fired, allowSelection:', allowSelection);
-                allowSelection && handleTextSelection(messageText, 'Assistant');
-              }}
+              className={`text-gray-800 ${allowSelection ? 'select-text cursor-text' : ''} relative`}
+              data-source="Assistant"
             >
               {messageText}
+              {/* Vote indicator for Assistant messages */}
+              {Object.entries(textSegmentVotes).some(([key, vote]) => 
+                vote && messageText.includes(key.replace('...', ''))
+              ) && (
+                <span className="absolute -right-2 -top-2">
+                  {Object.entries(textSegmentVotes).find(([key, vote]) => 
+                    vote && messageText.includes(key.replace('...', ''))
+                  )?.[1] === 'like' ? '👍' : '👎'}
+                </span>
+              )}
             </div>
           </div>
         );
@@ -327,10 +379,7 @@ export default function ThreadPage({ params }: { params: Promise<{ id: string }>
           <div 
             key={index} 
             className={`mb-2 text-gray-800 ${allowSelection ? 'select-text cursor-text' : ''}`}
-            onMouseUp={() => {
-              console.log('🔍 Regular text onMouseUp fired, allowSelection:', allowSelection);
-              allowSelection && handleTextSelection(trimmed, 'Human');
-            }}
+            data-source="Thread"
           >
             {trimmed}
           </div>
@@ -526,11 +575,13 @@ export default function ThreadPage({ params }: { params: Promise<{ id: string }>
           </Button>
         </div>
 
-        {/* Reference Modal */}
+        {/* Enhanced Reference Modal */}
         {showReferenceModal && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
             <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
-              <h3 className="text-lg font-semibold mb-4">Reply to this text?</h3>
+              <h3 className="text-lg font-semibold mb-4">Selected Text</h3>
+              
+              {/* Selected text display */}
               <div className="bg-muted p-3 rounded mb-4">
                 <div className="text-xs text-muted-foreground mb-1">
                   {selectedSource}:
@@ -539,6 +590,28 @@ export default function ThreadPage({ params }: { params: Promise<{ id: string }>
                   "{selectedText}"
                 </div>
               </div>
+
+              {/* Like/Dislike buttons */}
+              <div className="flex gap-2 mb-4 justify-center">
+                <Button
+                  variant={textSegmentVotes[`${selectedText.slice(0, 50)}...`] === 'like' ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => handleTextSegmentVote(selectedText, 'like')}
+                  className="flex items-center gap-1"
+                >
+                  👍 Like
+                </Button>
+                <Button
+                  variant={textSegmentVotes[`${selectedText.slice(0, 50)}...`] === 'dislike' ? 'destructive' : 'outline'}
+                  size="sm"
+                  onClick={() => handleTextSegmentVote(selectedText, 'dislike')}
+                  className="flex items-center gap-1"
+                >
+                  👎 Dislike
+                </Button>
+              </div>
+
+              {/* Action buttons */}
               <div className="flex gap-3">
                 <Button 
                   onClick={() => {
@@ -547,7 +620,7 @@ export default function ThreadPage({ params }: { params: Promise<{ id: string }>
                   }}
                   className="flex-1"
                 >
-                  Reply to this
+                  💬 Reply to this
                 </Button>
                 <Button 
                   variant="outline" 
@@ -559,7 +632,7 @@ export default function ThreadPage({ params }: { params: Promise<{ id: string }>
                     window.getSelection()?.removeAllRanges();
                   }}
                 >
-                  Cancel
+                  Close
                 </Button>
               </div>
             </div>
