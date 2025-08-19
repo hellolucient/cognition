@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import OpenAI from 'openai'
 
+// Enable Edge Runtime for faster cold starts
+export const runtime = 'edge'
+
 export async function POST(request: NextRequest) {
   try {
     const { apiKey } = await request.json()

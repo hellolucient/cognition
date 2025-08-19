@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from 'next/server'
 import OpenAI from 'openai'
 import Anthropic from '@anthropic-ai/sdk'
 
+// Note: Can use Edge Runtime for this route since it doesn't use encryption
+export const runtime = 'edge'
+
 export async function POST(request: NextRequest) {
   try {
     const { openaiKey, anthropicKey } = await request.json()

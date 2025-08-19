@@ -39,6 +39,8 @@ export default function ContributePage({ params }: { params: Promise<{ id: strin
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
+  const [streamingResponse, setStreamingResponse] = useState("");
+  const [isStreaming, setIsStreaming] = useState(false);
   const [referencedText, setReferencedText] = useState("");
   const [referencedSource, setReferencedSource] = useState("");
   const [showWaitlist, setShowWaitlist] = useState(false);
@@ -196,39 +198,114 @@ export default function ContributePage({ params }: { params: Promise<{ id: strin
     }
 
     setIsSubmitting(true);
+    setStreamingResponse("");
+    setErrorMessage("");
+    
     try {
-      const response = await fetch('/api/contribute', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          type: contributionType,
-          parentThreadId: resolvedParams.id,
-          userPrompt: contributionType === "ai" ? userPrompt : null,
-          manualContent: contributionType === "manual" ? manualContribution : null,
-          referencedText: referencedText || null,
-          referencedSource: referencedSource || null,
-          provider: contributionType === "ai" ? selectedProvider : null,
-        }),
-      });
+      if (contributionType === "ai") {
+        // Handle streaming AI responses
+        setIsStreaming(true);
+        
+        const response = await fetch('/api/contribute', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            type: contributionType,
+            parentThreadId: resolvedParams.id,
+            userPrompt: userPrompt,
+            referencedText: referencedText || null,
+            referencedSource: referencedSource || null,
+            provider: selectedProvider,
+          }),
+        });
 
-      const data = await response.json();
+        if (!response.ok) {
+          throw new Error('Failed to start AI generation');
+        }
 
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to create contribution');
+        // Handle streaming response
+        const reader = response.body?.getReader();
+        if (!reader) {
+          throw new Error('No response stream available');
+        }
+
+        const decoder = new TextDecoder();
+        let fullResponse = "";
+
+        try {
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+
+            const chunk = decoder.decode(value, { stream: true });
+            const lines = chunk.split('\n');
+
+            for (const line of lines) {
+              if (line.startsWith('data: ')) {
+                try {
+                  const data = JSON.parse(line.slice(6));
+                  
+                  if (data.type === 'content') {
+                    fullResponse += data.content;
+                    setStreamingResponse(fullResponse);
+                  } else if (data.type === 'complete') {
+                    // AI generation complete
+                    setIsStreaming(false);
+                    setShowSuccess(true);
+                    
+                    // Redirect after a short delay
+                    setTimeout(() => {
+                      window.location.href = `/thread/${resolvedParams.id}?scroll=bottom`;
+                    }, 1500);
+                  } else if (data.type === 'error') {
+                    throw new Error(data.error);
+                  }
+                } catch (parseError) {
+                  console.warn('Failed to parse streaming data:', parseError);
+                }
+              }
+            }
+          }
+        } finally {
+          reader.releaseLock();
+        }
+        
+      } else {
+        // Handle manual contributions (non-streaming)
+        const response = await fetch('/api/contribute', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            type: contributionType,
+            parentThreadId: resolvedParams.id,
+            manualContent: manualContribution,
+            referencedText: referencedText || null,
+            referencedSource: referencedSource || null,
+          }),
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.error || 'Failed to create contribution');
+        }
+        
+        // Show success state
+        setShowSuccess(true);
+        
+        // Redirect after a short delay
+        setTimeout(() => {
+          window.location.href = `/thread/${resolvedParams.id}?scroll=bottom`;
+        }, 1500);
       }
-      
-      // Show success state
-      setShowSuccess(true);
-      
-      // Redirect after a short delay to show the success message
-      setTimeout(() => {
-        window.location.href = `/thread/${resolvedParams.id}?scroll=bottom`;
-      }, 1500);
       
     } catch (error: any) {
       setErrorMessage(error.message);
+      setIsStreaming(false);
     } finally {
       setIsSubmitting(false);
     }
@@ -433,6 +510,32 @@ export default function ContributePage({ params }: { params: Promise<{ id: strin
           </form>
         )}
 
+        {/* Streaming Response Display */}
+        {isStreaming && streamingResponse && (
+          <div className="bg-blue-50 border border-blue-200 p-6 rounded-lg">
+            <div className="flex items-center gap-2 mb-3">
+              <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
+              <h3 className="font-medium text-blue-900">AI is responding...</h3>
+            </div>
+            <div className="prose prose-sm max-w-none text-gray-800">
+              {streamingResponse.split('\\n').map((line, index) => (
+                <p key={index} className="mb-2 last:mb-0">
+                  {line}
+                </p>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Success Message */}
+        {showSuccess && (
+          <div className="bg-green-50 border border-green-200 p-6 rounded-lg text-center">
+            <div className="text-2xl mb-2">✅</div>
+            <h3 className="font-medium text-green-900 mb-1">Contribution Added!</h3>
+            <p className="text-green-700 text-sm">Redirecting you to the updated conversation...</p>
+          </div>
+        )}
+
         {/* Original Thread Context - moved to bottom */}
         <div className="bg-muted/30 p-6 rounded-lg">
           <h2 className="font-medium mb-3">Original Conversation</h2>
@@ -542,7 +645,10 @@ export default function ContributePage({ params }: { params: Promise<{ id: strin
         onClose={() => setShowWaitlist(false)} 
       />
 
-      <AILoadingModal isLoading={loading || isSubmitting} />
+      <AILoadingModal 
+        isLoading={isSubmitting && contributionType === "ai" && !isStreaming && !streamingResponse} 
+        requireAuth={true} 
+      />
     </main>
   );
 }

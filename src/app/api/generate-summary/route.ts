@@ -3,6 +3,9 @@ import OpenAI from 'openai'
 import Anthropic from '@anthropic-ai/sdk'
 import { GoogleGenerativeAI } from '@google/generative-ai'
 
+// Enable Edge Runtime for faster cold starts
+export const runtime = 'edge'
+
 export async function POST(request: NextRequest) {
   try {
     const { content } = await request.json()
