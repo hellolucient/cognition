@@ -34,13 +34,14 @@ export default function HomePage() {
   const [selectedTag, setSelectedTag] = useState<string | null>(null);
   const [showBookmarkletModal, setShowBookmarkletModal] = useState(false);
   const [showFollowingOnly, setShowFollowingOnly] = useState(false);
+  const [sortBy, setSortBy] = useState<'latest' | 'popular'>('latest');
   const { user } = useSupabase();
 
 
 
   useEffect(() => {
     fetchThreads();
-  }, [showFollowingOnly]);
+  }, [showFollowingOnly, sortBy]);
 
   // Auto-scroll to threads section when redirected from successful post
   useEffect(() => {
@@ -61,7 +62,11 @@ export default function HomePage() {
 
   const fetchThreads = async () => {
     try {
-      const url = showFollowingOnly ? '/api/threads?following=true' : '/api/threads';
+      const params = new URLSearchParams();
+      if (showFollowingOnly) params.append('following', 'true');
+      if (sortBy) params.append('sort', sortBy);
+      
+      const url = `/api/threads?${params.toString()}`;
       const response = await fetch(url);
       if (response.ok) {
         const data = await response.json();
@@ -110,15 +115,10 @@ export default function HomePage() {
   // Get all unique tags from threads (guard against missing tags)
   const allTags = Array.from(new Set(threads.flatMap(thread => thread.tags || []))).slice(0, 10);
 
-  // Filter threads by selected tag and sort by net upvotes (upvotes - downvotes)
-  const filteredThreads = (selectedTag 
+  // Filter threads by selected tag (sorting is now handled by API)
+  const filteredThreads = selectedTag 
     ? threads.filter(thread => thread.tags?.includes(selectedTag))
-    : threads)
-    .sort((a, b) => {
-      const aNetVotes = a._count.upvotes - a._count.downvotes;
-      const bNetVotes = b._count.upvotes - b._count.downvotes;
-      return bNetVotes - aNetVotes; // Highest net votes first
-    });
+    : threads;
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -162,28 +162,52 @@ export default function HomePage() {
 
 
 
-        {/* Following Filter */}
-        {user && (
+        {/* View and Sort Controls */}
+        <div className="flex flex-col sm:flex-row gap-4 sm:gap-8">
+          {/* Following Filter */}
+          {user && (
+            <div className="space-y-2">
+              <div className="text-sm font-medium">View:</div>
+              <div className="flex gap-2">
+                <Button
+                  variant={!showFollowingOnly ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setShowFollowingOnly(false)}
+                >
+                  All Posts
+                </Button>
+                <Button
+                  variant={showFollowingOnly ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setShowFollowingOnly(true)}
+                >
+                  Following Only
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {/* Sort Options */}
           <div className="space-y-2">
-            <div className="text-sm font-medium">View:</div>
+            <div className="text-sm font-medium">Sort by:</div>
             <div className="flex gap-2">
               <Button
-                variant={!showFollowingOnly ? "default" : "outline"}
+                variant={sortBy === 'latest' ? "default" : "outline"}
                 size="sm"
-                onClick={() => setShowFollowingOnly(false)}
+                onClick={() => setSortBy('latest')}
               >
-                All Posts
+                Latest Activity
               </Button>
               <Button
-                variant={showFollowingOnly ? "default" : "outline"}
+                variant={sortBy === 'popular' ? "default" : "outline"}
                 size="sm"
-                onClick={() => setShowFollowingOnly(true)}
+                onClick={() => setSortBy('popular')}
               >
-                Following Only
+                Popular
               </Button>
             </div>
           </div>
-        )}
+        </div>
 
         {/* Tag Filter */}
         {allTags.length > 0 && (

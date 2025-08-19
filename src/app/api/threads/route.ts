@@ -280,6 +280,7 @@ export async function GET(request: NextRequest) {
     const limit = parseInt(searchParams.get('limit') || '20')
     const offset = parseInt(searchParams.get('offset') || '0')
     const followingOnly = searchParams.get('following') === 'true'
+    const sortBy = searchParams.get('sort') || 'latest' // 'latest' or 'popular'
 
     // Get authenticated user for following filter
     let currentUserId = null;
@@ -325,30 +326,83 @@ export async function GET(request: NextRequest) {
       };
     }
 
-    const threads = await prisma.thread.findMany({
-      where: whereClause,
-      take: limit,
-      skip: offset,
-      orderBy: {
-        createdAt: 'desc'
-      },
-      include: {
-        author: {
-          select: {
-            id: true,
-            name: true,
-            avatarUrl: true,
-          }
-        },
-        _count: {
-          select: {
-            comments: true,
-            upvotes: true,
-            downvotes: true,
+    let threads;
+    
+    if (sortBy === 'popular') {
+      // Sort by net upvotes (upvotes - downvotes)
+      threads = await prisma.thread.findMany({
+        where: whereClause,
+        take: limit,
+        skip: offset,
+        include: {
+          author: {
+            select: {
+              id: true,
+              name: true,
+              avatarUrl: true,
+            }
+          },
+          _count: {
+            select: {
+              comments: true,
+              upvotes: true,
+              downvotes: true,
+            }
           }
         }
-      }
-    })
+      });
+      
+      // Sort by net upvotes in JavaScript since Prisma doesn't support computed fields in orderBy
+      threads = threads.sort((a, b) => {
+        const aNetVotes = a._count.upvotes - a._count.downvotes;
+        const bNetVotes = b._count.upvotes - b._count.downvotes;
+        return bNetVotes - aNetVotes; // Highest net votes first
+      });
+      
+    } else {
+      // Sort by latest activity (most recent contribution or thread creation)
+      const threadsWithActivity = await prisma.thread.findMany({
+        where: whereClause,
+        take: limit,
+        skip: offset,
+        include: {
+          author: {
+            select: {
+              id: true,
+              name: true,
+              avatarUrl: true,
+            }
+          },
+          contributions: {
+            select: {
+              createdAt: true,
+            },
+            orderBy: {
+              createdAt: 'desc'
+            },
+            take: 1 // Only need the most recent contribution
+          },
+          _count: {
+            select: {
+              comments: true,
+              upvotes: true,
+              downvotes: true,
+            }
+          }
+        }
+      });
+      
+      // Sort by latest activity (either thread creation or most recent contribution)
+      threads = threadsWithActivity
+        .map(thread => ({
+          ...thread,
+          latestActivity: thread.contributions.length > 0 
+            ? new Date(thread.contributions[0].createdAt)
+            : new Date(thread.createdAt)
+        }))
+        .sort((a, b) => b.latestActivity.getTime() - a.latestActivity.getTime())
+        .map(({ latestActivity, contributions, ...thread }) => thread); // Remove helper fields
+    }
 
     const response = NextResponse.json(threads)
     // Cache public thread list for 60s, allow stale for 10min
