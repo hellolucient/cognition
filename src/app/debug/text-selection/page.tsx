@@ -11,10 +11,14 @@ export default function TextSelectionDebugPage() {
   // Also try with native DOM event listeners
   useEffect(() => {
     const handleDocumentMouseUp = () => {
-      console.log('🔍 Document mouseup fired!');
-      const selection = window.getSelection();
-      const text = selection?.toString().trim();
-      console.log('🔍 Document selection:', text);
+      try {
+        console.log('🔍 Document mouseup fired!');
+        const selection = window.getSelection();
+        const text = selection?.toString().trim();
+        console.log('🔍 Document selection:', text);
+      } catch (error) {
+        console.error('🔍 Error in document mouseup:', error);
+      }
     };
 
     document.addEventListener('mouseup', handleDocumentMouseUp);
@@ -22,28 +26,32 @@ export default function TextSelectionDebugPage() {
   }, []);
 
   const handleTextSelection = (event: React.MouseEvent) => {
-    console.log('🔍 onMouseUp event fired!', event);
-    
-    const selection = window.getSelection();
-    const selectedText = selection?.toString().trim();
-    
-    console.log('🔍 Text Selection Debug:', {
-      selection,
-      selectedText,
-      length: selectedText?.length,
-      rangeCount: selection?.rangeCount
-    });
-    
-    if (selectedText && selectedText.length > 5) {
-      console.log('✅ Text selection valid, showing modal');
-      setSelectedText(selectedText);
-      setShowModal(true);
-    } else {
-      console.log('❌ Text selection invalid:', {
-        hasText: !!selectedText,
+    try {
+      console.log('🔍 onMouseUp event fired!', event);
+      
+      const selection = window.getSelection();
+      const selectedText = selection?.toString().trim();
+      
+      console.log('🔍 Text Selection Debug:', {
+        selection,
+        selectedText,
         length: selectedText?.length,
-        minLength: 5
+        rangeCount: selection?.rangeCount
       });
+      
+      if (selectedText && selectedText.length > 5) {
+        console.log('✅ Text selection valid, showing modal');
+        setSelectedText(selectedText);
+        setShowModal(true);
+      } else {
+        console.log('❌ Text selection invalid:', {
+          hasText: !!selectedText,
+          length: selectedText?.length,
+          minLength: 5
+        });
+      }
+    } catch (error) {
+      console.error('🔍 Error in text selection handler:', error);
     }
   };
 
@@ -60,10 +68,10 @@ export default function TextSelectionDebugPage() {
           </p>
         </div>
 
-        <div className="bg-muted p-6 rounded-lg">
-          <h2 className="text-lg font-semibold mb-4">Test Content</h2>
+        <div className="bg-gray-50 p-4 rounded border">
+          <h2 className="text-base font-medium mb-3 text-gray-900">Test Content</h2>
           <div 
-            className="text-gray-800 select-text cursor-text space-y-4 border-2 border-dashed border-blue-300 p-4"
+            className="text-gray-800 select-text cursor-text space-y-3 border border-gray-300 p-3 rounded bg-white"
             onMouseUp={handleTextSelection}
             onMouseDown={() => console.log('🔍 onMouseDown fired!')}
             onClick={() => console.log('🔍 onClick fired!')}
@@ -85,11 +93,11 @@ export default function TextSelectionDebugPage() {
           </div>
         </div>
 
-        <div className="bg-yellow-50 p-4 rounded border">
-          <h3 className="font-semibold">Debug Info:</h3>
-          <p>Open browser console to see selection debug logs.</p>
-          <p>Selected text length must be &gt; 5 characters.</p>
-          <p className="text-sm text-gray-600 mt-2">
+        <div className="bg-gray-50 p-4 rounded border">
+          <h3 className="font-medium text-gray-900 mb-2">Debug Info:</h3>
+          <p className="text-sm text-gray-700 mb-1">Open browser console to see selection debug logs.</p>
+          <p className="text-sm text-gray-700 mb-2">Selected text length must be &gt; 5 characters.</p>
+          <p className="text-xs text-gray-600">
             <strong>Events to watch for:</strong><br/>
             • onMouseDown (when you press mouse)<br/>
             • onMouseUp (when you release mouse)<br/>
@@ -108,25 +116,27 @@ export default function TextSelectionDebugPage() {
       {/* Debug Modal */}
       {showModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-background rounded-lg p-6 max-w-md w-full mx-4">
-            <h3 className="text-lg font-semibold mb-4">✅ Text Selection Working!</h3>
-            <div className="bg-muted p-3 rounded mb-4">
-              <div className="text-sm font-medium text-muted-foreground mb-1">
+          <div className="bg-white rounded-lg p-4 max-w-sm w-full mx-4 shadow-lg">
+            <h3 className="text-base font-medium mb-3 text-gray-900">✅ Text Selection Working!</h3>
+            <div className="bg-gray-50 p-2 rounded mb-3 border">
+              <div className="text-xs text-gray-600 mb-1">
                 You selected:
               </div>
-              <div className="text-sm italic">"{selectedText}"</div>
+              <div className="text-sm text-gray-900">"{selectedText}"</div>
             </div>
-            <p className="text-muted-foreground mb-4 text-sm">
+            <p className="text-gray-600 mb-3 text-xs">
               Length: {selectedText.length} characters
             </p>
-            <div className="flex gap-3">
+            <div className="flex">
               <Button 
                 onClick={() => {
                   setShowModal(false);
                   setSelectedText("");
                   window.getSelection()?.removeAllRanges();
                 }}
-                className="flex-1"
+                size="sm"
+                variant="outline"
+                className="w-full"
               >
                 Close
               </Button>

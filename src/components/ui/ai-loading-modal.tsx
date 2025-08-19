@@ -361,75 +361,54 @@ export function AILoadingModal({ isLoading, delay = 800, requireAuth = false }: 
   if (!showModal || !currentSnippet) return null;
 
   return (
-    <div className={`fixed inset-0 bg-black/50 flex items-center justify-center z-50 transition-opacity duration-300 ${isVisible ? 'opacity-100' : 'opacity-0'}`}>
-      <div className={`${currentSnippet.color} rounded-lg p-8 max-w-md w-full mx-4 text-white transform transition-all duration-300 ${isVisible ? 'scale-100' : 'scale-95'}`}>
-        {/* Header */}
-        <div className="flex justify-between items-start mb-6">
-          <div className="w-16 h-16 flex items-center justify-center">
-            {currentSnippet.imageType === 'emoji' ? (
-              <div className="text-4xl">{currentSnippet.image}</div>
-            ) : (
-              <img 
-                src={currentSnippet.image} 
-                alt={currentSnippet.title}
-                className="w-full h-full object-contain rounded-lg"
-              />
-            )}
-          </div>
+    <div className={`fixed bottom-4 left-1/2 transform -translate-x-1/2 z-50 transition-all duration-300 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2'}`}>
+      <div className={`${currentSnippet.color} rounded-full px-4 py-2 text-white shadow-lg flex items-center space-x-3 max-w-sm`}>
+        {/* Icon */}
+        <div className="text-lg">
+          {currentSnippet.imageType === 'emoji' ? currentSnippet.image : '🤖'}
+        </div>
+        
+        {/* Status */}
+        <div className="flex items-center space-x-2 text-sm">
+          {isLoading ? (
+            <>
+              <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-white/60"></div>
+              <span>Loading...</span>
+            </>
+          ) : (
+            <>
+              <div className="rounded-full h-3 w-3 bg-green-400 flex items-center justify-center">
+                <span className="text-white text-xs">✓</span>
+              </div>
+              <span>Page loaded!</span>
+            </>
+          )}
+        </div>
+
+        {/* Close button */}
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={handleClose}
+          className="text-white hover:bg-white/20 h-6 w-6 p-0 rounded-full"
+        >
+          ✕
+        </Button>
+      </div>
+      
+      {/* Disable option - only show when clicked */}
+      {isVisible && (
+        <div className="mt-2 text-center">
           <Button
             variant="ghost"
             size="sm"
-            onClick={handleClose}
-            className="text-white hover:bg-white/20 h-8 w-8 p-0"
+            onClick={handleDisable}
+            className="text-gray-500 hover:text-gray-700 text-xs bg-white/90 hover:bg-white rounded-full px-3 py-1"
           >
-            ✕
+            Don't show again
           </Button>
         </div>
-
-        {/* Content */}
-        <div className="space-y-4">
-          <h2 className="text-2xl font-bold tracking-tight">
-            {currentSnippet.title}
-          </h2>
-          
-          <p className="text-white/90 leading-relaxed">
-            {currentSnippet.description}
-          </p>
-          
-          <div className="flex items-center justify-between pt-4">
-            <span className="text-white/80 text-sm font-medium">
-              {currentSnippet.year}
-            </span>
-            <div className="flex items-center space-x-2 text-white/60 text-sm">
-              {isLoading ? (
-                <>
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white/60"></div>
-                  <span>Loading continues...</span>
-                </>
-              ) : (
-                <>
-                  <div className="rounded-full h-4 w-4 bg-green-400 flex items-center justify-center">
-                    <span className="text-white text-xs">✓</span>
-                  </div>
-                  <span>Page loaded!</span>
-                </>
-              )}
-            </div>
-          </div>
-          
-          {/* Disable option */}
-          <div className="pt-4 border-t border-white/20 mt-4">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleDisable}
-              className="text-white/70 hover:text-white hover:bg-white/10 text-xs w-full justify-center"
-            >
-              Don't show these popups again
-            </Button>
-          </div>
-        </div>
-      </div>
+      )}
     </div>
   );
 }

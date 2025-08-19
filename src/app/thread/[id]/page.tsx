@@ -8,6 +8,7 @@ import { useState, useEffect, use, useRef } from "react";
 import { useSupabase } from "@/components/providers/supabase-provider";
 import { WaitlistModal } from "@/components/auth/waitlist-modal";
 import { TypingLoader } from "@/components/ui/typing-loader";
+import { AILoadingModal } from "@/components/ui/ai-loading-modal";
 
 interface Thread {
   id: string;
