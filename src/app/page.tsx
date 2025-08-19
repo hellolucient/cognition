@@ -175,16 +175,18 @@ export default function HomePage() {
                   size="sm"
                   onClick={() => setShowFollowingOnly(false)}
                   disabled={isChangingView}
+                  className={isChangingView && !showFollowingOnly ? "opacity-50 animate-pulse" : ""}
                 >
-                  {isChangingView && !showFollowingOnly ? "Loading..." : "All Posts"}
+                  All Posts
                 </Button>
                 <Button
                   variant={showFollowingOnly ? "default" : "outline"}
                   size="sm"
                   onClick={() => setShowFollowingOnly(true)}
                   disabled={isChangingView}
+                  className={isChangingView && showFollowingOnly ? "opacity-50 animate-pulse" : ""}
                 >
-                  {isChangingView && showFollowingOnly ? "Loading..." : "Following Only"}
+                  Following Only
                 </Button>
               </div>
             </div>
@@ -199,16 +201,18 @@ export default function HomePage() {
                 size="sm"
                 onClick={() => setSortBy('latest')}
                 disabled={isChangingView}
+                className={isChangingView && sortBy === 'latest' ? "opacity-50 animate-pulse" : ""}
               >
-                {isChangingView && sortBy === 'latest' ? "Loading..." : "Latest Activity"}
+                Latest Activity
               </Button>
               <Button
                 variant={sortBy === 'popular' ? "default" : "outline"}
                 size="sm"
                 onClick={() => setSortBy('popular')}
                 disabled={isChangingView}
+                className={isChangingView && sortBy === 'popular' ? "opacity-50 animate-pulse" : ""}
               >
-                {isChangingView && sortBy === 'popular' ? "Loading..." : "Popular"}
+                Popular
               </Button>
             </div>
           </div>

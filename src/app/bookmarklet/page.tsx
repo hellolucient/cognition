@@ -21,20 +21,33 @@ export default function BookmarkletLanding() {
     // Handle URL parameters and check for content
     const urlParams = new URLSearchParams(window.location.search);
     const passedPlatform = urlParams.get('platform');
+    const passedContent = urlParams.get('content');
     const fromBookmarklet = urlParams.get('from') === 'bookmarklet';
     
     if (passedPlatform) {
       setPlatform(passedPlatform);
     }
 
-    // Check if we have content from bookmarklet
-    const storedContent = sessionStorage.getItem('vanwinkle_chat');
-    if (storedContent) {
-      setHasContent(true);
-    } else if (fromBookmarklet) {
-      // If coming from bookmarklet but no content in sessionStorage,
-      // prompt user to paste from clipboard
-      setHasContent(false);
+    // Check for content from URL parameter or sessionStorage
+    if (passedContent) {
+      try {
+        const decodedContent = decodeURIComponent(passedContent);
+        sessionStorage.setItem('vanwinkle_chat', decodedContent);
+        setHasContent(true);
+        console.log('✅ Content loaded from URL parameter:', decodedContent.length, 'characters');
+      } catch (error) {
+        console.error('Failed to decode content from URL:', error);
+        setHasContent(false);
+      }
+    } else {
+      // Fallback: check sessionStorage
+      const storedContent = sessionStorage.getItem('vanwinkle_chat');
+      if (storedContent) {
+        setHasContent(true);
+      } else if (fromBookmarklet) {
+        // If coming from bookmarklet but no content, prompt user to paste from clipboard
+        setHasContent(false);
+      }
     }
   }, []);
 
