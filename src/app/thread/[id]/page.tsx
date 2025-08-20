@@ -318,13 +318,18 @@ export default function ThreadPage({ params }: { params: Promise<{ id: string }>
 
   // Function to format citations in text
   const formatCitations = (text: string) => {
-    // Handle multi-line citations like "Reddit\n+6"
-    let formatted = text.replace(/([A-Za-z][A-Za-z0-9\s]*[A-Za-z0-9])\s*\n\s*\+(\d+)/g, (match, source, number) => {
+    // Handle the actual pattern: "+2\nReddit" (number first, then source)
+    let formatted = text.replace(/\+(\d+)\s*\n\s*([A-Za-z][A-Za-z0-9\s\.\-]*(?:[A-Za-z0-9]|\.))/g, (match, number, source) => {
+      return `${source.trim()} <span class="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs bg-blue-100 text-blue-800 ml-1">+${number}</span>`;
+    });
+    
+    // Handle reverse pattern: "Reddit\n+6" (source first, then number)
+    formatted = formatted.replace(/([A-Za-z][A-Za-z0-9\s\.]*[A-Za-z0-9])\s*\n\s*\+(\d+)/g, (match, source, number) => {
       return `${source.trim()} <span class="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs bg-blue-100 text-blue-800 ml-1">+${number}</span>`;
     });
     
     // Handle inline citations like "Reddit +6"
-    formatted = formatted.replace(/(\b[A-Za-z][A-Za-z0-9\s]*[A-Za-z0-9])\s*\+(\d+)/g, (match, source, number) => {
+    formatted = formatted.replace(/(\b[A-Za-z][A-Za-z0-9\s\.]*[A-Za-z0-9])\s*\+(\d+)/g, (match, source, number) => {
       return `${source.trim()} <span class="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs bg-blue-100 text-blue-800 ml-1">+${number}</span>`;
     });
     
