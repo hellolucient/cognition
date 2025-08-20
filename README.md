@@ -101,6 +101,7 @@ Our intelligent bookmarklet makes sharing ChatGPT conversations effortless:
 - ✅ **Tag-based Discovery** - Filter and organize by topics
 - ✅ **Source Attribution** - Track which AI model was used
 - ✅ **Export System** - Download conversations in multiple formats (TXT, MD, JSON)
+- ✅ **Upvoting & Downvoting** - Community curation with vote counts and user preferences
 - ✅ **Social Sharing** - Share threads to X/Twitter and copy links
 
 ### Social Features
@@ -246,10 +247,10 @@ Open [http://localhost:3000](http://localhost:3000) to see the platform.
 - **Threads** - Original AI conversations and contributions with titles
 - **Follow** - User following relationships for social features
 - **Notification** - In-app notifications for follows and new posts
-- **Comments** - Community discussion (coming soon)
-- **Upvotes** - Community curation (coming soon)
+- **Upvotes & Downvotes** - Community curation and engagement tracking
 - **InviteCode** - Invite code management and tracking
 - **WaitlistEntry** - User waitlist for controlled growth
+- **PendingShare** - Save-for-later functionality for mobile users
 
 ### API Routes
 - `/api/threads` - CRUD operations for conversations with following filter
@@ -264,17 +265,19 @@ Open [http://localhost:3000](http://localhost:3000) to see the platform.
 
 ### Key Components
 - **Thread Feed** - Main discovery interface with tag filtering and following feed
-- **Contribution System** - Collaborative conversation building with AI/manual options
+- **Contribution System** - Collaborative conversation building with AI/manual options (not traditional comments)
 - **Quote/Reference** - Targeted response to specific text with modal interface (5+ character minimum)
+- **Voting System** - Upvote/downvote functionality with community curation
 - **Export System** - Download enhanced conversations in multiple formats
 - **User Profiles** - Customizable profiles with avatar, bio, social links, and activity
 - **Follow System** - Social connections with notifications and activity feeds
-- **Notification Bell** - Real-time in-app notifications for social interactions
+- **Notification Bell** - In-app notifications for social interactions
 - **AI Loading Modals** - Educational AI history during loading states (30+ facts)
 - **Social Sharing** - Share threads to X/Twitter with proper domain URLs
 - **User Settings** - API key management, invite codes, and AI modal preferences
 - **Admin Panel** - Platform AI provider configuration and management
 - **Invite System** - Controlled user onboarding with waitlist
+- **Save for Later** - Mobile-friendly link saving for ChatGPT share URLs
 
 ## 🎨 Design Philosophy
 
@@ -311,12 +314,13 @@ Features like **invite-only signup** and **waitlist management** ensure the comm
 - [x] Social sharing (X/Twitter, copy link)
 - [x] Profile pages with follower/following lists
 - [x] AI loading modals with educational content (30+ snippets)
-- [ ] Comments and upvoting system
+- [x] Upvoting and downvoting system for community curation
+- [x] Advanced contribution system (AI + manual insights)
 - [ ] Advanced moderation tools
 - [ ] Community guidelines and reporting
 
 ### Phase 3: Advanced Features 🔮
-- [ ] Real-time collaboration on threads
+- [ ] Real-time collaborative editing on threads (live multi-user contributions)
 - [ ] Advanced search and discovery
 - [ ] API for third-party integrations
 - [ ] Mobile app (React Native)
@@ -339,7 +343,7 @@ MIT License - see [LICENSE](LICENSE) for details.
 
 ## 🔗 Links
 
-- **Live Platform**: [https://vanwinkle.vercel.app](https://vanwinkle.vercel.app) ✅ **Production Ready**
+- **Live Platform**: [https://www.vanwinkleapp.com](https://www.vanwinkleapp.com) ✅ **Production Ready**
 - **Documentation**: [Wiki](https://github.com/hellolucient/cognition/wiki)
 - **Issues**: [GitHub Issues](https://github.com/hellolucient/cognition/issues)
 - **Discussions**: [GitHub Discussions](https://github.com/hellolucient/cognition/discussions)

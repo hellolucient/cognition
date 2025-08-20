@@ -20,7 +20,7 @@ vanwinkle lets you:
 ### Step 1: Get Access to vanwinkle
 
 #### 🔑 **If you have an invite code:**
-1. Visit [vanwinkle.com](https://www.vanwinkleapp.com)
+1. Visit [www.vanwinkleapp.com](https://www.vanwinkleapp.com)
 2. Click **"Have Invite Code?"** button
 3. Enter your invite code and email
 4. Create a password (minimum 6 characters)
@@ -29,7 +29,7 @@ vanwinkle lets you:
 7. You're in! 🎉
 
 #### 📝 **If you need an invite code:**
-1. Visit [vanwinkle.com](https://www.vanwinkleapp.com)
+1. Visit [www.vanwinkleapp.com](https://www.vanwinkleapp.com)
 2. Click **"Join Waitlist"** button
 3. Enter your email address
 4. Tell us why you're interested in AI conversations
