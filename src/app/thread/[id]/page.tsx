@@ -316,23 +316,51 @@ export default function ThreadPage({ params }: { params: Promise<{ id: string }>
     }
   };
 
-  // Function to format citations in text
+  // Function to format citations using structured data from bookmarklet
   const formatCitations = (text: string) => {
     console.log('🔍 formatCitations called with:', text.substring(0, 200) + '...');
     
+    // Check if we have structured citation data from the bookmarklet
+    const citationsData = sessionStorage.getItem('vanwinkle_citations');
+    if (citationsData) {
+      try {
+        const citations = JSON.parse(citationsData);
+        console.log('✅ Found structured citations:', citations);
+        
+        // Format each citation in the text
+        let formatted = text;
+        citations.forEach((citation: { source: string; number: number }) => {
+          const citationPattern = new RegExp(`\\b${citation.source.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\s*\\+${citation.number}\\b`, 'g');
+          formatted = formatted.replace(citationPattern, (match) => {
+            console.log('✅ Formatting citation:', match, '→', citation.source, '+', citation.number);
+            return `<span class="inline-flex items-center px-2 py-1 rounded-full text-xs bg-blue-100 text-blue-800 font-mono"><span class="text-[10px] mr-1">${citation.source}</span>+${citation.number}</span>`;
+          });
+        });
+        
+        console.log('🔍 formatCitations result (structured):', formatted.substring(0, 200) + '...');
+        return formatted;
+      } catch (error) {
+        console.error('❌ Error parsing citations data:', error);
+        // Fall back to regex pattern matching if structured data fails
+      }
+    }
+    
+    // Fallback: Use regex pattern matching (legacy behavior)
+    console.log('⚠️ No structured citations found, using regex fallback');
+    
     // Handle the actual pattern: "Source\n+6" (source first, then number on next line)
     let formatted = text.replace(/([A-Za-z][A-Za-z0-9\s\-\.]+)\s*\n\s*\+(\d+)/g, (match, source, number) => {
-      console.log('✅ Multi-line citation match:', match, '→', source.trim(), '+', number);
+      console.log('✅ Multi-line citation match (fallback):', match, '→', source.trim(), '+', number);
       return `${source.trim()} <span class="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs bg-blue-100 text-blue-800 ml-1 font-mono text-[10px] italic">+${number}</span>`;
     });
     
     // Handle inline citations like "Reddit +6"
     formatted = formatted.replace(/(\b[A-Za-z][A-Za-z0-9\s\-\.]+)\s*\+(\d+)/g, (match, source, number) => {
-      console.log('✅ Inline citation match:', match, '→', source.trim(), '+', number);
+      console.log('✅ Inline citation match (fallback):', match, '→', source.trim(), '+', number);
       return `${source.trim()} <span class="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs bg-blue-100 text-blue-800 ml-1 font-mono text-[10px] italic">+${number}</span>`;
     });
     
-    console.log('🔍 formatCitations result:', formatted.substring(0, 200) + '...');
+    console.log('🔍 formatCitations result (fallback):', formatted.substring(0, 200) + '...');
     return formatted;
   };
 
