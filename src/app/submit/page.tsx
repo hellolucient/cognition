@@ -62,13 +62,13 @@ export default function SubmitPage() {
     // Handle the actual pattern: "Source\n+6" (source first, then number on next line)
     let formatted = text.replace(/([A-Za-z][A-Za-z0-9\s\-\.]+)\s*\n\s*\+(\d+)/g, (match, source, number) => {
       console.log('✅ Multi-line citation match:', match, '→', source.trim(), '+', number);
-      return `${source.trim()} <span class="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs bg-blue-100 text-blue-800 ml-1">+${number}</span>`;
+      return `${source.trim()} <span class="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs bg-blue-100 text-blue-800 ml-1 font-mono text-[10px] italic">+${number}</span>`;
     });
     
     // Handle inline citations like "Reddit +6"
     formatted = formatted.replace(/(\b[A-Za-z][A-Za-z0-9\s\-\.]+)\s*\+(\d+)/g, (match, source, number) => {
       console.log('✅ Inline citation match:', match, '→', source.trim(), '+', number);
-      return `${source.trim()} <span class="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs bg-blue-100 text-blue-800 ml-1">+${number}</span>`;
+      return `${source.trim()} <span class="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs bg-blue-100 text-blue-800 ml-1 font-mono text-[10px] italic">+${number}</span>`;
     });
     
     console.log('🔍 Submit page formatCitations result:', formatted.substring(0, 200) + '...');
