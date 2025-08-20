@@ -154,34 +154,34 @@ export default function SubmitPage() {
       
       let contentToUse = '';
       
-      // Priority 1: Check for content in URL parameter (for shorter content)
-      if (passedContent) {
-        try {
-          contentToUse = decodeURIComponent(passedContent);
-          console.log('✅ Content loaded from URL parameter:', contentToUse.length, 'characters');
-        } catch (error) {
-          console.error('Failed to decode content from URL:', error);
-        }
-      } else {
-        console.log('⚠️ No content in URL parameter');
-      }
-      
-      // Priority 2: Check sessionStorage if bookmarklet indicated to use clipboard (for long content)
-      if (!contentToUse && useClipboard) {
+      // Priority 1: Check sessionStorage if bookmarklet indicated to use clipboard (for all content now)
+      if (useClipboard) {
         const storedContent = sessionStorage.getItem('vanwinkle_chat');
         if (storedContent) {
           contentToUse = storedContent;
-          console.log('✅ Long content loaded from sessionStorage:', contentToUse.length, 'characters');
+          console.log('✅ Content loaded from sessionStorage:', contentToUse.length, 'characters');
           sessionStorage.removeItem('vanwinkle_chat');
+        } else {
+          console.log('⚠️ use_clipboard=true but no content found in sessionStorage');
         }
       }
       
-      // Priority 3: Fallback to sessionStorage for any remaining cases
+      // Priority 2: Fallback to URL parameter (legacy support)
+      if (!contentToUse && passedContent) {
+        try {
+          contentToUse = decodeURIComponent(passedContent);
+          console.log('✅ Content loaded from URL parameter (fallback):', contentToUse.length, 'characters');
+        } catch (error) {
+          console.error('Failed to decode content from URL:', error);
+        }
+      }
+      
+      // Priority 3: Final fallback to sessionStorage for any remaining cases
       if (!contentToUse) {
         const storedContent = sessionStorage.getItem('vanwinkle_chat');
         if (storedContent) {
           contentToUse = storedContent;
-          console.log('✅ Fallback content loaded from sessionStorage:', contentToUse.length, 'characters');
+          console.log('✅ Final fallback content loaded from sessionStorage:', contentToUse.length, 'characters');
           sessionStorage.removeItem('vanwinkle_chat');
         }
       }
