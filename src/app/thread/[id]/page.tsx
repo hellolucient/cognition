@@ -316,6 +316,15 @@ export default function ThreadPage({ params }: { params: Promise<{ id: string }>
     }
   };
 
+  // Function to format citations in text
+  const formatCitations = (text: string) => {
+    // Convert patterns like "OpenAI Community +2" to styled citations
+    // Only match when there's a word/source before the +number
+    return text.replace(/(\b[A-Za-z][A-Za-z0-9\s]*[A-Za-z0-9])\s*\+(\d+)/g, (match, source, number) => {
+      return `${source.trim()} <span class="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs bg-blue-100 text-blue-800 ml-1">+${number}</span>`;
+    });
+  };
+
   const formatContent = (content: string, allowSelection = false) => {
     // Split by common AI conversation patterns
     const lines = content.split('\n');
@@ -331,8 +340,8 @@ export default function ThreadPage({ params }: { params: Promise<{ id: string }>
             <div 
               className={`text-gray-800 ${allowSelection ? 'select-text cursor-text' : ''} relative`}
               data-source="Human"
+              dangerouslySetInnerHTML={{ __html: formatCitations(messageText) }}
             >
-              {messageText}
               {/* Vote indicator for Human messages */}
               {Object.entries(textSegmentVotes).some(([key, vote]) => 
                 vote && messageText.includes(key.replace('...', ''))
@@ -357,8 +366,8 @@ export default function ThreadPage({ params }: { params: Promise<{ id: string }>
             <div 
               className={`text-gray-800 ${allowSelection ? 'select-text cursor-text' : ''} relative`}
               data-source="Assistant"
+              dangerouslySetInnerHTML={{ __html: formatCitations(messageText) }}
             >
-              {messageText}
               {/* Vote indicator for Assistant messages */}
               {Object.entries(textSegmentVotes).some(([key, vote]) => 
                 vote && messageText.includes(key.replace('...', ''))
@@ -381,9 +390,8 @@ export default function ThreadPage({ params }: { params: Promise<{ id: string }>
             key={index} 
             className={`mb-2 text-gray-800 ${allowSelection ? 'select-text cursor-text' : ''}`}
             data-source="Thread"
-          >
-            {trimmed}
-          </div>
+            dangerouslySetInnerHTML={{ __html: formatCitations(trimmed) }}
+          />
         );
       }
       
