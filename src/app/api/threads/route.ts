@@ -66,12 +66,10 @@ export async function POST(request: NextRequest) {
     // Clean content by removing vote indicators and other noise
     const cleanContent = (text: string): string => {
       return text
-        // Remove standalone vote indicators like +1, +5, +7, etc.
+        // Remove standalone vote indicators like +1, +5, +7, etc. (only when they're alone on a line)
         .replace(/\n\s*\+\d+\s*\n/g, '\n')
         .replace(/^\s*\+\d+\s*$/gm, '')
-        // Remove vote indicators at start of lines
-        .replace(/^\s*\+\d+\s+/gm, '')
-        // Remove vote indicators at end of lines
+        // Remove vote indicators at END of lines only (safer)
         .replace(/\s+\+\d+\s*$/gm, '')
         // Remove Reddit-style vote patterns
         .replace(/\s*\(\+\d+\)\s*/g, ' ')
