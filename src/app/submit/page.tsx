@@ -148,6 +148,10 @@ export default function SubmitPage() {
     }
     
     if (fromBookmarklet) {
+      console.log('🔍 Bookmarklet detected, checking for content...');
+      console.log('🔍 URL params:', { passedContent: !!passedContent, useClipboard, passedPlatform, passedShare });
+      console.log('🔍 Content length in URL:', passedContent ? passedContent.length : 'N/A');
+      
       let contentToUse = '';
       
       // Priority 1: Check for content in URL parameter (for shorter content)
@@ -158,6 +162,8 @@ export default function SubmitPage() {
         } catch (error) {
           console.error('Failed to decode content from URL:', error);
         }
+      } else {
+        console.log('⚠️ No content in URL parameter');
       }
       
       // Priority 2: Check sessionStorage if bookmarklet indicated to use clipboard (for long content)
