@@ -54,6 +54,7 @@ export default function SubmitPage() {
   const [showInviteSignup, setShowInviteSignup] = useState(false);
   const [showEmailSignIn, setShowEmailSignIn] = useState(false);
   const [shareUrl, setShareUrl] = useState<string>("");
+  const [formattedPreview, setFormattedPreview] = useState<string>("");
 
   // Function to format citations using structured data from bookmarklet
   const formatCitations = (text: string) => {
@@ -101,6 +102,32 @@ export default function SubmitPage() {
     
     console.log('🔍 Submit page formatCitations result (fallback):', formatted.substring(0, 200) + '...');
     return formatted;
+  };
+
+  // Function to wait for citations to be available and then format
+  const formatCitationsWithRetry = (text: string, maxRetries = 10) => {
+    return new Promise<string>((resolve) => {
+      let attempts = 0;
+      
+      const tryFormat = () => {
+        attempts++;
+        console.log(`🔍 Attempt ${attempts}: Checking for citations...`);
+        
+        const citationsData = sessionStorage.getItem('vanwinkle_citations');
+        if (citationsData) {
+          console.log('✅ Citations found on attempt', attempts);
+          resolve(formatCitations(text));
+        } else if (attempts < maxRetries) {
+          console.log(`⏳ Citations not ready yet, retrying in 100ms... (${attempts}/${maxRetries})`);
+          setTimeout(tryFormat, 100);
+        } else {
+          console.log('⚠️ Max retries reached, using fallback formatting');
+          resolve(formatCitations(text));
+        }
+      };
+      
+      tryFormat();
+    });
   };
 
   // Check for pre-filled content from bookmarklet
@@ -217,6 +244,18 @@ export default function SubmitPage() {
       }
     }
   }, []);
+
+  // Watch for citations and update formatted preview
+  useEffect(() => {
+    if (chatContent) {
+      const checkForCitations = async () => {
+        const formatted = await formatCitationsWithRetry(chatContent);
+        setFormattedPreview(formatted);
+      };
+      
+      checkForCitations();
+    }
+  }, [chatContent]);
 
   // Function to detect platform from conversation content or embedded meta
   const detectAndSetPlatform = (content: string) => {
@@ -355,7 +394,7 @@ export default function SubmitPage() {
       const finalSource = source === "Other" ? customSource : source;
       
       // Format citations before sending to API
-      const formattedContent = formatCitations(chatContent);
+              const formattedContent = await formatCitationsWithRetry(chatContent);
       console.log('🔍 Sending formatted content to API:', formattedContent.substring(0, 200) + '...');
       
       const response = await fetch('/api/threads', {
@@ -561,7 +600,7 @@ export default function SubmitPage() {
                   </div>
                   <div 
                     className="text-sm text-gray-800 whitespace-pre-wrap max-h-40 overflow-y-auto"
-                    dangerouslySetInnerHTML={{ __html: formatCitations(chatContent) }}
+                    dangerouslySetInnerHTML={{ __html: formattedPreview || 'Loading citations...' }}
                   />
                 </div>
               )}
