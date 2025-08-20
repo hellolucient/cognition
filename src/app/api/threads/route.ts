@@ -63,10 +63,32 @@ export async function POST(request: NextRequest) {
     // Parse tags
     const tagArray = tags ? tags.split(',').map((tag: string) => tag.trim()).filter(Boolean) : []
 
+    // Clean content by removing vote indicators and other noise
+    const cleanContent = (text: string): string => {
+      return text
+        // Remove standalone vote indicators like +1, +5, +7, etc.
+        .replace(/\n\s*\+\d+\s*\n/g, '\n')
+        .replace(/^\s*\+\d+\s*$/gm, '')
+        // Remove vote indicators at start of lines
+        .replace(/^\s*\+\d+\s+/gm, '')
+        // Remove vote indicators at end of lines
+        .replace(/\s+\+\d+\s*$/gm, '')
+        // Remove Reddit-style vote patterns
+        .replace(/\s*\(\+\d+\)\s*/g, ' ')
+        // Remove GitHub-style vote patterns
+        .replace(/\s*👍\s*\+\d+\s*/g, ' ')
+        .replace(/\s*👎\s*-\d+\s*/g, ' ')
+        // Clean up extra whitespace
+        .replace(/\n\s*\n\s*\n/g, '\n\n')
+        .trim();
+    };
+
+    const cleanedContent = cleanContent(content);
+
     // Create the thread
     const thread = await prisma.thread.create({
       data: {
-        content,
+        content: cleanedContent,
         title: title || null,
         summary,
         source: source || null,
@@ -151,13 +173,13 @@ export async function POST(request: NextRequest) {
       });
 
       // Enhanced matching logic for multiple platforms
-      const isFromBookmarklet = content.includes('🧑 You:') || 
-                               content.includes('🤖 ChatGPT:') ||
-                               content.includes('🤖 Claude:') ||
-                               content.includes('🤖 Gemini:') ||
-                               content.includes('🤖 Copilot:') ||
-                               content.includes('🤖 Grok:') ||
-                               content.includes('🤖 Perplexity:');
+      const isFromBookmarklet = cleanedContent.includes('🧑 You:') || 
+                               cleanedContent.includes('🤖 ChatGPT:') ||
+                               cleanedContent.includes('🤖 Claude:') ||
+                               cleanedContent.includes('🤖 Gemini:') ||
+                               cleanedContent.includes('🤖 Copilot:') ||
+                               cleanedContent.includes('🤖 Grok:') ||
+                               cleanedContent.includes('🤖 Perplexity:');
 
       if (isFromBookmarklet && pendingShares.length > 0) {
         // Try to find the best match
@@ -244,12 +266,12 @@ export async function POST(request: NextRequest) {
       if (!source && isFromBookmarklet) {
         let detectedPlatform = null;
         
-        if (content.includes('🤖 ChatGPT:')) detectedPlatform = 'ChatGPT';
-        else if (content.includes('🤖 Claude:')) detectedPlatform = 'Claude';
-        else if (content.includes('🤖 Gemini:')) detectedPlatform = 'Gemini';
-        else if (content.includes('🤖 Copilot:')) detectedPlatform = 'Copilot';
-        else if (content.includes('🤖 Grok:')) detectedPlatform = 'Grok';
-        else if (content.includes('🤖 Perplexity:')) detectedPlatform = 'Perplexity';
+        if (cleanedContent.includes('🤖 ChatGPT:')) detectedPlatform = 'ChatGPT';
+        else if (cleanedContent.includes('🤖 Claude:')) detectedPlatform = 'Claude';
+        else if (cleanedContent.includes('🤖 Gemini:')) detectedPlatform = 'Gemini';
+        else if (cleanedContent.includes('🤖 Copilot:')) detectedPlatform = 'Copilot';
+        else if (cleanedContent.includes('🤖 Grok:')) detectedPlatform = 'Grok';
+        else if (cleanedContent.includes('🤖 Perplexity:')) detectedPlatform = 'Perplexity';
         
         if (detectedPlatform) {
           await prisma.thread.update({
