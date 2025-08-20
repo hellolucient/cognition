@@ -62,6 +62,7 @@ export default function SubmitPage() {
     const passedShare = urlParams.get('share');
     const passedPlatform = urlParams.get('platform');
     const passedContent = urlParams.get('content');
+    const useClipboard = urlParams.get('use_clipboard') === 'true';
     
     if (passedShare) {
       try {
@@ -74,8 +75,18 @@ export default function SubmitPage() {
     if (fromBookmarklet) {
       let contentToUse = '';
       
-      // Priority 1: Check for content in URL parameter (new bookmarklet)
-      if (passedContent) {
+      // Priority 1: Check sessionStorage if bookmarklet indicated to use clipboard (for long content)
+      if (useClipboard) {
+        const storedContent = sessionStorage.getItem('vanwinkle_chat');
+        if (storedContent) {
+          contentToUse = storedContent;
+          console.log('✅ Long content loaded from sessionStorage:', contentToUse.length, 'characters');
+          sessionStorage.removeItem('vanwinkle_chat');
+        }
+      }
+      
+      // Priority 2: Check for content in URL parameter (for shorter content)
+      if (!contentToUse && passedContent) {
         try {
           contentToUse = decodeURIComponent(passedContent);
           console.log('✅ Content loaded from URL parameter:', contentToUse.length, 'characters');
@@ -84,12 +95,12 @@ export default function SubmitPage() {
         }
       }
       
-      // Priority 2: Check sessionStorage for content from bookmarklet (fallback)
+      // Priority 3: Fallback to sessionStorage for any remaining cases
       if (!contentToUse) {
         const storedContent = sessionStorage.getItem('vanwinkle_chat');
         if (storedContent) {
           contentToUse = storedContent;
-          console.log('✅ Content loaded from sessionStorage:', contentToUse.length, 'characters');
+          console.log('✅ Fallback content loaded from sessionStorage:', contentToUse.length, 'characters');
           sessionStorage.removeItem('vanwinkle_chat');
         }
       }
