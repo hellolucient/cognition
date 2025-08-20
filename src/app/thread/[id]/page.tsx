@@ -318,16 +318,21 @@ export default function ThreadPage({ params }: { params: Promise<{ id: string }>
 
   // Function to format citations in text
   const formatCitations = (text: string) => {
+    console.log('🔍 formatCitations called with:', text.substring(0, 200) + '...');
+    
     // Handle the actual pattern: "Source\n+6" (source first, then number on next line)
     let formatted = text.replace(/([A-Za-z][A-Za-z0-9\s\-\.]+)\s*\n\s*\+(\d+)/g, (match, source, number) => {
+      console.log('✅ Multi-line citation match:', match, '→', source.trim(), '+', number);
       return `${source.trim()} <span class="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs bg-blue-100 text-blue-800 ml-1">+${number}</span>`;
     });
     
     // Handle inline citations like "Reddit +6"
     formatted = formatted.replace(/(\b[A-Za-z][A-Za-z0-9\s\-\.]+)\s*\+(\d+)/g, (match, source, number) => {
+      console.log('✅ Inline citation match:', match, '→', source.trim(), '+', number);
       return `${source.trim()} <span class="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs bg-blue-100 text-blue-800 ml-1">+${number}</span>`;
     });
     
+    console.log('🔍 formatCitations result:', formatted.substring(0, 200) + '...');
     return formatted;
   };
 
