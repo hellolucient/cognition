@@ -30,6 +30,8 @@ const PLATFORM_PATTERNS = {
       // Direct ChatGPT conversation URLs (non-share)
       /^https:\/\/chat\.openai\.com\/c\/[a-zA-Z0-9\-]+$/i,
       /^https:\/\/chatgpt\.com\/c\/[a-zA-Z0-9\-]+$/i,
+      // Mobile ChatGPT share URLs (shortened format)
+      /^https:\/\/chatgpt\.com\/s\/t_[a-zA-Z0-9_]+$/i,
     ]
   },
   claude: {
@@ -37,19 +39,25 @@ const PLATFORM_PATTERNS = {
     displayName: "Claude (Anthropic)",
     patterns: [
       /^https:\/\/claude\.ai\/share\/[a-f0-9-]+$/i,
+      // Claude conversation URLs (non-share)
+      /^https:\/\/claude\.ai\/chat\/[a-f0-9-]+$/i,
     ]
   },
   perplexity: {
     name: "Perplexity",
     displayName: "Perplexity",
     patterns: [
+      // Original hex pattern
       /^https:\/\/www\.perplexity\.ai\/search\/[a-f0-9-]+$/i,
+      // UUID pattern (mobile/newer format)
+      /^https:\/\/www\.perplexity\.ai\/search\/[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/i,
     ]
   },
   grok: {
     name: "Grok",
     displayName: "Grok (xAI)",
     patterns: [
+      // General share pattern (supports URL encoding and UUIDs)
       /^https:\/\/grok\.com\/share\/.+$/i,
     ]
   },
@@ -57,7 +65,10 @@ const PLATFORM_PATTERNS = {
     name: "Gemini",
     displayName: "Gemini (Google)",
     patterns: [
+      // Shortened URL pattern
       /^https:\/\/g\.co\/gemini\/share\/[a-f0-9]+$/i,
+      // Direct Gemini share URLs (mobile/standard)
+      /^https:\/\/gemini\.google\.com\/share\/[a-f0-9]+$/i,
     ]
   },
   copilot: {
