@@ -55,6 +55,26 @@ export default function SubmitPage() {
   const [showEmailSignIn, setShowEmailSignIn] = useState(false);
   const [shareUrl, setShareUrl] = useState<string>("");
 
+  // Function to format citations in text (same as thread page)
+  const formatCitations = (text: string) => {
+    console.log('🔍 Submit page formatCitations called with:', text.substring(0, 200) + '...');
+    
+    // Handle the actual pattern: "Source\n+6" (source first, then number on next line)
+    let formatted = text.replace(/([A-Za-z][A-Za-z0-9\s\-\.]+)\s*\n\s*\+(\d+)/g, (match, source, number) => {
+      console.log('✅ Multi-line citation match:', match, '→', source.trim(), '+', number);
+      return `${source.trim()} <span class="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs bg-blue-100 text-blue-800 ml-1">+${number}</span>`;
+    });
+    
+    // Handle inline citations like "Reddit +6"
+    formatted = formatted.replace(/(\b[A-Za-z][A-Za-z0-9\s\-\.]+)\s*\+(\d+)/g, (match, source, number) => {
+      console.log('✅ Inline citation match:', match, '→', source.trim(), '+', number);
+      return `${source.trim()} <span class="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs bg-blue-100 text-blue-800 ml-1">+${number}</span>`;
+    });
+    
+    console.log('🔍 Submit page formatCitations result:', formatted.substring(0, 200) + '...');
+    return formatted;
+  };
+
   // Check for pre-filled content from bookmarklet
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
@@ -106,7 +126,11 @@ export default function SubmitPage() {
       }
       
       if (contentToUse) {
-        setChatContent(contentToUse);
+        console.log('🔍 Raw content from bookmarklet:', contentToUse.substring(0, 200) + '...');
+        // Format citations before setting content
+        const formattedContent = formatCitations(contentToUse);
+        console.log('🔍 Formatted content result:', formattedContent.substring(0, 200) + '...');
+        setChatContent(formattedContent);
         
         // Prefer URL param platform if present; else detect from content
         if (passedPlatform) {
@@ -139,7 +163,11 @@ export default function SubmitPage() {
       const prefilledContent = urlParams.get('content');
       if (prefilledContent) {
         const decodedContent = decodeURIComponent(prefilledContent);
-        setChatContent(decodedContent);
+        console.log('🔍 Raw content from URL param:', decodedContent.substring(0, 200) + '...');
+        // Format citations before setting content
+        const formattedContent = formatCitations(decodedContent);
+        console.log('🔍 Formatted content from URL param:', formattedContent.substring(0, 200) + '...');
+        setChatContent(formattedContent);
         // Platform param may be present too
         if (passedPlatform) {
           const normalized = passedPlatform.trim().toLowerCase();
@@ -493,6 +521,20 @@ export default function SubmitPage() {
                 required
                 rows={15}
               />
+              
+              {/* Preview area for formatted content */}
+              {chatContent && (
+                <div className="mt-4 p-4 border rounded-lg bg-gray-50">
+                  <Label className="text-sm font-medium text-gray-700 mb-2 block">Preview (with formatted citations):</Label>
+                  <div className="text-xs text-gray-500 mb-2">
+                    Raw content preview: {chatContent.substring(0, 100)}...
+                  </div>
+                  <div 
+                    className="text-sm text-gray-800 whitespace-pre-wrap max-h-40 overflow-y-auto"
+                    dangerouslySetInnerHTML={{ __html: formatCitations(chatContent) }}
+                  />
+                </div>
+              )}
             </div>
           )}
           
