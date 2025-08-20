@@ -150,23 +150,23 @@ export default function SubmitPage() {
     if (fromBookmarklet) {
       let contentToUse = '';
       
-      // Priority 1: Check sessionStorage if bookmarklet indicated to use clipboard (for long content)
-      if (useClipboard) {
-        const storedContent = sessionStorage.getItem('vanwinkle_chat');
-        if (storedContent) {
-          contentToUse = storedContent;
-          console.log('✅ Long content loaded from sessionStorage:', contentToUse.length, 'characters');
-          sessionStorage.removeItem('vanwinkle_chat');
-        }
-      }
-      
-      // Priority 2: Check for content in URL parameter (for shorter content)
-      if (!contentToUse && passedContent) {
+      // Priority 1: Check for content in URL parameter (for shorter content)
+      if (passedContent) {
         try {
           contentToUse = decodeURIComponent(passedContent);
           console.log('✅ Content loaded from URL parameter:', contentToUse.length, 'characters');
         } catch (error) {
           console.error('Failed to decode content from URL:', error);
+        }
+      }
+      
+      // Priority 2: Check sessionStorage if bookmarklet indicated to use clipboard (for long content)
+      if (!contentToUse && useClipboard) {
+        const storedContent = sessionStorage.getItem('vanwinkle_chat');
+        if (storedContent) {
+          contentToUse = storedContent;
+          console.log('✅ Long content loaded from sessionStorage:', contentToUse.length, 'characters');
+          sessionStorage.removeItem('vanwinkle_chat');
         }
       }
       
