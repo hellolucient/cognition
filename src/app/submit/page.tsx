@@ -127,10 +127,9 @@ export default function SubmitPage() {
       
       if (contentToUse) {
         console.log('🔍 Raw content from bookmarklet:', contentToUse.substring(0, 200) + '...');
-        // Format citations before setting content
-        const formattedContent = formatCitations(contentToUse);
-        console.log('🔍 Formatted content result:', formattedContent.substring(0, 200) + '...');
-        setChatContent(formattedContent);
+        // Keep raw content in textarea, but format for preview
+        setChatContent(contentToUse);
+        console.log('🔍 Raw content set in textarea, formatted version available for preview');
         
         // Prefer URL param platform if present; else detect from content
         if (passedPlatform) {
@@ -164,10 +163,9 @@ export default function SubmitPage() {
       if (prefilledContent) {
         const decodedContent = decodeURIComponent(prefilledContent);
         console.log('🔍 Raw content from URL param:', decodedContent.substring(0, 200) + '...');
-        // Format citations before setting content
-        const formattedContent = formatCitations(decodedContent);
-        console.log('🔍 Formatted content from URL param:', formattedContent.substring(0, 200) + '...');
-        setChatContent(formattedContent);
+        // Keep raw content in textarea, but format for preview
+        setChatContent(decodedContent);
+        console.log('🔍 Raw content from URL param set in textarea, formatted version available for preview');
         // Platform param may be present too
         if (passedPlatform) {
           const normalized = passedPlatform.trim().toLowerCase();
@@ -328,13 +326,17 @@ export default function SubmitPage() {
     try {
       const finalSource = source === "Other" ? customSource : source;
       
+      // Format citations before sending to API
+      const formattedContent = formatCitations(chatContent);
+      console.log('🔍 Sending formatted content to API:', formattedContent.substring(0, 200) + '...');
+      
       const response = await fetch('/api/threads', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          content: chatContent,
+          content: formattedContent,
           source: finalSource,
           tags,
           title,
