@@ -60,12 +60,14 @@ export default function SubmitPage() {
   const formatCitations = (text: string) => {
     console.log('🔍 Submit page formatCitations called with:', text.substring(0, 200) + '...');
     
-    // Check if we have structured citation data from the bookmarklet
-    const citationsData = sessionStorage.getItem('vanwinkle_citations');
-    if (citationsData) {
+    // Check if we have structured citation data from URL parameter
+    const urlParams = new URLSearchParams(window.location.search);
+    const citationsParam = urlParams.get('citations');
+    
+    if (citationsParam) {
       try {
-        const citations = JSON.parse(citationsData);
-        console.log('✅ Found structured citations:', citations);
+        const citations = JSON.parse(decodeURIComponent(citationsParam));
+        console.log('✅ Found structured citations from URL:', citations);
         
         // Format each citation in the text
         let formatted = text;
@@ -80,7 +82,7 @@ export default function SubmitPage() {
         console.log('🔍 Submit page formatCitations result (structured):', formatted.substring(0, 200) + '...');
         return formatted;
       } catch (error) {
-        console.error('❌ Error parsing citations data:', error);
+        console.error('❌ Error parsing citations data from URL:', error);
         // Fall back to regex pattern matching if structured data fails
       }
     }
@@ -113,9 +115,12 @@ export default function SubmitPage() {
         attempts++;
         console.log(`🔍 Attempt ${attempts}: Checking for citations...`);
         
-        const citationsData = sessionStorage.getItem('vanwinkle_citations');
-        if (citationsData) {
-          console.log('✅ Citations found on attempt', attempts);
+        // Check URL parameter first (new method)
+        const urlParams = new URLSearchParams(window.location.search);
+        const citationsParam = urlParams.get('citations');
+        
+        if (citationsParam) {
+          console.log('✅ Citations found in URL on attempt', attempts);
           resolve(formatCitations(text));
         } else if (attempts < maxRetries) {
           console.log(`⏳ Citations not ready yet, retrying in 100ms... (${attempts}/${maxRetries})`);
