@@ -293,6 +293,16 @@ export default function ThreadPage({ params }: { params: Promise<{ id: string }>
         setSelectedSource(source);
         setShowReferenceModal(true);
         
+        // Clear the browser's default selection highlighting
+        setTimeout(() => {
+          if (window.getSelection) {
+            const selection = window.getSelection();
+            if (selection) {
+              selection.removeAllRanges();
+            }
+          }
+        }, 100);
+        
         console.log('✅ Modal should now be visible');
         
       }, 300); // Reduced delay to 300ms
@@ -717,6 +727,20 @@ export default function ThreadPage({ params }: { params: Promise<{ id: string }>
           </div>
         )}
 
+        {/* Custom Selection Styles */}
+        <style dangerouslySetInnerHTML={{
+          __html: `
+            ::selection {
+              background: rgba(59, 130, 246, 0.3) !important;
+              color: inherit !important;
+            }
+            ::-moz-selection {
+              background: rgba(59, 130, 246, 0.3) !important;
+              color: inherit !important;
+            }
+          `
+        }} />
+
         {/* Enhanced Reference Modal */}
         {console.log('🔍 Rendering modal check:', { showReferenceModal, selectedText, selectedSource })}
         {showReferenceModal && (
@@ -741,7 +765,7 @@ export default function ThreadPage({ params }: { params: Promise<{ id: string }>
                   <div className="text-xs text-gray-600 mb-1 font-medium">
                     {selectedSource}:
                   </div>
-                  <div className="text-sm text-gray-900 font-mono bg-white p-2 rounded border break-words">
+                  <div className="text-sm text-gray-900 bg-white p-2 rounded border break-words leading-relaxed">
                     "{selectedText}"
                   </div>
                 </div>
