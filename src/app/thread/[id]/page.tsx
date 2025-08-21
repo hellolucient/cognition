@@ -217,10 +217,36 @@ export default function ThreadPage({ params }: { params: Promise<{ id: string }>
           return;
         }
         
-        if (selectedText && selectedText.length >= 10) {
+        // More strict selection validation
+        if (selectedText && selectedText.length >= 10 && selectedText.length <= 500) {
           // Find which element contains the selection
           const range = selection?.getRangeAt(0);
           const container = range?.commonAncestorContainer;
+          
+          // Get the exact selected text, not the entire element content
+          let exactSelectedText = selectedText;
+          
+          // If selection is very long, try to get just the visible/selected portion
+          if (selectedText.length > 200) {
+            // Try to get a more reasonable selection by looking at the actual range
+            try {
+              const startOffset = range?.startOffset || 0;
+              const endOffset = range?.endOffset || 0;
+              
+              if (startOffset !== endOffset) {
+                // Get text from the specific range
+                const textContent = container?.textContent || '';
+                exactSelectedText = textContent.substring(startOffset, endOffset).trim();
+                
+                // If we got a reasonable selection, use it
+                if (exactSelectedText.length >= 10 && exactSelectedText.length <= 200) {
+                  selectedText = exactSelectedText;
+                }
+              }
+            } catch (error) {
+              console.log('⚠️ Error getting exact selection, using fallback');
+            }
+          }
           
           // Traverse up to find the source element
           let sourceElement = container?.nodeType === Node.TEXT_NODE 
@@ -236,7 +262,22 @@ export default function ThreadPage({ params }: { params: Promise<{ id: string }>
             sourceElement = sourceElement.parentElement;
           }
           
-          console.log('✅ Text selected:', { selectedText, source });
+          // Check if selection is within a reasonable boundary (not spanning multiple elements)
+          const startContainer = range?.startContainer;
+          const endContainer = range?.endContainer;
+          if (startContainer && endContainer && startContainer !== endContainer) {
+            // Selection spans multiple containers - might be too broad
+            const startParent = startContainer.nodeType === Node.TEXT_NODE ? startContainer.parentElement : startContainer as Element;
+            const endParent = endContainer.nodeType === Node.TEXT_NODE ? endContainer.parentElement : endContainer as Element;
+            
+            if (startParent !== endParent) {
+              console.log('⚠️ Selection spans multiple elements, ignoring');
+              setIsSelecting(false);
+              return;
+            }
+          }
+          
+          console.log('✅ Text selected:', { selectedText, source, length: selectedText.length });
           console.log('🔍 Setting modal state:', { 
             selectedText, 
             selectedSource, 
@@ -259,8 +300,15 @@ export default function ThreadPage({ params }: { params: Promise<{ id: string }>
             selectedSource, 
             showReferenceModal: true 
           });
+        } else {
+          console.log('❌ Selection invalid:', { 
+            length: selectedText?.length, 
+            minLength: 10, 
+            maxLength: 500,
+            tooLong: selectedText && selectedText.length > 500
+          });
         }
-      }, 300); // 300ms delay to let user finish selecting
+      }, 500); // Increased delay to 500ms to let user finish selecting
     };
 
     document.addEventListener('selectionchange', handleSelectionChange);
@@ -689,7 +737,7 @@ export default function ThreadPage({ params }: { params: Promise<{ id: string }>
             style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0 }}
           >
             <div 
-              className="bg-white rounded-lg p-4 sm:p-6 max-w-lg w-full max-h-[90vh] overflow-y-auto shadow-xl border"
+              className="bg-white rounded-lg p-4 sm:p-6 max-w-lg w-full max-h-[90vh] flex flex-col shadow-xl border"
               style={{ 
                 position: 'relative',
                 zIndex: 10000,
@@ -697,20 +745,22 @@ export default function ThreadPage({ params }: { params: Promise<{ id: string }>
                 boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)'
               }}
             >
-              <h3 className="text-lg font-semibold mb-4 text-gray-900">Selected Text</h3>
+              <h3 className="text-lg font-semibold mb-4 text-gray-900 flex-shrink-0">Selected Text</h3>
               
-              {/* Selected text display */}
-              <div className="bg-gray-100 p-3 rounded mb-4 border border-gray-200">
-                <div className="text-xs text-gray-600 mb-1 font-medium">
-                  {selectedSource}:
-                </div>
-                <div className="text-sm text-gray-900 font-mono bg-white p-2 rounded border break-words">
-                  "{selectedText}"
+              {/* Selected text display - scrollable content area */}
+              <div className="flex-1 overflow-y-auto min-h-0 mb-4">
+                <div className="bg-gray-100 p-3 rounded border border-gray-200">
+                  <div className="text-xs text-gray-600 mb-1 font-medium">
+                    {selectedSource}:
+                  </div>
+                  <div className="text-sm text-gray-900 font-mono bg-white p-2 rounded border break-words">
+                    "{selectedText}"
+                  </div>
                 </div>
               </div>
 
-              {/* Like/Dislike buttons */}
-              <div className="flex gap-2 mb-4 justify-center flex-wrap">
+              {/* Like/Dislike buttons - always visible */}
+              <div className="flex gap-2 mb-4 justify-center flex-wrap flex-shrink-0">
                 <Button
                   variant={textSegmentVotes[`${selectedText.slice(0, 50)}...`] === 'like' ? 'default' : 'outline'}
                   size="sm"
@@ -729,8 +779,8 @@ export default function ThreadPage({ params }: { params: Promise<{ id: string }>
                 </Button>
               </div>
 
-              {/* Action buttons */}
-              <div className="flex gap-3 flex-col sm:flex-row">
+              {/* Action buttons - always visible */}
+              <div className="flex gap-3 flex-col sm:flex-row flex-shrink-0">
                 <Button 
                   onClick={() => {
                     // Navigate to contribute page with reference
