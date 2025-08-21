@@ -188,13 +188,20 @@ export default function ThreadPage({ params }: { params: Promise<{ id: string }>
   const [isSelecting, setIsSelecting] = useState(false);
   const conversationRef = useRef<HTMLDivElement>(null);
 
-  // Set up text selection listener with debouncing and better selection handling
+  // Set up text selection listener with better handling and debugging
   useEffect(() => {
     let selectionTimeout: NodeJS.Timeout;
     
     const handleSelectionChange = () => {
       const selection = window.getSelection();
       const selectedText = selection?.toString().trim();
+      
+      console.log('🔍 Selection change detected:', {
+        hasSelection: !!selection,
+        rangeCount: selection?.rangeCount,
+        selectedText: selectedText?.substring(0, 100),
+        length: selectedText?.length
+      });
       
       // Show selection indicator when user starts selecting
       if (selectedText && selectedText.length > 0) {
@@ -206,109 +213,89 @@ export default function ThreadPage({ params }: { params: Promise<{ id: string }>
       // Clear any existing timeout
       clearTimeout(selectionTimeout);
       
-      // Add a small delay to let the user finish selecting
+      // Add a delay to let the user finish selecting
       selectionTimeout = setTimeout(() => {
         const selection = window.getSelection();
         const selectedText = selection?.toString().trim();
         
-        // Check if selection is still active (user might still be dragging)
+        console.log('🔍 Processing selection after delay:', {
+          hasSelection: !!selection,
+          rangeCount: selection?.rangeCount,
+          selectedText: selectedText?.substring(0, 100),
+          length: selectedText?.length
+        });
+        
+        // Check if selection is still active
         if (!selection || selection.rangeCount === 0) {
+          console.log('❌ No active selection');
           setIsSelecting(false);
           return;
         }
         
-        // More strict selection validation
-        if (selectedText && selectedText.length >= 10 && selectedText.length <= 500) {
-          // Find which element contains the selection
-          const range = selection?.getRangeAt(0);
-          const container = range?.commonAncestorContainer;
-          
-          // Get the exact selected text, not the entire element content
-          let exactSelectedText = selectedText;
-          
-          // If selection is very long, try to get just the visible/selected portion
-          if (selectedText.length > 200) {
-            // Try to get a more reasonable selection by looking at the actual range
-            try {
-              const startOffset = range?.startOffset || 0;
-              const endOffset = range?.endOffset || 0;
-              
-              if (startOffset !== endOffset) {
-                // Get text from the specific range
-                const textContent = container?.textContent || '';
-                exactSelectedText = textContent.substring(startOffset, endOffset).trim();
-                
-                // If we got a reasonable selection, use it
-                if (exactSelectedText.length >= 10 && exactSelectedText.length <= 200) {
-                  selectedText = exactSelectedText;
-                }
-              }
-            } catch (error) {
-              console.log('⚠️ Error getting exact selection, using fallback');
-            }
-          }
-          
-          // Traverse up to find the source element
-          let sourceElement = container?.nodeType === Node.TEXT_NODE 
-            ? container.parentElement 
-            : container as Element;
-            
-          let source = 'Unknown';
-          while (sourceElement && sourceElement !== document.body) {
-            if (sourceElement.getAttribute('data-source')) {
-              source = sourceElement.getAttribute('data-source')!;
-              break;
-            }
-            sourceElement = sourceElement.parentElement;
-          }
-          
-          // Check if selection is within a reasonable boundary (not spanning multiple elements)
-          const startContainer = range?.startContainer;
-          const endContainer = range?.endContainer;
-          if (startContainer && endContainer && startContainer !== endContainer) {
-            // Selection spans multiple containers - might be too broad
-            const startParent = startContainer.nodeType === Node.TEXT_NODE ? startContainer.parentElement : startContainer as Element;
-            const endParent = endContainer.nodeType === Node.TEXT_NODE ? endContainer.parentElement : endContainer as Element;
-            
-            if (startParent !== endParent) {
-              console.log('⚠️ Selection spans multiple elements, ignoring');
-              setIsSelecting(false);
-              return;
-            }
-          }
-          
-          console.log('✅ Text selected:', { selectedText, source, length: selectedText.length });
-          console.log('🔍 Setting modal state:', { 
-            selectedText, 
-            selectedSource, 
-            showReferenceModal: true,
-            user: !!user 
-          });
-          
-          if (!user) {
-            console.log('🔒 User not authenticated, showing waitlist');
-            setShowWaitlist(true);
-            return;
-          }
-          
-          setSelectedText(selectedText);
-          setSelectedSource(source);
-          setShowReferenceModal(true);
-          
-          console.log('🔍 Modal state after setState:', { 
-            selectedText, 
-            selectedSource, 
-            showReferenceModal: true 
-          });
-        } else {
-          console.log('❌ Selection invalid:', { 
-            length: selectedText?.length, 
-            minLength: 10, 
-            maxLength: 500,
-            tooLong: selectedText && selectedText.length > 500
-          });
+        // Basic validation
+        if (!selectedText || selectedText.length < 10) {
+          console.log('❌ Selection too short:', selectedText?.length);
+          setIsSelecting(false);
+          return;
         }
-      }, 500); // Increased delay to 500ms to let user finish selecting
+        
+        if (selectedText.length > 1000) {
+          console.log('❌ Selection too long:', selectedText.length);
+          setIsSelecting(false);
+          return;
+        }
+        
+        // Get the selection range details
+        const range = selection.getRangeAt(0);
+        console.log('🔍 Range details:', {
+          startContainer: range.startContainer,
+          endContainer: range.endContainer,
+          startOffset: range.startOffset,
+          endOffset: range.endOffset,
+          collapsed: range.collapsed
+        });
+        
+        // Check if selection is collapsed (just a cursor)
+        if (range.collapsed) {
+          console.log('❌ Selection is collapsed (just cursor)');
+          setIsSelecting(false);
+          return;
+        }
+        
+        // Find the source element
+        let sourceElement = range.commonAncestorContainer;
+        if (sourceElement.nodeType === Node.TEXT_NODE) {
+          sourceElement = sourceElement.parentElement;
+        }
+        
+        let source = 'Unknown';
+        while (sourceElement && sourceElement !== document.body) {
+          if (sourceElement.getAttribute('data-source')) {
+            source = sourceElement.getAttribute('data-source')!;
+            break;
+          }
+          sourceElement = sourceElement.parentElement;
+        }
+        
+        console.log('✅ Valid selection found:', { 
+          selectedText: selectedText.substring(0, 100), 
+          source, 
+          length: selectedText.length 
+        });
+        
+        if (!user) {
+          console.log('🔒 User not authenticated, showing waitlist');
+          setShowWaitlist(true);
+          return;
+        }
+        
+        setSelectedText(selectedText);
+        setSelectedSource(source);
+        setShowReferenceModal(true);
+        
+        console.log('✅ Modal should now be visible');
+        
+      }, 300); // Reduced delay to 300ms
     };
 
     document.addEventListener('selectionchange', handleSelectionChange);
@@ -470,8 +457,8 @@ export default function ThreadPage({ params }: { params: Promise<{ id: string }>
             <div 
               className={`text-gray-800 ${allowSelection ? 'select-text cursor-text' : ''} relative`}
               data-source="Human"
-              dangerouslySetInnerHTML={{ __html: messageText }}
             >
+              {messageText}
               {/* Vote indicator for Human messages */}
               {Object.entries(textSegmentVotes).some(([key, vote]) => 
                 vote && messageText.includes(key.replace('...', ''))
@@ -496,8 +483,8 @@ export default function ThreadPage({ params }: { params: Promise<{ id: string }>
             <div 
               className={`text-gray-800 ${allowSelection ? 'select-text cursor-text' : ''} relative`}
               data-source="Assistant"
-              dangerouslySetInnerHTML={{ __html: messageText }}
             >
+              {messageText}
               {/* Vote indicator for Assistant messages */}
               {Object.entries(textSegmentVotes).some(([key, vote]) => 
                 vote && messageText.includes(key.replace('...', ''))
@@ -520,8 +507,9 @@ export default function ThreadPage({ params }: { params: Promise<{ id: string }>
             key={index} 
             className={`mb-2 text-gray-800 ${allowSelection ? 'select-text cursor-text' : ''}`}
             data-source="Thread"
-            dangerouslySetInnerHTML={{ __html: trimmed }}
-          />
+          >
+            {trimmed}
+          </div>
         );
       }
       
