@@ -213,6 +213,12 @@ export default function ThreadPage({ params }: { params: Promise<{ id: string }>
         }
         
         console.log('✅ Text selected:', { selectedText, source });
+        console.log('🔍 Setting modal state:', { 
+          selectedText, 
+          selectedSource, 
+          showReferenceModal: true,
+          user: !!user 
+        });
         
         if (!user) {
           console.log('🔒 User not authenticated, showing waitlist');
@@ -223,6 +229,12 @@ export default function ThreadPage({ params }: { params: Promise<{ id: string }>
         setSelectedText(selectedText);
         setSelectedSource(source);
         setShowReferenceModal(true);
+        
+        console.log('🔍 Modal state after setState:', { 
+          selectedText, 
+          selectedSource, 
+          showReferenceModal: true 
+        });
       }
     };
 
@@ -633,17 +645,29 @@ export default function ThreadPage({ params }: { params: Promise<{ id: string }>
         </div>
 
         {/* Enhanced Reference Modal */}
+        {console.log('🔍 Rendering modal check:', { showReferenceModal, selectedText, selectedSource })}
         {showReferenceModal && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
-              <h3 className="text-lg font-semibold mb-4">Selected Text</h3>
+          <div 
+            className="fixed inset-0 bg-black/50 flex items-center justify-center z-[9999]"
+            style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0 }}
+          >
+            <div 
+              className="bg-white rounded-lg p-6 max-w-md w-full mx-4 shadow-xl border"
+              style={{ 
+                position: 'relative',
+                zIndex: 10000,
+                backgroundColor: 'white',
+                boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)'
+              }}
+            >
+              <h3 className="text-lg font-semibold mb-4 text-gray-900">Selected Text</h3>
               
               {/* Selected text display */}
-              <div className="bg-muted p-3 rounded mb-4">
-                <div className="text-xs text-muted-foreground mb-1">
+              <div className="bg-gray-100 p-3 rounded mb-4 border border-gray-200">
+                <div className="text-xs text-gray-600 mb-1 font-medium">
                   {selectedSource}:
                 </div>
-                <div className="text-sm">
+                <div className="text-sm text-gray-900 font-mono bg-white p-2 rounded border">
                   "{selectedText}"
                 </div>
               </div>
