@@ -71,12 +71,25 @@ export default function SubmitPage() {
         
         // Format each citation in the text
         let formatted = text;
-        citations.forEach((citation: { source: string; number: number }) => {
+        console.log('🔍 Original text to process:', text.substring(0, 500) + '...');
+        
+        citations.forEach((citation: { source: string; number: number }, index: number) => {
           const citationPattern = new RegExp(`\\b${citation.source.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\s*\\+${citation.number}\\b`, 'g');
-          formatted = formatted.replace(citationPattern, (match) => {
-            console.log('✅ Formatting citation:', match, '→', citation.source, '+', citation.number);
-            return `<span class="inline-flex items-center px-2 py-1 rounded-full text-xs bg-blue-100 text-blue-800 font-mono"><span class="text-[10px] mr-1">${citation.source}</span>+${citation.number}</span>`;
-          });
+          console.log(`🔍 Processing citation ${index + 1}:`, citation.source, '+', citation.number);
+          console.log(`🔍 Regex pattern:`, citationPattern);
+          
+          // Check if the pattern exists in the text
+          const matches = formatted.match(citationPattern);
+          console.log(`🔍 Found ${matches ? matches.length : 0} matches for`, citation.source, '+', citation.number);
+          
+          if (matches && matches.length > 0) {
+            formatted = formatted.replace(citationPattern, (match) => {
+              console.log('✅ Formatting citation:', match, '→', citation.source, '+', citation.number);
+              return `<span class="inline-flex items-center px-2 py-1 rounded-full text-xs bg-blue-100 text-blue-800 font-mono"><span class="text-[10px] mr-1">${citation.source}</span>+${citation.number}</span>`;
+            });
+          } else {
+            console.log('⚠️ No matches found for citation pattern:', citation.source, '+', citation.number);
+          }
         });
         
         console.log('🔍 Submit page formatCitations result (structured):', formatted.substring(0, 200) + '...');
