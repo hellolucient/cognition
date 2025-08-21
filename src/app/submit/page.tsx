@@ -69,11 +69,19 @@ export default function SubmitPage() {
         const citations = JSON.parse(decodeURIComponent(citationsParam));
         console.log('✅ Found structured citations from URL:', citations);
         
-        // Format each citation in the text
+        // Deduplicate citations to avoid processing the same source+number multiple times
+        const uniqueCitations = citations.filter((citation: { source: string; number: number }, index: number, self: any[]) => 
+          index === self.findIndex((c: { source: string; number: number }) => 
+            c.source === citation.source && c.number === citation.number
+          )
+        );
+        console.log('🔍 Deduplicated citations:', uniqueCitations.length, 'unique out of', citations.length, 'total');
+        
+        // Format each unique citation in the text
         let formatted = text;
         console.log('🔍 Original text to process:', text.substring(0, 500) + '...');
         
-        citations.forEach((citation: { source: string; number: number }, index: number) => {
+        uniqueCitations.forEach((citation: { source: string; number: number }, index: number) => {
           const citationPattern = new RegExp(`\\b${citation.source.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\s*\\+${citation.number}\\b`, 'g');
           console.log(`🔍 Processing citation ${index + 1}:`, citation.source, '+', citation.number);
           console.log(`🔍 Regex pattern:`, citationPattern);
