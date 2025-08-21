@@ -93,7 +93,7 @@ export default function SubmitPage() {
           if (matches && matches.length > 0) {
             formatted = formatted.replace(citationPattern, (match) => {
               console.log('✅ Formatting citation:', match, '→', citation.source, '+', citation.number);
-              return `<span class="inline-flex items-center px-1.5 py-0.5 rounded-md text-xs bg-gray-50 text-gray-600 font-mono border border-gray-200"><span class="text-[9px] mr-1 opacity-75">${citation.source}</span>+${citation.number}</span>`;
+              return `<span class="inline-flex items-center px-1 py-0.5 rounded-md text-xs bg-gray-50 text-gray-600 font-mono border border-gray-200"><span class="text-[9px] mr-1 opacity-75">${citation.source}</span><span class="font-normal">+${citation.number}</span></span>`;
             });
           } else {
             console.log('⚠️ No matches found for citation pattern:', citation.source, '+', citation.number);
@@ -114,13 +114,13 @@ export default function SubmitPage() {
     // Handle the actual pattern: "Source\n+6" (source first, then number on next line)
     let formatted = text.replace(/([A-Za-z][A-Za-z0-9\s\-\.]+)\s*\n\s*\+(\d+)/g, (match, source, number) => {
       console.log('✅ Multi-line citation match (fallback):', match, '→', source.trim(), '+', number);
-      return `${source.trim()} <span class="inline-flex items-center px-1.5 py-0.5 rounded-md text-xs bg-gray-50 text-gray-600 ml-1 font-mono text-[9px] opacity-75 border border-gray-200">+${number}</span>`;
+      return `${source.trim()} <span class="inline-flex items-center px-1 py-0.5 rounded-md text-xs bg-gray-50 text-gray-600 ml-1 font-mono text-[9px] opacity-75 border border-gray-200 font-normal">+${number}</span>`;
     });
     
     // Handle inline citations like "Reddit +6"
     formatted = formatted.replace(/(\b[A-Za-z][A-Za-z0-9\s\-\.]+)\s*\+(\d+)/g, (match, source, number) => {
       console.log('✅ Inline citation match (fallback):', match, '→', source.trim(), '+', number);
-            return `${source.trim()} <span class="inline-flex items-center px-1.5 py-0.5 rounded-md text-xs bg-gray-50 text-gray-600 ml-1 font-mono text-[10px] italic">+${number}</span>`;
+                         return `${source.trim()} <span class="inline-flex items-center px-1 py-0.5 rounded-md text-xs bg-gray-50 text-gray-600 ml-1 font-mono text-[9px] opacity-75 border border-gray-200 font-normal">+${number}</span>`;
     });
     
     console.log('🔍 Submit page formatCitations result (fallback):', formatted.substring(0, 200) + '...');
