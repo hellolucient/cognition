@@ -185,61 +185,89 @@ export default function ThreadPage({ params }: { params: Promise<{ id: string }>
   const [showExportModal, setShowExportModal] = useState(false);
   const [exportFormat, setExportFormat] = useState("text");
   const [isExporting, setIsExporting] = useState(false);
+  const [isSelecting, setIsSelecting] = useState(false);
   const conversationRef = useRef<HTMLDivElement>(null);
 
-  // Set up text selection listener that triggers immediately on selection
+  // Set up text selection listener with debouncing and better selection handling
   useEffect(() => {
+    let selectionTimeout: NodeJS.Timeout;
+    
     const handleSelectionChange = () => {
       const selection = window.getSelection();
       const selectedText = selection?.toString().trim();
       
-      if (selectedText && selectedText.length > 5) {
-        // Find which element contains the selection
-        const range = selection?.getRangeAt(0);
-        const container = range?.commonAncestorContainer;
+      // Show selection indicator when user starts selecting
+      if (selectedText && selectedText.length > 0) {
+        setIsSelecting(true);
+      } else {
+        setIsSelecting(false);
+      }
+      
+      // Clear any existing timeout
+      clearTimeout(selectionTimeout);
+      
+      // Add a small delay to let the user finish selecting
+      selectionTimeout = setTimeout(() => {
+        const selection = window.getSelection();
+        const selectedText = selection?.toString().trim();
         
-        // Traverse up to find the source element
-        let sourceElement = container?.nodeType === Node.TEXT_NODE 
-          ? container.parentElement 
-          : container as Element;
-          
-        let source = 'Unknown';
-        while (sourceElement && sourceElement !== document.body) {
-          if (sourceElement.getAttribute('data-source')) {
-            source = sourceElement.getAttribute('data-source')!;
-            break;
-          }
-          sourceElement = sourceElement.parentElement;
-        }
-        
-        console.log('✅ Text selected:', { selectedText, source });
-        console.log('🔍 Setting modal state:', { 
-          selectedText, 
-          selectedSource, 
-          showReferenceModal: true,
-          user: !!user 
-        });
-        
-        if (!user) {
-          console.log('🔒 User not authenticated, showing waitlist');
-          setShowWaitlist(true);
+        // Check if selection is still active (user might still be dragging)
+        if (!selection || selection.rangeCount === 0) {
+          setIsSelecting(false);
           return;
         }
         
-        setSelectedText(selectedText);
-        setSelectedSource(source);
-        setShowReferenceModal(true);
-        
-        console.log('🔍 Modal state after setState:', { 
-          selectedText, 
-          selectedSource, 
-          showReferenceModal: true 
-        });
-      }
+        if (selectedText && selectedText.length >= 10) {
+          // Find which element contains the selection
+          const range = selection?.getRangeAt(0);
+          const container = range?.commonAncestorContainer;
+          
+          // Traverse up to find the source element
+          let sourceElement = container?.nodeType === Node.TEXT_NODE 
+            ? container.parentElement 
+            : container as Element;
+            
+          let source = 'Unknown';
+          while (sourceElement && sourceElement !== document.body) {
+            if (sourceElement.getAttribute('data-source')) {
+              source = sourceElement.getAttribute('data-source')!;
+              break;
+            }
+            sourceElement = sourceElement.parentElement;
+          }
+          
+          console.log('✅ Text selected:', { selectedText, source });
+          console.log('🔍 Setting modal state:', { 
+            selectedText, 
+            selectedSource, 
+            showReferenceModal: true,
+            user: !!user 
+          });
+          
+          if (!user) {
+            console.log('🔒 User not authenticated, showing waitlist');
+            setShowWaitlist(true);
+            return;
+          }
+          
+          setSelectedText(selectedText);
+          setSelectedSource(source);
+          setShowReferenceModal(true);
+          
+          console.log('🔍 Modal state after setState:', { 
+            selectedText, 
+            selectedSource, 
+            showReferenceModal: true 
+          });
+        }
+      }, 300); // 300ms delay to let user finish selecting
     };
 
     document.addEventListener('selectionchange', handleSelectionChange);
-    return () => document.removeEventListener('selectionchange', handleSelectionChange);
+    return () => {
+      document.removeEventListener('selectionchange', handleSelectionChange);
+      clearTimeout(selectionTimeout);
+    };
   }, [user]);
 
   const handleTextSelection = (text: string, source: string) => {
@@ -644,15 +672,24 @@ export default function ThreadPage({ params }: { params: Promise<{ id: string }>
           </Button>
         </div>
 
+        {/* Text Selection Indicator */}
+        {isSelecting && (
+          <div className="fixed top-4 right-4 bg-blue-500 text-white px-3 py-2 rounded-lg shadow-lg z-[9998] animate-pulse">
+            <div className="flex items-center gap-2">
+              <span className="text-sm">📝 Selecting text...</span>
+            </div>
+          </div>
+        )}
+
         {/* Enhanced Reference Modal */}
         {console.log('🔍 Rendering modal check:', { showReferenceModal, selectedText, selectedSource })}
         {showReferenceModal && (
           <div 
-            className="fixed inset-0 bg-black/50 flex items-center justify-center z-[9999]"
+            className="fixed inset-0 bg-black/50 flex items-center justify-center z-[9999] p-4"
             style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0 }}
           >
             <div 
-              className="bg-white rounded-lg p-6 max-w-md w-full mx-4 shadow-xl border"
+              className="bg-white rounded-lg p-4 sm:p-6 max-w-lg w-full max-h-[90vh] overflow-y-auto shadow-xl border"
               style={{ 
                 position: 'relative',
                 zIndex: 10000,
@@ -667,13 +704,13 @@ export default function ThreadPage({ params }: { params: Promise<{ id: string }>
                 <div className="text-xs text-gray-600 mb-1 font-medium">
                   {selectedSource}:
                 </div>
-                <div className="text-sm text-gray-900 font-mono bg-white p-2 rounded border">
+                <div className="text-sm text-gray-900 font-mono bg-white p-2 rounded border break-words">
                   "{selectedText}"
                 </div>
               </div>
 
               {/* Like/Dislike buttons */}
-              <div className="flex gap-2 mb-4 justify-center">
+              <div className="flex gap-2 mb-4 justify-center flex-wrap">
                 <Button
                   variant={textSegmentVotes[`${selectedText.slice(0, 50)}...`] === 'like' ? 'default' : 'outline'}
                   size="sm"
@@ -693,7 +730,7 @@ export default function ThreadPage({ params }: { params: Promise<{ id: string }>
               </div>
 
               {/* Action buttons */}
-              <div className="flex gap-3">
+              <div className="flex gap-3 flex-col sm:flex-row">
                 <Button 
                   onClick={() => {
                     // Navigate to contribute page with reference
@@ -712,6 +749,7 @@ export default function ThreadPage({ params }: { params: Promise<{ id: string }>
                     // Clear browser selection to allow new selections
                     window.getSelection()?.removeAllRanges();
                   }}
+                  className="sm:w-auto"
                 >
                   Close
                 </Button>
