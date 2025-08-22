@@ -92,6 +92,9 @@ export function NavWithNotifications() {
           Profile
         </Link>
       )}
+      <Link href="/test-inline-comments" className="text-muted-foreground hover:text-foreground">
+        Test Inline Comments
+      </Link>
       <Link href="/settings" className="text-muted-foreground hover:text-foreground relative">
         Settings
         {user && pendingCount > 0 && (
@@ -121,6 +124,9 @@ export function MobileNavWithNotifications() {
           Profile
         </Link>
       )}
+      <Link href="/test-inline-comments" className="text-muted-foreground hover:text-foreground">
+        Test Inline Comments
+      </Link>
       <Link href="/settings" className="text-muted-foreground hover:text-foreground relative">
         Settings
         {user && pendingCount > 0 && (
