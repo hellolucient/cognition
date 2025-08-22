@@ -346,14 +346,49 @@ export default function ThreadPage({ params }: { params: Promise<{ id: string }>
     const currentVote = textSegmentVotes[segmentKey];
     const newVote = currentVote === voteType ? null : voteType; // Toggle if same vote
     
-    // Update local state immediately
+    // Update local state immediately for responsive UI
     setTextSegmentVotes(prev => ({
       ...prev,
       [segmentKey]: newVote
     }));
     
-    // TODO: Send to API to persist vote
-    console.log('📊 Text segment vote:', { text: segmentKey, vote: newVote });
+    try {
+      // Send vote to API to persist it
+      const response = await fetch('/api/text-segment-votes', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`
+        },
+        body: JSON.stringify({
+          threadId: resolvedParams.id,
+          textSegment: text,
+          voteType: newVote || voteType // If removing vote, send the original type
+        })
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        console.log('📊 Text segment vote saved:', data);
+        
+        // Refresh inline contributions to get updated vote counts
+        fetchInlineContributions();
+      } else {
+        console.error('Failed to save text segment vote');
+        // Revert local state if API call failed
+        setTextSegmentVotes(prev => ({
+          ...prev,
+          [segmentKey]: currentVote
+        }));
+      }
+    } catch (error) {
+      console.error('Error saving text segment vote:', error);
+      // Revert local state if API call failed
+      setTextSegmentVotes(prev => ({
+        ...prev,
+        [segmentKey]: currentVote
+      }));
+    }
   };
 
   const handleInlineContributionVote = async (contributionId: string, voteType: 'like' | 'dislike') => {
@@ -576,15 +611,20 @@ export default function ThreadPage({ params }: { params: Promise<{ id: string }>
               data-source="Human"
             >
               {messageText}
-              {/* Vote indicator for Human messages */}
+              {/* Inline vote display for Human messages */}
               {Object.entries(textSegmentVotes).some(([key, vote]) => 
                 vote && messageText.includes(key.replace('...', ''))
               ) && (
-                <span className="absolute -right-2 -top-2">
+                <div className="inline-flex items-center gap-1 ml-2 text-sm">
+                  <span className="text-gray-500">|</span>
                   {Object.entries(textSegmentVotes).find(([key, vote]) => 
                     vote && messageText.includes(key.replace('...', ''))
-                  )?.[1] === 'like' ? '👍' : '👎'}
-                </span>
+                  )?.[1] === 'like' ? (
+                    <span className="text-green-600">👍</span>
+                  ) : (
+                    <span className="text-red-600">👎</span>
+                  )}
+                </div>
               )}
             </div>
           </div>
@@ -602,15 +642,20 @@ export default function ThreadPage({ params }: { params: Promise<{ id: string }>
               data-source="Assistant"
             >
               {messageText}
-              {/* Vote indicator for Assistant messages */}
+              {/* Inline vote display for Assistant messages */}
               {Object.entries(textSegmentVotes).some(([key, vote]) => 
                 vote && messageText.includes(key.replace('...', ''))
               ) && (
-                <span className="absolute -right-2 -top-2">
+                <div className="inline-flex items-center gap-1 ml-2 text-sm">
+                  <span className="text-gray-500">|</span>
                   {Object.entries(textSegmentVotes).find(([key, vote]) => 
                     vote && messageText.includes(key.replace('...', ''))
-                  )?.[1] === 'like' ? '👍' : '👎'}
-                </span>
+                  )?.[1] === 'like' ? (
+                    <span className="text-green-600">👍</span>
+                  ) : (
+                    <span className="text-red-600">👎</span>
+                  )}
+                </div>
               )}
             </div>
           </div>
@@ -626,6 +671,21 @@ export default function ThreadPage({ params }: { params: Promise<{ id: string }>
             data-source="Thread"
           >
             {trimmed}
+            {/* Inline vote display for regular lines */}
+            {Object.entries(textSegmentVotes).some(([key, vote]) => 
+              vote && trimmed.includes(key.replace('...', ''))
+            ) && (
+              <div className="inline-flex items-center gap-1 ml-2 text-sm">
+                <span className="text-gray-500">|</span>
+                {Object.entries(textSegmentVotes).find(([key, vote]) => 
+                  vote && trimmed.includes(key.replace('...', ''))
+                )?.[1] === 'like' ? (
+                  <span className="text-green-600">👍</span>
+                ) : (
+                  <span className="text-red-600">👎</span>
+                )}
+              </div>
+            )}
           </div>
         );
       }
@@ -649,24 +709,57 @@ export default function ThreadPage({ params }: { params: Promise<{ id: string }>
       return formattedContent;
     }
 
-    // For now, we'll append contributions at the end of the content
-    // In a more sophisticated implementation, we could insert them inline
-    const contributionElements = relevantContributions.map(contribution => (
-      <InlineContribution
-        key={contribution.id}
-        contribution={contribution}
-        onToggleCollapse={handleToggleInlineContribution}
-        onVote={handleInlineContributionVote}
-        currentUserVote={contribution.textSegmentVotes.find(v => v.userId === user?.id)?.voteType as 'like' | 'dislike' | null}
-      />
-    ));
+    // Sort contributions by their position in the text
+    const sortedContributions = relevantContributions.sort((a, b) => a.textStartIndex - b.textStartIndex);
 
-    return (
-      <>
-        {formattedContent}
-        {contributionElements}
-      </>
-    );
+    // Create a new array with contributions inserted at the right positions
+    const result = [];
+    let currentIndex = 0;
+
+    // For each contribution, find where it should be inserted
+    sortedContributions.forEach(contribution => {
+      // Find the line that contains this contribution's referenced text
+      const lines = content.split('\n');
+      let lineIndex = 0;
+      let charCount = 0;
+      
+      for (let i = 0; i < lines.length; i++) {
+        const lineLength = lines[i].length + 1; // +1 for newline
+        if (charCount + lineLength > contribution.textStartIndex) {
+          lineIndex = i;
+          break;
+        }
+        charCount += lineLength;
+      }
+
+      // Insert the contribution after the line that contains the referenced text
+      if (lineIndex < formattedContent.length) {
+        // Add all content up to this line
+        for (let i = currentIndex; i <= lineIndex; i++) {
+          result.push(formattedContent[i]);
+        }
+        
+        // Add the contribution
+        result.push(
+          <InlineContribution
+            key={contribution.id}
+            contribution={contribution}
+            onToggleCollapse={handleToggleInlineContribution}
+            onVote={handleInlineContributionVote}
+            currentUserVote={contribution.textSegmentVotes.find(v => v.userId === user?.id)?.voteType as 'like' | 'dislike' | null}
+          />
+        );
+        
+        currentIndex = lineIndex + 1;
+      }
+    });
+
+    // Add remaining content
+    for (let i = currentIndex; i < formattedContent.length; i++) {
+      result.push(formattedContent[i]);
+    }
+
+    return result;
   };
 
   if (loading) {
@@ -964,39 +1057,17 @@ export default function ThreadPage({ params }: { params: Promise<{ id: string }>
                 </Button>
               </div>
 
-              {/* Contribution options */}
-              <div className="space-y-4 mb-4">
-                <h4 className="text-sm font-medium text-gray-700">How would you like to contribute?</h4>
-                
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <Button 
-                    onClick={() => {
-                      // Navigate to contribute page with AI option and reference
-                      window.location.href = `/contribute/${thread.id}?ref=${encodeURIComponent(selectedText)}&source=${selectedSource}&type=ai`;
-                    }}
-                    className="h-auto p-4 flex flex-col items-center gap-2 bg-blue-50 hover:bg-blue-100 border-blue-200 text-blue-800"
-                  >
-                    <div className="text-lg">🤖</div>
-                    <div className="text-sm font-medium">Continue with AI</div>
-                    <div className="text-xs text-blue-600">Add a new prompt and get an AI response</div>
-                  </Button>
-                  
-                  <Button 
-                    onClick={() => {
-                      // Navigate to contribute page with manual option and reference
-                      window.location.href = `/contribute/${thread.id}?ref=${encodeURIComponent(selectedText)}&source=${selectedSource}&type=manual`;
-                    }}
-                    className="h-auto p-4 flex flex-col items-center gap-2 bg-green-50 hover:bg-green-100 border-green-200 text-green-800"
-                  >
-                    <div className="text-lg">💭</div>
-                    <div className="text-sm font-medium">Add Your Thoughts</div>
-                    <div className="text-xs text-green-600">Share your own insights or analysis</div>
-                  </Button>
-                </div>
-              </div>
-
               {/* Action buttons */}
               <div className="flex gap-3 flex-col sm:flex-row flex-shrink-0">
+                <Button 
+                  onClick={() => {
+                    // Navigate to contribute page with reference
+                    window.location.href = `/contribute/${thread.id}?ref=${encodeURIComponent(selectedText)}&source=${selectedSource}`;
+                  }}
+                  className="flex-1"
+                >
+                  💬 Contribute to This Text
+                </Button>
                 <Button 
                   variant="outline" 
                   onClick={() => {
