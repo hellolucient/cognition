@@ -9,8 +9,7 @@ import { useSupabase } from "@/components/providers/supabase-provider";
 import { WaitlistModal } from "@/components/auth/waitlist-modal";
 import { TypingLoader } from "@/components/ui/typing-loader";
 import { AILoadingModal } from "@/components/ui/ai-loading-modal";
-import { InlineComment } from "@/components/ui/inline-comment";
-import { InlineCommentModal } from "@/components/ui/inline-comment-modal";
+import { InlineContribution } from "@/components/ui/inline-contribution";
 
 interface Thread {
   id: string;
@@ -53,7 +52,7 @@ export default function ThreadPage({ params }: { params: Promise<{ id: string }>
   useEffect(() => {
     fetchThread();
     fetchVoteStatus();
-    fetchInlineComments();
+    fetchInlineContributions();
   }, [resolvedParams.id]);
 
   const fetchVoteStatus = async () => {
@@ -71,15 +70,15 @@ export default function ThreadPage({ params }: { params: Promise<{ id: string }>
     }
   };
 
-  const fetchInlineComments = async () => {
+  const fetchInlineContributions = async () => {
     try {
       const response = await fetch(`/api/inline-comments?threadId=${resolvedParams.id}`);
       if (response.ok) {
         const data = await response.json();
-        setInlineComments(data.inlineComments || []);
+        setInlineContributions(data.inlineContributions || []);
       }
     } catch (error) {
-      console.error('Error fetching inline comments:', error);
+      console.error('Error fetching inline contributions:', error);
     }
   };
 
@@ -203,8 +202,8 @@ export default function ThreadPage({ params }: { params: Promise<{ id: string }>
   const [isSelecting, setIsSelecting] = useState(false);
   const conversationRef = useRef<HTMLDivElement>(null);
   
-  // New state for inline comments
-  const [inlineComments, setInlineComments] = useState<any[]>([]);
+  // New state for inline contributions
+  const [inlineContributions, setInlineContributions] = useState<any[]>([]);
   const [showInlineCommentModal, setShowInlineCommentModal] = useState(false);
   const [isAddingComment, setIsAddingComment] = useState(false);
 
@@ -311,7 +310,7 @@ export default function ThreadPage({ params }: { params: Promise<{ id: string }>
         
         setSelectedText(selectedText);
         setSelectedSource(source);
-        setShowInlineCommentModal(true);
+        setShowReferenceModal(true);
         
         // Clear the browser's default selection highlighting
         setTimeout(() => {
@@ -357,14 +356,14 @@ export default function ThreadPage({ params }: { params: Promise<{ id: string }>
     console.log('📊 Text segment vote:', { text: segmentKey, vote: newVote });
   };
 
-  const handleInlineCommentVote = async (commentId: string, voteType: 'like' | 'dislike') => {
+  const handleInlineContributionVote = async (contributionId: string, voteType: 'like' | 'dislike') => {
     if (!user) {
       alert('Please sign in to vote');
       return;
     }
 
     try {
-      const response = await fetch(`/api/inline-comments/${commentId}/vote`, {
+      const response = await fetch(`/api/inline-comments/${contributionId}/vote`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -374,17 +373,17 @@ export default function ThreadPage({ params }: { params: Promise<{ id: string }>
       });
 
       if (response.ok) {
-        // Refresh inline comments to get updated vote counts
-        fetchInlineComments();
+        // Refresh inline contributions to get updated vote counts
+        fetchInlineContributions();
       }
     } catch (error) {
-      console.error('Error voting on inline comment:', error);
+      console.error('Error voting on inline contribution:', error);
     }
   };
 
-  const handleToggleInlineComment = async (commentId: string, newState: boolean) => {
+  const handleToggleInlineContribution = async (contributionId: string, newState: boolean) => {
     try {
-      const response = await fetch(`/api/inline-comments/${commentId}/toggle`, {
+      const response = await fetch(`/api/inline-comments/${contributionId}/toggle`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -394,20 +393,20 @@ export default function ThreadPage({ params }: { params: Promise<{ id: string }>
 
       if (response.ok) {
         // Update local state
-        setInlineComments(prev => 
-          prev.map(comment => 
-            comment.id === commentId 
-              ? { ...comment, isCollapsed: newState }
-              : comment
+        setInlineContributions(prev => 
+          prev.map(contribution => 
+            contribution.id === contributionId 
+              ? { ...contribution, isCollapsed: newState }
+              : contribution
           )
         );
       }
     } catch (error) {
-      console.error('Error toggling inline comment:', error);
+      console.error('Error toggling inline contribution:', error);
     }
   };
 
-  const handleAddInlineComment = async (content: string) => {
+  const handleAddInlineContribution = async (content: string) => {
     if (!user) return;
 
     setIsAddingComment(true);
@@ -433,13 +432,13 @@ export default function ThreadPage({ params }: { params: Promise<{ id: string }>
       });
 
       if (response.ok) {
-        // Refresh inline comments
-        fetchInlineComments();
+        // Refresh inline contributions
+        fetchInlineContributions();
         // Clear selection
         window.getSelection()?.removeAllRanges();
       }
     } catch (error) {
-      console.error('Error adding inline comment:', error);
+      console.error('Error adding inline contribution:', error);
     } finally {
       setIsAddingComment(false);
     }
@@ -637,35 +636,35 @@ export default function ThreadPage({ params }: { params: Promise<{ id: string }>
     return formattedLines;
   };
 
-  // Function to insert inline comments at the appropriate positions
-  const insertInlineComments = (content: string, allowSelection = false) => {
+  // Function to insert inline contributions at the appropriate positions
+  const insertInlineContributions = (content: string, allowSelection = false) => {
     const formattedContent = formatContent(content, allowSelection);
     
-    // Find inline comments that reference text in this content
-    const relevantComments = inlineComments.filter(comment => 
-      comment.textStartIndex >= 0 && comment.textEndIndex <= content.length
+    // Find inline contributions that reference text in this content
+    const relevantContributions = inlineContributions.filter(contribution => 
+      contribution.textStartIndex >= 0 && contribution.textEndIndex <= content.length
     );
 
-    if (relevantComments.length === 0) {
+    if (relevantContributions.length === 0) {
       return formattedContent;
     }
 
-    // For now, we'll append comments at the end of the content
+    // For now, we'll append contributions at the end of the content
     // In a more sophisticated implementation, we could insert them inline
-    const commentElements = relevantComments.map(comment => (
-      <InlineComment
-        key={comment.id}
-        comment={comment}
-        onToggleCollapse={handleToggleInlineComment}
-        onVote={handleInlineCommentVote}
-        currentUserVote={comment.textSegmentVotes.find(v => v.userId === user?.id)?.voteType as 'like' | 'dislike' | null}
+    const contributionElements = relevantContributions.map(contribution => (
+      <InlineContribution
+        key={contribution.id}
+        contribution={contribution}
+        onToggleCollapse={handleToggleInlineContribution}
+        onVote={handleInlineContributionVote}
+        currentUserVote={contribution.textSegmentVotes.find(v => v.userId === user?.id)?.voteType as 'like' | 'dislike' | null}
       />
     ));
 
     return (
       <>
         {formattedContent}
-        {commentElements}
+        {contributionElements}
       </>
     );
   };
@@ -773,7 +772,7 @@ export default function ThreadPage({ params }: { params: Promise<{ id: string }>
                 Original by {thread.author.name || "Anonymous"}
               </span>
             </div>
-            {insertInlineComments(thread.content, true)}
+            {insertInlineContributions(thread.content, true)}
           </div>
 
           {/* Contributions */}
@@ -810,7 +809,7 @@ export default function ThreadPage({ params }: { params: Promise<{ id: string }>
                         </Badge>
                       </div>
                     </div>
-                    {insertInlineComments(contribution.content, true)}
+                    {insertInlineContributions(contribution.content, true)}
                   </div>
                 );
               })}
@@ -844,34 +843,34 @@ export default function ThreadPage({ params }: { params: Promise<{ id: string }>
           </Button>
         </div>
 
-        {/* Inline Comment Stats */}
-        {inlineComments.length > 0 && (
+        {/* Inline Contribution Stats */}
+        {inlineContributions.length > 0 && (
           <div className="bg-gray-50/50 border border-gray-200 rounded-lg p-4">
-            <h3 className="text-lg font-semibold mb-3 text-gray-900">Inline Comments</h3>
+            <h3 className="text-lg font-semibold mb-3 text-gray-900">Inline Contributions</h3>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
               <div className="bg-white p-3 rounded border">
-                <div className="text-2xl font-bold text-blue-600">{inlineComments.length}</div>
-                <div className="text-sm text-gray-600">Total Comments</div>
+                <div className="text-2xl font-bold text-blue-600">{inlineContributions.length}</div>
+                <div className="text-sm text-gray-600">Total Contributions</div>
               </div>
               <div className="bg-white p-3 rounded border">
                 <div className="text-2xl font-bold text-green-600">
-                  {inlineComments.reduce((sum, comment) => 
-                    sum + comment.textSegmentVotes.filter(v => v.voteType === 'like').length, 0
+                  {inlineContributions.reduce((sum, contribution) => 
+                    sum + contribution.textSegmentVotes.filter(v => v.voteType === 'like').length, 0
                   )}
                 </div>
                 <div className="text-sm text-gray-600">Total 👍</div>
               </div>
               <div className="bg-white p-3 rounded border">
                 <div className="text-2xl font-bold text-red-600">
-                  {inlineComments.reduce((sum, comment) => 
-                    sum + comment.textSegmentVotes.filter(v => v.voteType === 'dislike').length, 0
+                  {inlineContributions.reduce((sum, contribution) => 
+                    sum + contribution.textSegmentVotes.filter(v => v.voteType === 'dislike').length, 0
                   )}
                 </div>
                 <div className="text-sm text-gray-600">Total 👎</div>
               </div>
               <div className="bg-white p-3 rounded border">
                 <div className="text-2xl font-bold text-purple-600">
-                  {inlineComments.filter(c => !c.isCollapsed).length}
+                  {inlineContributions.filter(c => !c.isCollapsed).length}
                 </div>
                 <div className="text-sm text-gray-600">Expanded</div>
               </div>
@@ -965,17 +964,39 @@ export default function ThreadPage({ params }: { params: Promise<{ id: string }>
                 </Button>
               </div>
 
-              {/* Action buttons - always visible */}
+              {/* Contribution options */}
+              <div className="space-y-4 mb-4">
+                <h4 className="text-sm font-medium text-gray-700">How would you like to contribute?</h4>
+                
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <Button 
+                    onClick={() => {
+                      // Navigate to contribute page with AI option and reference
+                      window.location.href = `/contribute/${thread.id}?ref=${encodeURIComponent(selectedText)}&source=${selectedSource}&type=ai`;
+                    }}
+                    className="h-auto p-4 flex flex-col items-center gap-2 bg-blue-50 hover:bg-blue-100 border-blue-200 text-blue-800"
+                  >
+                    <div className="text-lg">🤖</div>
+                    <div className="text-sm font-medium">Continue with AI</div>
+                    <div className="text-xs text-blue-600">Add a new prompt and get an AI response</div>
+                  </Button>
+                  
+                  <Button 
+                    onClick={() => {
+                      // Navigate to contribute page with manual option and reference
+                      window.location.href = `/contribute/${thread.id}?ref=${encodeURIComponent(selectedText)}&source=${selectedSource}&type=manual`;
+                    }}
+                    className="h-auto p-4 flex flex-col items-center gap-2 bg-green-50 hover:bg-green-100 border-green-200 text-green-800"
+                  >
+                    <div className="text-lg">💭</div>
+                    <div className="text-sm font-medium">Add Your Thoughts</div>
+                    <div className="text-xs text-green-600">Share your own insights or analysis</div>
+                  </Button>
+                </div>
+              </div>
+
+              {/* Action buttons */}
               <div className="flex gap-3 flex-col sm:flex-row flex-shrink-0">
-                <Button 
-                  onClick={() => {
-                    // Navigate to contribute page with reference
-                    window.location.href = `/contribute/${thread.id}?ref=${encodeURIComponent(selectedText)}&source=${selectedSource}`;
-                  }}
-                  className="flex-1"
-                >
-                  💬 Reply to this
-                </Button>
                 <Button 
                   variant="outline" 
                   onClick={() => {
@@ -994,20 +1015,7 @@ export default function ThreadPage({ params }: { params: Promise<{ id: string }>
           </div>
         )}
 
-        {/* Inline Comment Modal */}
-        <InlineCommentModal
-          isOpen={showInlineCommentModal}
-          onClose={() => {
-            setShowInlineCommentModal(false);
-            setSelectedText("");
-            setSelectedSource("");
-            window.getSelection()?.removeAllRanges();
-          }}
-          selectedText={selectedText}
-          selectedSource={selectedSource}
-          onSubmit={handleAddInlineComment}
-          isSubmitting={isAddingComment}
-        />
+
 
         {/* Export Modal */}
         {showExportModal && (

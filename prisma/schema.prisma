@@ -40,8 +40,8 @@ model User {
   followers      Follow[]     @relation("UserFollowers")
   notifications  Notification[]
   sentNotifications Notification[] @relation("NotificationSender")
-  // New relations for inline comments
-  inlineComments InlineComment[]
+  // New relations for inline contributions
+  inlineContributions InlineContribution[]
   textSegmentVotes TextSegmentVote[]
 }
 
@@ -66,8 +66,8 @@ model Thread {
   upvotes          Upvote[]
   downvotes        Downvote[]
   notifications    Notification[]
-  // New field for inline comments
-  inlineComments   InlineComment[]
+  // New field for inline contributions
+  inlineContributions   InlineContribution[]
 
   @@index([authorId])
   @@index([isContribution])
@@ -89,8 +89,8 @@ model Comment {
   @@index([authorId])
 }
 
-// New model for inline comments
-model InlineComment {
+// New model for inline contributions
+model InlineContribution {
   id              String   @id @default(cuid())
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
@@ -100,7 +100,8 @@ model InlineComment {
   referencedText  String   // The text that was highlighted
   textStartIndex  Int      // Start position of highlighted text in content
   textEndIndex    Int      // End position of highlighted text in content
-  isCollapsed     Boolean  @default(true) // Whether comment is collapsed by default
+  isCollapsed     Boolean  @default(true) // Whether contribution is collapsed by default
+  contributionType String  // 'ai' or 'manual'
   author          User     @relation(fields: [authorId], references: [id])
   thread          Thread   @relation(fields: [threadId], references: [id])
   textSegmentVotes TextSegmentVote[]
@@ -115,13 +116,13 @@ model TextSegmentVote {
   id              String   @id @default(cuid())
   createdAt       DateTime @default(now())
   userId          String
-  inlineCommentId String
+  inlineContributionId String
   voteType        String   // 'like' or 'dislike'
   user            User     @relation(fields: [userId], references: [id])
-  inlineComment   InlineComment @relation(fields: [inlineCommentId], references: [id])
+  inlineContribution   InlineContribution @relation(fields: [inlineContributionId], references: [id])
 
-  @@unique([userId, inlineCommentId])
-  @@index([inlineCommentId])
+  @@unique([userId, inlineContributionId])
+  @@index([inlineContributionId])
   @@index([userId])
 }
 

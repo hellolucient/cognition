@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import { prisma } from '@/lib/prisma';
+import prisma from '@/lib/prisma';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -37,8 +37,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Thread not found' }, { status: 404 });
     }
 
-    // Create inline comment
-    const inlineComment = await prisma.inlineComment.create({
+    // Create inline contribution
+    const inlineContribution = await prisma.inlineContribution.create({
       data: {
         content,
         authorId: user.id,
@@ -46,7 +46,8 @@ export async function POST(request: NextRequest) {
         referencedText,
         textStartIndex,
         textEndIndex,
-        isCollapsed: false, // New comments are expanded for the author
+        isCollapsed: false, // New contributions are expanded for the author
+        contributionType: 'manual', // Default to manual, can be updated later
       },
       include: {
         author: {
@@ -59,7 +60,7 @@ export async function POST(request: NextRequest) {
       }
     });
 
-    return NextResponse.json({ inlineComment });
+    return NextResponse.json({ inlineContribution });
   } catch (error) {
     console.error('Error creating inline comment:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
@@ -75,8 +76,8 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Thread ID required' }, { status: 400 });
     }
 
-    // Get all inline comments for a thread
-    const inlineComments = await prisma.inlineComment.findMany({
+    // Get all inline contributions for a thread
+    const inlineContributions = await prisma.inlineContribution.findMany({
       where: { threadId },
       include: {
         author: {
@@ -96,7 +97,7 @@ export async function GET(request: NextRequest) {
       orderBy: { createdAt: 'asc' }
     });
 
-    return NextResponse.json({ inlineComments });
+    return NextResponse.json({ inlineContributions });
   } catch (error) {
     console.error('Error fetching inline comments:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });

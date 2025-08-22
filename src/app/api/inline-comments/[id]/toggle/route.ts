@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import { prisma } from '@/lib/prisma';
+import prisma from '@/lib/prisma';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -27,25 +27,25 @@ export async function POST(
     const resolvedParams = await params;
     const inlineCommentId = resolvedParams.id;
 
-    // Get the inline comment
-    const inlineComment = await prisma.inlineComment.findUnique({
+    // Get the inline contribution
+    const inlineContribution = await prisma.inlineContribution.findUnique({
       where: { id: inlineCommentId }
     });
 
-    if (!inlineComment) {
-      return NextResponse.json({ error: 'Inline comment not found' }, { status: 404 });
+    if (!inlineContribution) {
+      return NextResponse.json({ error: 'Inline contribution not found' }, { status: 404 });
     }
 
     // Toggle collapse state
-    const updatedComment = await prisma.inlineComment.update({
+    const updatedContribution = await prisma.inlineContribution.update({
       where: { id: inlineCommentId },
       data: {
-        isCollapsed: !inlineComment.isCollapsed
+        isCollapsed: !inlineContribution.isCollapsed
       }
     });
 
     return NextResponse.json({ 
-      isCollapsed: updatedComment.isCollapsed 
+      isCollapsed: updatedContribution.isCollapsed 
     });
   } catch (error) {
     console.error('Error toggling inline comment:', error);
