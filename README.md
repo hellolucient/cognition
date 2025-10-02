@@ -15,11 +15,11 @@ Instead of AI conversations disappearing into private chat histories, vanwinkle 
 
 ## ✨ How It Works
 
-### 🚀 **One-Click ChatGPT Integration**
-1. **Drag our bookmarklet** to your browser's bookmark bar
-2. **Go to any ChatGPT conversation** (web or Mac app share links)
+### 🚀 **One-Click AI Integration**
+1. **Install our bookmarklet** from the [Install Page](https://www.vanwinkleapp.com/install)
+2. **Go to any AI conversation** (ChatGPT, Claude, Perplexity, Grok, Gemini, Copilot)
 3. **Click the bookmarklet** → Automatically extracts & copies your conversation
-4. **Cognition opens** with your chat ready to submit - just click "Paste from Clipboard"!
+4. **vanwinkle opens** with your chat ready to submit - just click "Paste from Clipboard"!
 
 ### 📝 **Traditional Sharing (Any AI)**
 1. **Manually paste any AI chat** (ChatGPT, Claude, etc.) into our submission form
@@ -66,34 +66,37 @@ Transform boring loading screens into educational moments with our AI history mo
 - Bookmarklet authentication checks
 - Summary generation and posting
 
-## 🔖 **ChatGPT Bookmarklet Magic**
+## 🔖 **Universal AI Bookmarklet Magic**
 
-Our intelligent bookmarklet makes sharing ChatGPT conversations effortless:
+Our intelligent bookmarklet makes sharing AI conversations effortless across all major platforms:
 
-### 🎯 **Perfect for Mac ChatGPT App Users:**
-1. **Create conversation** in ChatGPT Mac app
+### 🎯 **Supported AI Platforms:**
+- ✅ **ChatGPT** (chat.openai.com, chatgpt.com/share/...)
+- ✅ **Claude** (claude.ai)
+- ✅ **Perplexity** (perplexity.ai)
+- ✅ **Grok** (grok.com)
+- ✅ **Gemini** (gemini.google.com, g.co/gemini)
+- ✅ **Copilot** (copilot.microsoft.com)
+
+### 🌐 **Perfect for Mac App Users:**
+1. **Create conversation** in any AI Mac app
 2. **Click "Share"** → Copy the share URL  
 3. **Open URL in browser** → Click our bookmarklet
 4. **BOOM!** → vanwinkle opens with your full conversation ready to submit
 
-### 🌐 **Works with Any ChatGPT Page:**
-- ✅ **Regular chat.openai.com conversations**
-- ✅ **ChatGPT share URLs** (chatgpt.com/share/...)
-- ✅ **Mac app share links** (via browser)
-- ✅ **Automatic content extraction** using proven selectors
-- ✅ **Beautiful formatting** with `🧑 You:` and `🤖 ChatGPT:` labels
-
 ### 🔧 **How It Works:**
-- **Smart extraction** finds conversation messages regardless of ChatGPT's UI changes
+- **Smart platform detection** automatically identifies which AI service you're using
+- **Intelligent extraction** finds conversation messages with platform-specific selectors
+- **Beautiful formatting** with `🧑 You:` and `🤖 [Platform]:` labels
 - **Clipboard integration** copies formatted content automatically  
 - **Auto-opens vanwinkle** submit page for seamless workflow
-- **Graceful fallbacks** download file if clipboard fails
+- **Citation extraction** captures source references from platforms like Perplexity
 - **Cross-browser compatible** works in Chrome, Safari, Firefox, etc.
 
 ## 🛠 Features
 
 ### Core Functionality
-- ✅ **Smart ChatGPT Bookmarklet** - One-click extraction from any ChatGPT conversation (including Mac app share links)
+- ✅ **Universal AI Bookmarklet** - One-click extraction from ChatGPT, Claude, Perplexity, Grok, Gemini, and Copilot conversations
 - ✅ **Thread Feed** - Browse and discover AI conversations with filtering
 - ✅ **Smart Summaries & Titles** - AI-generated previews with configurable providers
 - ✅ **Contribution System** - Extend conversations with AI or manual input
@@ -114,6 +117,8 @@ Our intelligent bookmarklet makes sharing ChatGPT conversations effortless:
 - ✅ **Social Discovery** - Find interesting users through their contributions
 
 ### User Experience
+- ✅ **Install Page** - Dedicated bookmarklet installation page with instructions
+- ✅ **Maintenance Mode** - Component-based access control for controlled launches
 - ✅ **Invite-Only System** - Controlled growth with invite codes
 - ✅ **Email & GitHub Auth** - Multiple authentication options via Supabase
 - ✅ **Waitlist Management** - Queue system for new users
@@ -202,6 +207,9 @@ SUMMARY_MODEL="gpt-4o-mini"
 # Security
 API_KEY_ENCRYPTION_KEY="your-32-character-encryption-key"
 NEXT_PUBLIC_SITE_URL="http://localhost:3000"
+
+# Maintenance Mode (Optional)
+NEXT_PUBLIC_MAINTENANCE_MODE="false"  # Set to "true" to enable maintenance mode
 ```
 
 ## 🔒 User API Keys: Security Overview
@@ -239,6 +247,7 @@ Open [http://localhost:3000](http://localhost:3000) to see the platform.
 2. **Generate Invite Codes**: Use the admin panel at `/admin` to manage platform AI settings
 3. **Create Initial Users**: Generate invite codes for initial community members
 4. **Configure AI Provider**: Choose your preferred AI provider (OpenAI, Anthropic, or Google) in the admin panel
+5. **Enable Maintenance Mode** (Optional): Set `NEXT_PUBLIC_MAINTENANCE_MODE=true` to restrict access during development
 
 ## 🏗 Architecture
 
@@ -264,6 +273,8 @@ Open [http://localhost:3000](http://localhost:3000) to see the platform.
 - `/api/admin/*` - Admin panel endpoints for platform management
 
 ### Key Components
+- **Install Page** - Standalone bookmarklet installation page with platform support info
+- **Maintenance Mode** - Component-based access control with admin bypass
 - **Thread Feed** - Main discovery interface with tag filtering and following feed
 - **Contribution System** - Collaborative conversation building with AI/manual options (not traditional comments)
 - **Quote/Reference** - Targeted response to specific text with modal interface (5+ character minimum)
@@ -277,7 +288,7 @@ Open [http://localhost:3000](http://localhost:3000) to see the platform.
 - **User Settings** - API key management, invite codes, and AI modal preferences
 - **Admin Panel** - Platform AI provider configuration and management
 - **Invite System** - Controlled user onboarding with waitlist
-- **Save for Later** - Mobile-friendly link saving for ChatGPT share URLs
+- **Save for Later** - Mobile-friendly link saving for AI share URLs
 
 ## 🎨 Design Philosophy
 
@@ -305,6 +316,9 @@ Features like **invite-only signup** and **waitlist management** ensure the comm
 - [x] Email & GitHub authentication
 - [x] User settings and API key management
 - [x] Admin panel for platform management
+- [x] Universal AI bookmarklet (ChatGPT, Claude, Perplexity, Grok, Gemini, Copilot)
+- [x] Install page for bookmarklet distribution
+- [x] Maintenance mode for controlled launches
 
 ### Phase 2: Social Features ✅
 - [x] User profiles with avatars, bios, and social links
@@ -344,6 +358,7 @@ MIT License - see [LICENSE](LICENSE) for details.
 ## 🔗 Links
 
 - **Live Platform**: [https://www.vanwinkleapp.com](https://www.vanwinkleapp.com) ✅ **Production Ready**
+- **Install Page**: [https://www.vanwinkleapp.com/install](https://www.vanwinkleapp.com/install) 🚀 **Get the Bookmarklet**
 - **Documentation**: [Wiki](https://github.com/hellolucient/cognition/wiki)
 - **Issues**: [GitHub Issues](https://github.com/hellolucient/cognition/issues)
 - **Discussions**: [GitHub Discussions](https://github.com/hellolucient/cognition/discussions)
