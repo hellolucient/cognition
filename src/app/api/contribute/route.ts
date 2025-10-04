@@ -394,6 +394,12 @@ export async function POST(request: NextRequest) {
       }
 
       if (!encryptedKey) {
+        console.log('❌ No encrypted API key found for provider:', provider);
+        console.log('🔍 User API keys:', {
+          hasOpenAI: !!dbUser.encryptedOpenAIKey,
+          hasAnthropic: !!dbUser.encryptedAnthropicKey,
+          hasGoogle: !!dbUser.encryptedGoogleKey
+        });
         return NextResponse.json(
           { error: `Please add your ${provider} API key in Settings to contribute with AI` },
           { status: 400 }

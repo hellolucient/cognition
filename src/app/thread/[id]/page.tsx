@@ -59,6 +59,31 @@ export default function ThreadPage({ params }: { params: Promise<{ id: string }>
     fetchThread();
     fetchVoteStatus();
     fetchInlineContributions();
+    
+    // Check if we're coming from a contribution (has scroll=bottom param)
+    const urlParams = new URLSearchParams(window.location.search);
+    const scrollToBottom = urlParams.get('scroll') === 'bottom';
+    
+    if (scrollToBottom) {
+      console.log('🔄 Coming from contribution, refreshing thread data...');
+      // Add a small delay to ensure the contribution is saved
+      const refreshTimeout = setTimeout(() => {
+        fetchThread();
+        fetchInlineContributions();
+        
+        // Scroll to bottom after refresh to show new contribution
+        setTimeout(() => {
+          window.scrollTo({ 
+            top: document.documentElement.scrollHeight, 
+            behavior: 'smooth' 
+          });
+        }, 200); // Small delay to ensure content is rendered
+      }, 500);
+      
+      return () => {
+        clearTimeout(refreshTimeout);
+      };
+    }
   }, [resolvedParams.id]);
 
   const fetchVoteStatus = async () => {

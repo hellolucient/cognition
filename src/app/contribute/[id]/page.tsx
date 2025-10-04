@@ -7,7 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import Link from "next/link";
-import { useState, useEffect, use } from "react";
+import { useState, useEffect, use, useRef } from "react";
 import { useSupabase } from "@/components/providers/supabase-provider";
 import { WaitlistModal } from "@/components/auth/waitlist-modal";
 import { TypingLoader } from "@/components/ui/typing-loader";
@@ -50,6 +50,12 @@ export default function ContributePage({ params }: { params: Promise<{ id: strin
   const [selectedSource, setSelectedSource] = useState("");
   const [showReferenceModal, setShowReferenceModal] = useState(false);
   const { user, loading: authLoading } = useSupabase();
+  const userRef = useRef(user);
+  
+  // Keep user ref updated
+  useEffect(() => {
+    userRef.current = user;
+  }, [user]);
 
   // Set up text selection listener with better handling and debugging
   useEffect(() => {
@@ -79,23 +85,18 @@ export default function ContributePage({ params }: { params: Promise<{ id: strin
       
       // Add a delay to let the user finish selecting
       selectionTimeout = setTimeout(() => {
-        const selection = window.getSelection();
-        const selectedText = selection?.toString().trim();
+        // Re-check selection after delay
+        const delayedSelection = window.getSelection();
+        const delayedSelectedText = delayedSelection?.toString().trim();
         
         console.log('🔍 Contribute Processing selection after delay:', {
-          hasSelection: !!selection,
-          rangeCount: selection?.rangeCount,
-          selectedText: selectedText?.substring(0, 100),
-          length: selectedText?.length
+          hasSelection: !!delayedSelection,
+          rangeCount: delayedSelection?.rangeCount,
+          selectedText: delayedSelectedText?.substring(0, 100),
+          length: delayedSelectedText?.length
         });
         
-        // Check if selection is still active
-        if (!selection || selection.rangeCount === 0) {
-          console.log('❌ No active selection');
-          return;
-        }
-        
-        // Basic validation
+        // Use the original selectedText from the closure for validation
         if (!selectedText || selectedText.length < 10) {
           console.log('❌ Selection too short:', selectedText?.length);
           return;
@@ -143,7 +144,7 @@ export default function ContributePage({ params }: { params: Promise<{ id: strin
           length: selectedText.length 
         });
         
-        if (!user) {
+        if (!userRef.current) {
           console.log('🔒 User not authenticated, showing waitlist');
           setShowWaitlist(true);
           return;
@@ -308,7 +309,7 @@ export default function ContributePage({ params }: { params: Promise<{ id: strin
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!user) {
+    if (!userRef.current) {
       setShowWaitlist(true);
       return;
     }
@@ -348,7 +349,9 @@ export default function ContributePage({ params }: { params: Promise<{ id: strin
         });
 
         if (!response.ok) {
-          throw new Error('Failed to start AI generation');
+          const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+          console.error('❌ API Error:', errorData);
+          throw new Error(`Failed to start AI generation: ${errorData.error || 'Unknown error'}`);
         }
 
         // Handle streaming response

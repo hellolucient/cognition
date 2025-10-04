@@ -33,7 +33,17 @@ const LOADING_MESSAGES = [
   "Loading the collective brain. Please get yours ready.",
   "Warning: excessive thinking may cause spontaneous philosophical combustion.",
   "Fact: Collaboration increases by 37.38% when you say the word 'vanwinkle' out loud.",
-  "If your thought has absurd levels of creative potential, please keep arms and legs inside the vehicle at all times."
+  "If your thought has absurd levels of creative potential, please keep arms and legs inside the vehicle at all times.",
+  "Loading... because the human brain can generate 86 billion neurons and still forget where it put its keys.",
+  "Did you know? Most thoughts take a coffee break before they're ready to load.",
+  "Fun fact: The average person pauses for 2.7 seconds to ponder the meaning of life... right before this loads.",
+  "Loading... hold tight! Great ideas often take a detour through the land of procrastination.",
+  "Warning: Thinking too hard may result in existential crises or spontaneous naps.",
+  "While you wait, remember: even Wi-Fi signals need a moment to find themselves.",
+  "Loading... because even the best ideas must first consult their inner critic.",
+  "If patience is a virtue, then this loading screen is a masterclass.",
+  "Your thoughts are being processed. Please do not disturb the creative chaos.",
+  "Loading... because great things take time, and so do great excuses."
 ];
 
 interface TypingLoaderProps {
