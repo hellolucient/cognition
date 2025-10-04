@@ -51,6 +51,130 @@ export default function ContributePage({ params }: { params: Promise<{ id: strin
   const [showReferenceModal, setShowReferenceModal] = useState(false);
   const { user, loading: authLoading } = useSupabase();
 
+  // Set up text selection listener with better handling and debugging
+  useEffect(() => {
+    let selectionTimeout: NodeJS.Timeout;
+    
+    const handleSelectionChange = () => {
+      const selection = window.getSelection();
+      const selectedText = selection?.toString().trim();
+      
+      console.log('🔍 Contribute Selection change detected:', {
+        hasSelection: !!selection,
+        rangeCount: selection?.rangeCount,
+        selectedText: selectedText?.substring(0, 100),
+        length: selectedText?.length,
+        timestamp: new Date().toISOString()
+      });
+      
+      // Show selection indicator when user starts selecting
+      if (selectedText && selectedText.length > 0) {
+        console.log('🔍 User is selecting text...');
+      } else {
+        console.log('🔍 No text selected');
+      }
+      
+      // Clear any existing timeout
+      clearTimeout(selectionTimeout);
+      
+      // Add a delay to let the user finish selecting
+      selectionTimeout = setTimeout(() => {
+        const selection = window.getSelection();
+        const selectedText = selection?.toString().trim();
+        
+        console.log('🔍 Contribute Processing selection after delay:', {
+          hasSelection: !!selection,
+          rangeCount: selection?.rangeCount,
+          selectedText: selectedText?.substring(0, 100),
+          length: selectedText?.length
+        });
+        
+        // Check if selection is still active
+        if (!selection || selection.rangeCount === 0) {
+          console.log('❌ No active selection');
+          return;
+        }
+        
+        // Basic validation
+        if (!selectedText || selectedText.length < 10) {
+          console.log('❌ Selection too short:', selectedText?.length);
+          return;
+        }
+        
+        if (selectedText.length > 1000) {
+          console.log('❌ Selection too long:', selectedText.length);
+          return;
+        }
+        
+        // Get the selection range details
+        const range = selection.getRangeAt(0);
+        console.log('🔍 Range details:', {
+          startContainer: range.startContainer,
+          endContainer: range.endContainer,
+          startOffset: range.startOffset,
+          endOffset: range.endOffset,
+          collapsed: range.collapsed
+        });
+        
+        // Check if selection is collapsed (just a cursor)
+        if (range.collapsed) {
+          console.log('❌ Selection is collapsed (just cursor)');
+          return;
+        }
+        
+        // Find the source element
+        let sourceElement = range.commonAncestorContainer;
+        if (sourceElement.nodeType === Node.TEXT_NODE) {
+          sourceElement = sourceElement.parentElement;
+        }
+        
+        let source = 'Unknown';
+        while (sourceElement && sourceElement !== document.body) {
+          if (sourceElement.getAttribute('data-source')) {
+            source = sourceElement.getAttribute('data-source')!;
+            break;
+          }
+          sourceElement = sourceElement.parentElement;
+        }
+        
+        console.log('✅ Contribute Valid selection found:', { 
+          selectedText: selectedText.substring(0, 100), 
+          source, 
+          length: selectedText.length 
+        });
+        
+        if (!user) {
+          console.log('🔒 User not authenticated, showing waitlist');
+          setShowWaitlist(true);
+          return;
+        }
+        
+        setSelectedText(selectedText);
+        setSelectedSource(source);
+        setShowReferenceModal(true);
+        
+        // Clear the browser's default selection highlighting
+        setTimeout(() => {
+          if (window.getSelection) {
+            const selection = window.getSelection();
+            if (selection) {
+              selection.removeAllRanges();
+            }
+          }
+        }, 100);
+        
+        console.log('✅ Contribute Modal should now be visible');
+        
+      }, 300); // Reduced delay to 300ms
+    };
+
+    document.addEventListener('selectionchange', handleSelectionChange);
+    return () => {
+      document.removeEventListener('selectionchange', handleSelectionChange);
+      clearTimeout(selectionTimeout);
+    };
+  }, []); // No dependencies to prevent constant re-registration
+
   const handleTextSelection = (text: string, source: string) => {
     console.log('🔍 Contribute handleTextSelection called:', { text, source });
     
@@ -98,8 +222,8 @@ export default function ContributePage({ params }: { params: Promise<{ id: strin
           <div key={index} className="mb-4 p-4 bg-blue-50 border-l-4 border-blue-500 rounded-r">
             <div className="text-sm font-medium text-blue-700 mb-1">Human</div>
             <div 
-              className={`text-gray-800 ${allowSelection ? 'select-text cursor-text' : ''}`}
-              onMouseUp={() => allowSelection && handleTextSelection(messageText, 'Human')}
+              className={`text-gray-800 ${allowSelection ? 'cursor-text' : ''}`}
+              style={allowSelection ? { userSelect: 'text' } : { userSelect: 'none' }}
             >
               {messageText}
             </div>
@@ -114,8 +238,8 @@ export default function ContributePage({ params }: { params: Promise<{ id: strin
           <div key={index} className="mb-4 p-4 bg-gray-50 border-l-4 border-gray-500 rounded-r">
             <div className="text-sm font-medium text-gray-700 mb-1">Assistant</div>
             <div 
-              className={`text-gray-800 ${allowSelection ? 'select-text cursor-text' : ''}`}
-              onMouseUp={() => allowSelection && handleTextSelection(messageText, 'Assistant')}
+              className={`text-gray-800 ${allowSelection ? 'cursor-text' : ''}`}
+              style={allowSelection ? { userSelect: 'text' } : { userSelect: 'none' }}
             >
               {messageText}
             </div>
@@ -128,8 +252,8 @@ export default function ContributePage({ params }: { params: Promise<{ id: strin
         return (
           <div 
             key={index} 
-            className={`mb-2 text-gray-800 ${allowSelection ? 'select-text cursor-text' : ''}`}
-            onMouseUp={() => allowSelection && handleTextSelection(trimmed, 'Human')}
+            className={`mb-2 text-gray-800 ${allowSelection ? 'cursor-text' : ''}`}
+            style={allowSelection ? { userSelect: 'text' } : { userSelect: 'none' }}
           >
             {trimmed}
           </div>

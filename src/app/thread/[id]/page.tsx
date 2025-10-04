@@ -48,6 +48,12 @@ export default function ThreadPage({ params }: { params: Promise<{ id: string }>
   const [upvoteCount, setUpvoteCount] = useState(0);
   const [downvoteCount, setDownvoteCount] = useState(0);
   const { user } = useSupabase();
+  const userRef = useRef(user);
+  
+  // Keep user ref updated
+  useEffect(() => {
+    userRef.current = user;
+  }, [user]);
 
   useEffect(() => {
     fetchThread();
@@ -219,7 +225,8 @@ export default function ThreadPage({ params }: { params: Promise<{ id: string }>
         hasSelection: !!selection,
         rangeCount: selection?.rangeCount,
         selectedText: selectedText?.substring(0, 100),
-        length: selectedText?.length
+        length: selectedText?.length,
+        timestamp: new Date().toISOString()
       });
       
       // Show selection indicator when user starts selecting
@@ -302,8 +309,12 @@ export default function ThreadPage({ params }: { params: Promise<{ id: string }>
           length: selectedText.length 
         });
         
-        if (!user) {
+        // Get current user state
+        const currentUser = userRef.current;
+        
+        if (!currentUser) {
           console.log('🔒 User not authenticated, showing waitlist');
+          console.log('🔒 User state:', { user: currentUser, userEmail: currentUser?.email });
           setShowWaitlist(true);
           return;
         }
@@ -332,7 +343,7 @@ export default function ThreadPage({ params }: { params: Promise<{ id: string }>
       document.removeEventListener('selectionchange', handleSelectionChange);
       clearTimeout(selectionTimeout);
     };
-  }, [user]);
+  }, []); // Remove user dependency to prevent constant re-registration
 
   const handleTextSelection = (text: string, source: string) => {
     // Keep this function for backward compatibility, but it's now handled by selectionchange
@@ -607,7 +618,8 @@ export default function ThreadPage({ params }: { params: Promise<{ id: string }>
           <div key={index} className="mb-4 p-4 bg-blue-50 border-l-4 border-blue-500 rounded-r">
             <div className="text-sm font-medium text-blue-700 mb-1">Human</div>
             <div 
-              className={`text-gray-800 ${allowSelection ? 'select-text cursor-text' : ''} relative`}
+              className={`text-gray-800 ${allowSelection ? 'cursor-text' : ''} relative`}
+              style={allowSelection ? { userSelect: 'text' } : { userSelect: 'none' }}
               data-source="Human"
             >
               {messageText}
@@ -638,7 +650,8 @@ export default function ThreadPage({ params }: { params: Promise<{ id: string }>
           <div key={index} className="mb-4 p-4 bg-gray-50 border-l-4 border-gray-500 rounded-r">
             <div className="text-sm font-medium text-gray-700 mb-1">Assistant</div>
             <div 
-              className={`text-gray-800 ${allowSelection ? 'select-text cursor-text' : ''} relative`}
+              className={`text-gray-800 ${allowSelection ? 'cursor-text' : ''} relative`}
+              style={allowSelection ? { userSelect: 'text' } : { userSelect: 'none' }}
               data-source="Assistant"
             >
               {messageText}
@@ -667,7 +680,8 @@ export default function ThreadPage({ params }: { params: Promise<{ id: string }>
         return (
           <div 
             key={index} 
-            className={`mb-2 text-gray-800 ${allowSelection ? 'select-text cursor-text' : ''}`}
+            className={`mb-2 text-gray-800 ${allowSelection ? 'cursor-text' : ''}`}
+            style={allowSelection ? { userSelect: 'text' } : { userSelect: 'none' }}
             data-source="Thread"
           >
             {trimmed}
